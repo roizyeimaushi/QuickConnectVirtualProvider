@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { notificationsApi } from "@/lib/api";
+import { API_BASE_URL } from "@/lib/constants";
 import { useAuth } from "@/components/providers/auth-provider";
 
 // System notifications for employees - stored in localStorage to track read status
@@ -155,8 +156,9 @@ export function NotificationsPopover() {
             eventSourceRef.current.close();
         }
 
+
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+            const apiUrl = API_BASE_URL;
             const streamUrl = `${apiUrl}/notifications/stream`;
 
             const startStream = async () => {
