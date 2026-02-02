@@ -541,7 +541,7 @@ export default function EmployeeDashboard() {
                                 </div>
                                 <p className="text-xs text-muted-foreground">Mark your attendance</p>
                             </Link>
-                            <Link href="/account/profile" className="block p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                            <Link href="/dashboard/employee/profile" className="block p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                                 <div className="flex items-center gap-2 mb-2">
                                     <Fingerprint className="h-5 w-5 text-purple-500" />
                                     <span className="font-semibold">My Profile</span>
