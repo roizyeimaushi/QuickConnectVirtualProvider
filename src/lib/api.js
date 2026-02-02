@@ -322,6 +322,7 @@ export const attendanceApi = {
     getTodayStatus: () => api.get('/attendance-records/today-status'),
     // New: Get display status (considers break as orange)
     getDisplayStatus: (recordId) => api.get(`/attendance-records/${recordId}/display-status`),
+    delete: (id) => api.delete(`/attendance-records/${id}`),
 };
 
 // ==========================================

@@ -1,25 +1,5 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
-import { DashboardLayout } from "@/components/layout/dashboard-layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { sessionsApi } from "@/lib/api";
-import { useToast } from "@/hooks/use-toast";
-import { formatDate, formatTime24 } from "@/lib/utils";
+import { EditRecordDialog } from "@/components/attendance/edit-record-dialog";
+import { attendanceApi } from "@/lib/api";
 import {
     ArrowLeft,
     Calendar,
@@ -31,8 +11,19 @@ import {
     MapPin,
     User,
     Laptop,
-    Smartphone
+    Smartphone,
+    Pencil,
+    Trash2,
+    MoreVertical
 } from "lucide-react";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 function SessionDetailsSkeleton() {
     return (
@@ -92,6 +83,10 @@ export default function SessionDetailsPage() {
     const [session, setSession] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    // Edit Dialog State
+    const [recordToEdit, setRecordToEdit] = useState(null);
+    const [editDialogOpen, setEditDialogOpen] = useState(false);
+
     const fetchSession = async (isPolling = false) => {
         if (!id) return;
 
@@ -128,9 +123,35 @@ export default function SessionDetailsPage() {
 
     useEffect(() => {
         fetchSession();
-        const interval = setInterval(() => fetchSession(true), 5000); // Poll every 5s
-        return () => clearInterval(interval);
-    }, [id]);
+        // Disable polling when dialog is open to prevent overwriting edits/state
+        if (!editDialogOpen) {
+            const interval = setInterval(() => fetchSession(true), 5000); // Poll every 5s
+            return () => clearInterval(interval);
+        }
+    }, [id, editDialogOpen]);
+
+    const handleDeleteRecord = async (recordId) => {
+        if (!confirm("Are you sure you want to delete this attendance record? This action cannot be undone.")) {
+            return;
+        }
+
+        try {
+            await attendanceApi.delete(recordId);
+            toast({
+                title: "Deleted",
+                description: "Attendance record deleted successfully.",
+                variant: "success",
+            });
+            fetchSession(true);
+        } catch (error) {
+            console.error("Delete failed:", error);
+            toast({
+                title: "Error",
+                description: "Failed to delete record.",
+                variant: "destructive",
+            });
+        }
+    };
 
     const statusConfig = {
         active: {
@@ -297,20 +318,43 @@ export default function SessionDetailsPage() {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <Badge
-                                                    variant="outline"
-                                                    className={
-                                                        record.user?.status === 'inactive'
-                                                            ? "bg-red-50 text-red-700 border-red-200"
-                                                            : record.status === "present"
-                                                                ? "bg-green-50 text-green-700 border-green-200"
-                                                                : record.status === "late"
-                                                                    ? "bg-yellow-50 text-yellow-700 border-yellow-200"
-                                                                    : "bg-gray-50 text-gray-700 border-gray-200"
-                                                    }
-                                                >
-                                                    {record.user?.status === 'inactive' ? 'inactive' : record.status}
-                                                </Badge>
+                                                <div className="flex items-center gap-2">
+                                                    <Badge
+                                                        variant="outline"
+                                                        className={
+                                                            record.user?.status === 'inactive'
+                                                                ? "bg-red-50 text-red-700 border-red-200"
+                                                                : record.status === "present"
+                                                                    ? "bg-green-50 text-green-700 border-green-200"
+                                                                    : record.status === "late"
+                                                                        ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                                                                        : "bg-gray-50 text-gray-700 border-gray-200"
+                                                        }
+                                                    >
+                                                        {record.user?.status === 'inactive' ? 'inactive' : record.status}
+                                                    </Badge>
+
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                                <MoreVertical className="h-4 w-4" />
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end">
+                                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                            <DropdownMenuItem onClick={() => {
+                                                                setRecordToEdit(record);
+                                                                setEditDialogOpen(true);
+                                                            }}>
+                                                                <Pencil className="mr-2 h-4 w-4" /> Edit
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuSeparator />
+                                                            <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={() => handleDeleteRecord(record.id)}>
+                                                                <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </div>
                                             </div>
 
                                             {/* Time Info Grid */}
@@ -359,6 +403,7 @@ export default function SessionDetailsPage() {
                                                 <TableHead className="text-center">Time Out</TableHead>
                                                 <TableHead className="text-center">Status</TableHead>
                                                 <TableHead className="text-center">Device & Location</TableHead>
+                                                <TableHead className="text-right">Actions</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -441,6 +486,27 @@ export default function SessionDetailsPage() {
                                                             </div>
                                                         )}
                                                     </TableCell>
+                                                    <TableCell className="text-right">
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                onClick={() => {
+                                                                    setRecordToEdit(record);
+                                                                    setEditDialogOpen(true);
+                                                                }}
+                                                            >
+                                                                <Pencil className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                                                            </Button>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                onClick={() => handleDeleteRecord(record.id)}
+                                                            >
+                                                                <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                                                            </Button>
+                                                        </div>
+                                                    </TableCell>
                                                 </TableRow>
                                             ))}
                                         </TableBody>
@@ -456,6 +522,16 @@ export default function SessionDetailsPage() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Edit Dialog */}
+            {recordToEdit && (
+                <EditRecordDialog
+                    record={recordToEdit}
+                    open={editDialogOpen}
+                    onOpenChange={setEditDialogOpen}
+                    onSuccess={() => fetchSession(true)}
+                />
+            )}
         </DashboardLayout>
     );
 }

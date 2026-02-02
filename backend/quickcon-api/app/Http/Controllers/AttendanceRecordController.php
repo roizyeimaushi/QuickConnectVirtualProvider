@@ -1067,6 +1067,25 @@ class AttendanceRecordController extends Controller
         ]);
     }
 
+    public function destroy(AttendanceRecord $attendanceRecord)
+    {
+        // Audit Log
+        AuditLog::log(
+            'delete_attendance',
+            "Admin deleted attendance record for " . ($attendanceRecord->user ? $attendanceRecord->user->full_name : 'Unknown') . " ({$attendanceRecord->attendance_date->toDateString()})",
+            AuditLog::STATUS_SUCCESS,
+            auth()->id(),
+            'AttendanceRecord',
+            $attendanceRecord->id,
+            $attendanceRecord->toArray(),
+            null
+        );
+
+        $attendanceRecord->delete();
+
+        return response()->json(['message' => 'Attendance record deleted successfully']);
+    }
+
     /**
      * Get display status for an attendance record.
      */

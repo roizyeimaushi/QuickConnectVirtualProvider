@@ -119,6 +119,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/attendance-records/by-session/{sessionId}', [AttendanceRecordController::class, 'bySession']);
         Route::get('/attendance-records/by-employee/{employeeId}', [AttendanceRecordController::class, 'byEmployee']);
         Route::put('/attendance-records/{attendanceRecord}', [AttendanceRecordController::class, 'update']);
+        Route::delete('/attendance-records/{attendanceRecord}', [AttendanceRecordController::class, 'destroy']);
 
         // Reports (Admin)
         Route::prefix('reports')->group(function () {
