@@ -147,13 +147,19 @@ class ReportController extends Controller
     public function employeeDashboard(Request $request)
     {
         $user = $request->user();
-        $today = Carbon::today()->toDateString();
         $now = Carbon::now();
+        
+        // Use consistent date logic with AttendanceRecordController
+        // If before 14:00 (2 PM), we're still in previous day's shift cycle
+        $today = $now->hour < 14 
+            ? Carbon::yesterday()->toDateString() 
+            : Carbon::today()->toDateString();
 
         // ============================================================
         // WEEKEND CHECK: No work on Saturday & Sunday
         // ============================================================
-        $dayOfWeek = Carbon::today()->dayOfWeek;
+        $todayDate = Carbon::parse($today);
+        $dayOfWeek = $todayDate->dayOfWeek;
         $isWeekend = ($dayOfWeek === Carbon::SATURDAY || $dayOfWeek === Carbon::SUNDAY);
         
         if ($isWeekend) {

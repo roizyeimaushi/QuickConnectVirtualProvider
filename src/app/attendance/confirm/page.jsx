@@ -670,9 +670,24 @@ export default function AttendanceConfirmPage() {
                 variant: "success",
             });
         } catch (error) {
+            console.error('Time In Error:', error);
+
+            // Build a user-friendly error message
+            let errorMessage = 'Please try again';
+            if (error.message) {
+                errorMessage = error.message;
+            } else if (error.error) {
+                errorMessage = error.error;
+            }
+
+            // Add error code if available
+            if (error.error_code) {
+                errorMessage += ` (Code: ${error.error_code})`;
+            }
+
             toast({
                 title: "Failed to Time In",
-                description: error.message || error.error || "Please try again",
+                description: errorMessage,
                 variant: "destructive",
             });
         } finally {

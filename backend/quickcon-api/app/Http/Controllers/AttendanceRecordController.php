@@ -414,12 +414,35 @@ class AttendanceRecordController extends Controller
                 'record' => $record->load(['session.schedule', 'user']),
             ]);
 
+        } catch (\Illuminate\Database\QueryException $e) {
+            DB::rollBack();
+            Log::error('Database Error in Confirm: ' . $e->getMessage());
+            
+            // Check for duplicate key error
+            if (str_contains($e->getMessage(), 'Duplicate entry') || str_contains($e->getMessage(), 'UNIQUE constraint')) {
+                return response()->json([
+                    'message' => 'You already have an attendance record for today. Please refresh the page.',
+                    'error_code' => 'DUPLICATE_RECORD',
+                    'error' => $e->getMessage()
+                ], 409);
+            }
+            
+            return response()->json([
+                'message' => 'Database error occurred. Please try again.',
+                'error_code' => 'DATABASE_ERROR',
+                'error' => $e->getMessage()
+            ], 500);
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('Confirmation Error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
             return response()->json([
                 'message' => 'Failed to confirm attendance. Please try again.',
-                'error' => $e->getMessage() // TEMPORARY DEBUG: Expose error always
+                'error_code' => 'SYSTEM_ERROR',
+                'error' => $e->getMessage(),
+                '_debug' => [
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                ]
             ], 500);
         }
     }
