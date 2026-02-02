@@ -224,7 +224,7 @@ class SettingsController extends Controller
                 \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
                 // Log the restore
-                \App\Models\AuditLog::log('system_restore', 'System restored from backup file', auth()->id(), 'System', null);
+                \App\Models\AuditLog::log('system_restore', 'System restored from backup file', \App\Models\AuditLog::STATUS_SUCCESS, auth()->id(), 'System', null);
             });
 
             return response()->json(['message' => 'System settings restored successfully']);
@@ -246,6 +246,7 @@ class SettingsController extends Controller
              \App\Models\AuditLog::log(
                 'clear_logs',
                 'Audit logs cleared by admin',
+                \App\Models\AuditLog::STATUS_SUCCESS,
                 auth()->id(),
                 'System',
                 null
@@ -287,6 +288,7 @@ class SettingsController extends Controller
             \App\Models\AuditLog::log(
                 'clear_data',
                 'System attendance data cleared by admin',
+                \App\Models\AuditLog::STATUS_SUCCESS,
                 auth()->id(),
                 'System',
                 null

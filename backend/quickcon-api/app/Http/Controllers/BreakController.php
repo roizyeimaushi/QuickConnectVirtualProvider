@@ -339,6 +339,7 @@ class BreakController extends Controller
         AuditLog::log(
             'break_start',
             "{$user->first_name} {$user->last_name} started $type break",
+            AuditLog::STATUS_SUCCESS,
             $user->id,
             'EmployeeBreak',
             $break->id
@@ -400,6 +401,7 @@ class BreakController extends Controller
         AuditLog::log(
             'break_end',
             "{$user->first_name} {$user->last_name} ended break ({$break->duration_minutes} minutes)",
+            AuditLog::STATUS_SUCCESS,
             $user->id,
             'EmployeeBreak',
             $break->id
