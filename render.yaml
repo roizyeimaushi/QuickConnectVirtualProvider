@@ -3,7 +3,7 @@ services:
   # SINGLE SERVICE - Monolith (Docker Image)
   # ============================================
   - type: web
-    name: "quickconnect-virtul"
+    name: "quickconnect-virtual"
     image: "roizenx/quickconn-monolith:latest"
     region: "singapore"
     plan: "free"
@@ -18,7 +18,7 @@ services:
       - key: APP_KEY
         generateValue: true
       - key: APP_URL
-        value: "https://quickconnect-virtul.onrender.com"
+        value: "https://quickconnect-virtual.onrender.com"
       - key: LOG_CHANNEL
         value: "stderr"
       - key: DB_CONNECTION
@@ -40,10 +40,10 @@ services:
       - key: FILESYSTEM_DISK
         value: "local"
       - key: NEXT_PUBLIC_API_URL
-        value: "https://quickconnect-virtul.onrender.com"
+        value: "https://quickconnect-virtual.onrender.com"
       - key: SANCTUM_STATEFUL_DOMAINS
-        value: "quickconnect-virtul.onrender.com"
+        value: "quickconnect-virtual.onrender.com"
       - key: CORS_ALLOWED_ORIGINS
-        value: "https://quickconnect-virtul.onrender.com"
+        value: "https://quickconnect-virtual.onrender.com"
       - key: ALLOW_EXTERNAL_ACCESS
         value: "true"
