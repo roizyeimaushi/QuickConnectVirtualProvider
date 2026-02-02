@@ -219,8 +219,14 @@ class AttendanceSessionController extends Controller
 
     public function getToday()
     {
+        // Use consistent 14:00 boundary logic for night shifts
+        $now = Carbon::now();
+        $today = $now->hour < 14 
+            ? Carbon::yesterday()->toDateString() 
+            : Carbon::today()->toDateString();
+            
         $sessions = AttendanceSession::with(['schedule', 'creator'])
-                                     ->whereDate('date', Carbon::today())
+                                     ->whereDate('date', $today)
                                      ->get();
 
         return response()->json($sessions);
