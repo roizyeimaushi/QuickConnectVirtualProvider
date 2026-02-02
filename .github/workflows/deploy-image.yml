@@ -27,3 +27,7 @@ jobs:
           file: ./Dockerfile.monolith
           push: true
           tags: roizenx/quickconn-monolith:latest
+
+      - name: Trigger Render Deploy
+        if: success()
+        run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
