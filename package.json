@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev -H 0.0.0.0",
     "serve": "cd backend/quickcon-api && php artisan serve",
-    "build": "next build --no-lint",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
