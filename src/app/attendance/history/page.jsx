@@ -43,8 +43,10 @@ import {
     ChevronRight,
     Edit,
     Loader2,
+    Trash2,
 } from "lucide-react";
 import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
 
 function HistoryTableSkeleton() {
     return (
@@ -95,6 +97,28 @@ export default function AttendanceHistoryPage() {
     const [editingRecord, setEditingRecord] = useState(null);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const recordsPerPage = 10;
+    const { toast } = useToast();
+
+    const handleDeleteRecord = async (recordId) => {
+        if (!confirm("Are you sure you want to delete this record? This action cannot be undone.")) return;
+
+        try {
+            await attendanceApi.delete(recordId);
+            toast({
+                title: "Deleted",
+                description: "Attendance record deleted successfully",
+                variant: "success",
+            });
+            fetchRecords();
+        } catch (error) {
+            console.error("Delete failed:", error);
+            toast({
+                title: "Error",
+                description: "Failed to delete record",
+                variant: "destructive",
+            });
+        }
+    };
 
     // Track initialization to only show loader on first fetch
     const initialized = useRef(false);
@@ -375,18 +399,27 @@ export default function AttendanceHistoryPage() {
 
                                                 {/* Actions (admin only) */}
                                                 {user?.role === 'admin' && (
-                                                    <div className="pt-2 border-t">
+                                                    <div className="pt-2 border-t flex gap-2">
                                                         <Button
                                                             variant="outline"
                                                             size="sm"
-                                                            className="w-full"
+                                                            className="flex-1"
                                                             onClick={() => {
                                                                 setEditingRecord(record);
                                                                 setIsEditDialogOpen(true);
                                                             }}
                                                         >
                                                             <Edit className="h-4 w-4 mr-2" />
-                                                            Edit Record
+                                                            Edit
+                                                        </Button>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                            onClick={() => handleDeleteRecord(record.id)}
+                                                        >
+                                                            <Trash2 className="h-4 w-4 mr-2" />
+                                                            Delete
                                                         </Button>
                                                     </div>
                                                 )}
@@ -464,16 +497,26 @@ export default function AttendanceHistoryPage() {
                                                         </TableCell>
                                                         {user?.role === 'admin' && (
                                                             <TableCell className="text-center">
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="icon"
-                                                                    onClick={() => {
-                                                                        setEditingRecord(record);
-                                                                        setIsEditDialogOpen(true);
-                                                                    }}
-                                                                >
-                                                                    <Edit className="h-4 w-4" />
-                                                                </Button>
+                                                                <div className="flex items-center justify-center gap-1">
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        onClick={() => {
+                                                                            setEditingRecord(record);
+                                                                            setIsEditDialogOpen(true);
+                                                                        }}
+                                                                    >
+                                                                        <Edit className="h-4 w-4" />
+                                                                    </Button>
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                                        onClick={() => handleDeleteRecord(record.id)}
+                                                                    >
+                                                                        <Trash2 className="h-4 w-4" />
+                                                                    </Button>
+                                                                </div>
                                                             </TableCell>
                                                         )}
                                                     </TableRow>

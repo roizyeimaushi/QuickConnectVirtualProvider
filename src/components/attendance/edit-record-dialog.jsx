@@ -111,7 +111,7 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                         </Select>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="grid gap-2">
                             <Label htmlFor="time_in">Time In</Label>
                             <Input
@@ -132,7 +132,7 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="grid gap-2">
                             <Label htmlFor="break_start">Break Start</Label>
                             <Input
