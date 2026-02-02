@@ -395,7 +395,7 @@ class AttendanceRecordController extends Controller
             Log::error('Confirmation Error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
             return response()->json([
                 'message' => 'Failed to confirm attendance. Please try again.',
-                'error' => config('app.debug') ? $e->getMessage() : null
+                'error' => $e->getMessage() // TEMPORARY DEBUG: Expose error always
             ], 500);
         }
     }
