@@ -10,6 +10,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
     Table,
     TableBody,
     TableCell,
@@ -98,12 +108,19 @@ export default function AttendanceHistoryPage() {
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const recordsPerPage = 10;
     const { toast } = useToast();
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [recordToDelete, setRecordToDelete] = useState(null);
 
-    const handleDeleteRecord = async (recordId) => {
-        if (!confirm("Are you sure you want to delete this record? This action cannot be undone.")) return;
+    const handleDeleteRecord = (recordId) => {
+        setRecordToDelete(recordId);
+        setDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!recordToDelete) return;
 
         try {
-            await attendanceApi.delete(recordId);
+            await attendanceApi.delete(recordToDelete);
             toast({
                 title: "Deleted",
                 description: "Attendance record deleted successfully",
@@ -117,6 +134,9 @@ export default function AttendanceHistoryPage() {
                 description: "Failed to delete record",
                 variant: "destructive",
             });
+        } finally {
+            setDeleteDialogOpen(false);
+            setRecordToDelete(null);
         }
     };
 
@@ -570,6 +590,23 @@ export default function AttendanceHistoryPage() {
                         onSuccess={fetchRecords}
                     />
                 )}
+
+                <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete the attendance record.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+                                Delete
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </div>
         </DashboardLayout>
     );
