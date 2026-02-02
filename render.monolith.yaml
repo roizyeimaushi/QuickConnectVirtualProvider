@@ -41,20 +41,22 @@ services:
         value: error
       
       # ==========================================
-      # DATABASE (Set manually in Render Dashboard)
+      # DATABASE - TiDB Cloud
       # ==========================================
       - key: DB_CONNECTION
         value: mysql
       - key: DB_HOST
-        sync: false  # You must set this manually
+        value: gateway01.ap-southeast-1.prod.aws.tidbcloud.com
       - key: DB_PORT
-        value: "3306"
+        value: "4000"
       - key: DB_DATABASE
-        sync: false  # You must set this manually
+        value: test
       - key: DB_USERNAME
-        sync: false  # You must set this manually
+        value: 2rcbbSwyn9vf1YB.root
       - key: DB_PASSWORD
-        sync: false  # You must set this manually
+        sync: false  # Set this manually in Render Dashboard for security
+      - key: MYSQL_ATTR_SSL_CA
+        value: /etc/ssl/certs/ca-certificates.crt
       
       # ==========================================
       # SESSIONS & CACHE
