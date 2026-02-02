@@ -1,0 +1,49 @@
+services:
+  # ============================================
+  # SINGLE SERVICE - Monolith (Docker Image)
+  # ============================================
+  - type: web
+    name: quickconnect-virtul
+    image: docker.io/roizenx/quickconn-monolith:latest
+    region: singapore
+    plan: free # or starter
+    healthCheckPath: /api/health
+    envVars:
+      - key: APP_NAME
+        value: "QuickConn Attendance"
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_URL
+        value: https://quickconnect-virtul.onrender.com
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: DB_CONNECTION
+        value: mysql
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "4000"
+      - key: DB_DATABASE
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: MYSQL_ATTR_SSL_CA
+        value: /etc/ssl/certs/ca-certificates.crt
+      - key: SESSION_DRIVER
+        value: cookie
+      - key: FILESYSTEM_DISK
+        value: local
+      - key: NEXT_PUBLIC_API_URL
+        value: https://quickconnect-virtul.onrender.com
+      - key: SANCTUM_STATEFUL_DOMAINS
+        value: quickconnect-virtul.onrender.com
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://quickconnect-virtul.onrender.com
+      - key: ALLOW_EXTERNAL_ACCESS
+        value: "true"
