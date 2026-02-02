@@ -87,6 +87,10 @@ class BreakController extends Controller
              // If we just return what is configured, the frontend can decide to block.
         }
 
+        // Break window status flags (used in response)
+        $isBeforeBreakWindow = false;
+        $isAfterBreakWindow = false;
+
         // Calculate usage
         // 1. Total finished duration today
         $finishedBreaks = EmployeeBreak::where('user_id', $user->id)
