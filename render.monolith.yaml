@@ -7,7 +7,7 @@ services:
   # SINGLE SERVICE - Next.js + Laravel Together
   # ============================================
   - type: web
-    name: quickconn-app
+    name: quickconnect-virtul
     runtime: docker
     region: singapore  # Change to your preferred region
     plan: starter  # Recommended for monolith (needs more RAM)

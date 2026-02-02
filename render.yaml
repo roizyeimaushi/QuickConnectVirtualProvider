@@ -7,7 +7,7 @@ services:
   # FRONTEND - Next.js Static Site
   # ============================================
   - type: web
-    name: quickconn-frontend
+    name: quickconnect-virtul
     runtime: node
     region: singapore  # Change to your preferred region
     plan: free  # Use 'starter' for production

@@ -2,6 +2,7 @@ import { Inter } from "next/font/google";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { SettingsProvider } from "@/components/providers/settings-provider";
+import { UrlHider } from "@/components/system/url-hider";
 import "./globals.css";
 
 const inter = Inter({
@@ -42,6 +43,7 @@ export default function RootLayout({ children }) {
             >
                 <SettingsProvider>
                     <AuthProvider>
+                        <UrlHider />
                         {children}
                         <Toaster />
                     </AuthProvider>
