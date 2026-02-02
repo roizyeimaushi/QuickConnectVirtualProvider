@@ -13,6 +13,7 @@ export function UrlHider() {
         if (typeof window !== "undefined" && window.location.pathname !== "/") {
             try {
                 // Keep the state but change the URL
+                console.log("Hiding URL path:", window.location.pathname);
                 window.history.replaceState(null, "", "/");
             } catch (e) {
                 console.error("Failed to hide URL path", e);
