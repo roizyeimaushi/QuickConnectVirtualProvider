@@ -5,15 +5,25 @@
 // - Production Separate: Set NEXT_PUBLIC_API_URL to "https://your-backend.onrender.com/api"
 // - Development: Falls back to localhost:8000/api
 export const API_BASE_URL = (() => {
-    const envUrl = process.env.NEXT_PUBLIC_API_URL;
+    let envUrl = process.env.NEXT_PUBLIC_API_URL;
 
     // If explicitly set to empty string or "/api" = monolith mode (same origin)
     if (envUrl === '' || envUrl === '/api') {
         return typeof window !== 'undefined' ? '/api' : 'http://localhost:8000/api';
     }
 
-    // If set to a full URL = separate services mode
+    // If set to a full URL or hostname = separate services mode
     if (envUrl) {
+        // Ensure protocol
+        if (!envUrl.startsWith('http')) {
+            envUrl = `https://${envUrl}`;
+        }
+
+        // Ensure /api suffix
+        if (!envUrl.endsWith('/api')) {
+            envUrl = `${envUrl}/api`;
+        }
+
         return envUrl;
     }
 
