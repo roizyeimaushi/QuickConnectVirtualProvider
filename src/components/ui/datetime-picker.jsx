@@ -119,7 +119,7 @@ export function DateTimePicker({ value, onChange, placeholder = "Pick a date" })
                         initialFocus
                     />
                 </div>
-                <div className="flex divide-x border-border h-[300px] w-full">
+                <div className="flex divide-x border-border h-[200px] md:h-[300px] w-full">
                     {/* Hours Column */}
                     <ScrollArea className="w-20 md:w-24">
                         <div className="flex flex-col p-2 gap-1">

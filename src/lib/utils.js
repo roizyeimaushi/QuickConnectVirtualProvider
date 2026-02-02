@@ -265,6 +265,15 @@ export function isValidTimeFormat(time) {
  * @returns {string} Initials (up to 2 characters)
  */
 export function getInitials(firstName, lastName) {
+    // Handle case where only full name is provided
+    if (!lastName && firstName && typeof firstName === 'string' && firstName.includes(' ')) {
+        const parts = firstName.trim().split(/\s+/);
+        if (parts.length >= 2) {
+            firstName = parts[0];
+            lastName = parts[parts.length - 1]; // Use last part as last name
+        }
+    }
+
     const first = firstName?.charAt(0)?.toUpperCase() || '';
     const last = lastName?.charAt(0)?.toUpperCase() || '';
 
