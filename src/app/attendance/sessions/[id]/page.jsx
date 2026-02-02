@@ -1,5 +1,36 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { EditRecordDialog } from "@/components/attendance/edit-record-dialog";
-import { attendanceApi } from "@/lib/api";
+import { attendanceApi, sessionsApi } from "@/lib/api";
+import { formatTime24, formatDate } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import { DashboardLayout } from "@/components/layout/dashboard-layout";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import {
+    Avatar,
+    AvatarFallback,
+    AvatarImage,
+} from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
 import {
     ArrowLeft,
     Calendar,
