@@ -23,6 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { attendanceApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { DateTimePicker } from "@/components/ui/datetime-picker";
 
 export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
     const { toast } = useToast();
@@ -114,20 +115,18 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="grid gap-2">
                             <Label htmlFor="time_in">Time In</Label>
-                            <Input
-                                id="time_in"
-                                type="datetime-local"
+                            <DateTimePicker
                                 value={formData.time_in}
-                                onChange={(e) => setFormData({ ...formData, time_in: e.target.value })}
+                                onChange={(val) => setFormData({ ...formData, time_in: val })}
+                                placeholder="Pick time in"
                             />
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="time_out">Time Out</Label>
-                            <Input
-                                id="time_out"
-                                type="datetime-local"
+                            <DateTimePicker
                                 value={formData.time_out}
-                                onChange={(e) => setFormData({ ...formData, time_out: e.target.value })}
+                                onChange={(val) => setFormData({ ...formData, time_out: val })}
+                                placeholder="Pick time out"
                             />
                         </div>
                     </div>
@@ -135,20 +134,18 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="grid gap-2">
                             <Label htmlFor="break_start">Break Start</Label>
-                            <Input
-                                id="break_start"
-                                type="datetime-local"
+                            <DateTimePicker
                                 value={formData.break_start}
-                                onChange={(e) => setFormData({ ...formData, break_start: e.target.value })}
+                                onChange={(val) => setFormData({ ...formData, break_start: val })}
+                                placeholder="Pick break start"
                             />
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="break_end">Break End</Label>
-                            <Input
-                                id="break_end"
-                                type="datetime-local"
+                            <DateTimePicker
                                 value={formData.break_end}
-                                onChange={(e) => setFormData({ ...formData, break_end: e.target.value })}
+                                onChange={(val) => setFormData({ ...formData, break_end: val })}
+                                placeholder="Pick break end"
                             />
                         </div>
                     </div>
