@@ -98,8 +98,21 @@ class AttendanceRecordController extends Controller
             return response()->json([
                 'message' => 'Attendance session not found. Please ask your administrator to create a session for today.',
                 'error_code' => 'SESSION_NOT_FOUND',
-                'session_id' => $sessionId
+                'session_id' => $sessionId,
+                '_debug' => [
+                    'total_sessions' => AttendanceSession::count(),
+                    'active_sessions' => AttendanceSession::where('status', 'active')->count(),
+                ]
             ], 404);
+        }
+        
+        // Validate schedule exists
+        if (!$session->schedule) {
+            return response()->json([
+                'message' => 'This session has no schedule attached. Please contact your administrator.',
+                'error_code' => 'NO_SCHEDULE',
+                'session_id' => $sessionId,
+            ], 400);
         }
         
         $user = $request->user();
@@ -388,6 +401,7 @@ class AttendanceRecordController extends Controller
             AuditLog::log(
                 'confirm_attendance',
                 "{$user->first_name} {$user->last_name} confirmed attendance ({$status})",
+                AuditLog::STATUS_SUCCESS,
                 $user->id,
                 'AttendanceRecord',
                 $record->id
@@ -685,6 +699,7 @@ class AttendanceRecordController extends Controller
         AuditLog::log(
             'check_out',
             "{$user->first_name} checked out",
+            AuditLog::STATUS_SUCCESS,
             $user->id,
             'AttendanceRecord',
             $attendanceRecord->id
@@ -1010,6 +1025,7 @@ class AttendanceRecordController extends Controller
         AuditLog::log(
             'update_attendance',
             "Admin {$request->user()->first_name} updated record: " . implode(', ', $changes) . ". Reason: {$request->reason}",
+            AuditLog::STATUS_SUCCESS,
             $request->user()->id,
             'AttendanceRecord',
             $attendanceRecord->id
