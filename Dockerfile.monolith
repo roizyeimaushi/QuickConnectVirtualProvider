@@ -1,0 +1,93 @@
+# ============================================
+# MONOLITH Dockerfile - Next.js + Laravel in ONE Container
+# Deploy to Render as a single service
+# ============================================
+
+FROM node:20-alpine AS frontend-builder
+
+# Build Next.js Frontend
+WORKDIR /app/frontend
+COPY package*.json ./
+RUN npm ci
+COPY . .
+# Set API URL to internal localhost (same container)
+ENV NEXT_PUBLIC_API_URL=http://localhost:8000
+RUN npm run build
+
+# ============================================
+# PHP + Nginx Base Image
+# ============================================
+FROM php:8.2-fpm-alpine
+
+# Install system dependencies
+RUN apk add --no-cache \
+    git \
+    curl \
+    libpng-dev \
+    libzip-dev \
+    zip \
+    unzip \
+    oniguruma-dev \
+    nginx \
+    supervisor \
+    nodejs \
+    npm
+
+# Install PHP extensions
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
+
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# ============================================
+# LARAVEL BACKEND SETUP
+# ============================================
+WORKDIR /var/www/api
+
+# Copy Laravel application
+COPY backend/quickcon-api/composer.json backend/quickcon-api/composer.lock ./
+RUN composer install --no-dev --optimize-autoloader --no-scripts --no-interaction
+
+COPY backend/quickcon-api/ .
+RUN composer dump-autoload --optimize
+
+# Create storage directories
+RUN mkdir -p storage/logs \
+    storage/framework/cache \
+    storage/framework/sessions \
+    storage/framework/views \
+    bootstrap/cache
+
+# Set permissions
+RUN chown -R www-data:www-data /var/www/api \
+    && chmod -R 775 storage bootstrap/cache
+
+# ============================================
+# NEXTJS FRONTEND SETUP
+# ============================================
+WORKDIR /var/www/frontend
+
+# Copy built frontend from builder stage
+COPY --from=frontend-builder /app/frontend/.next ./.next
+COPY --from=frontend-builder /app/frontend/public ./public
+COPY --from=frontend-builder /app/frontend/package*.json ./
+COPY --from=frontend-builder /app/frontend/node_modules ./node_modules
+
+# ============================================
+# NGINX + SUPERVISOR CONFIG
+# ============================================
+COPY docker/monolith/nginx.conf /etc/nginx/http.d/default.conf
+COPY docker/monolith/supervisord.conf /etc/supervisord.conf
+COPY docker/monolith/start.sh /start.sh
+RUN chmod +x /start.sh
+
+# Expose single port (Render uses $PORT)
+EXPOSE 10000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:10000/api/health || exit 1
+
+WORKDIR /var/www
+
+CMD ["/start.sh"]

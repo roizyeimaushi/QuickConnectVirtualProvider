@@ -2,6 +2,51 @@
 
 This guide provides step-by-step instructions for deploying the QuickConn Attendance System to Render.com with **100% success rate**.
 
+## 🎯 Choose Your Deployment Method
+
+| Method | Services | Cost | Best For |
+|--------|----------|------|----------|
+| **Monolith (2-in-1)** | 1 service | Lower | Simple setup, no CORS issues |
+| **Separate Services** | 2 services | Higher | Scalability, independent updates |
+
+> **Recommended:** Use **Monolith** for simplicity - both Next.js and Laravel run in one container!
+
+---
+
+## � QUICK START: Monolith Deployment (Easiest)
+
+### Step 1: Rename Blueprint File
+```powershell
+cd C:\Users\Admin\Desktop\AttendanceSheetSystem
+# Use monolith config as main render.yaml
+copy render.monolith.yaml render.yaml
+```
+
+### Step 2: Push to GitHub
+```powershell
+git add .
+git commit -m "Deploy monolith to Render"
+git push -u origin main
+```
+
+### Step 3: Deploy on Render
+1. Go to [render.com/dashboard](https://dashboard.render.com)
+2. Click **New** → **Blueprint**
+3. Connect GitHub → Select `QuickConn-Attendance-Sheet-System`
+4. Render detects `render.yaml` → Click **Apply**
+
+### Step 4: Set Database Credentials
+In Render Dashboard → `quickconn-app` → Environment:
+- `DB_HOST` = Your database host
+- `DB_DATABASE` = Your database name
+- `DB_USERNAME` = Your database user
+- `DB_PASSWORD` = Your database password
+
+### Step 5: Access Your App! 🎉
+- **URL:** `https://quickconn-app.onrender.com`
+- **API:** `https://quickconn-app.onrender.com/api/health`
+- **Login:** `admin@quickconn.net` / `password123`
+
 ---
 
 ## 📋 Prerequisites
@@ -12,9 +57,7 @@ Before you begin, ensure you have:
 2. **Render Account** - Sign up at [render.com](https://render.com) (free tier works!)
 3. **MySQL Database** - See database options below
 
----
-
-## 🗄️ Step 1: Set Up MySQL Database (REQUIRED)
+## �🗄️ Step 1: Set Up MySQL Database (REQUIRED)
 
 Render doesn't offer MySQL natively, so use one of these **free** providers:
 
@@ -231,13 +274,27 @@ Render automatically redeploys when you push to GitHub:
 
 ## 📁 Files Created for Deployment
 
+### Separate Services (2 services)
 | File | Purpose |
 |------|---------|
-| `render.yaml` | Render Blueprint configuration |
-| `backend/quickcon-api/Dockerfile.render` | Production Docker image |
-| `backend/quickcon-api/docker/start.sh` | Startup script |
-| `backend/quickcon-api/docker/nginx.render.conf` | Production Nginx config |
-| `backend/quickcon-api/docker/supervisord.render.conf` | Process manager config |
+| `render.yaml` | Render Blueprint for 2 services |
+| `backend/quickcon-api/Dockerfile.render` | Laravel production Docker image |
+| `backend/quickcon-api/docker/start.sh` | Laravel startup script |
+| `backend/quickcon-api/docker/nginx.render.conf` | Laravel Nginx config |
+| `backend/quickcon-api/docker/supervisord.render.conf` | Laravel process manager |
+
+### Monolith (1 service - RECOMMENDED)
+| File | Purpose |
+|------|---------|
+| `render.monolith.yaml` | Render Blueprint for monolith |
+| `Dockerfile.monolith` | Combined Next.js + Laravel image |
+| `docker/monolith/nginx.conf` | Routes /api to Laravel, rest to Next.js |
+| `docker/monolith/supervisord.conf` | Runs PHP-FPM, Nginx, and Next.js |
+| `docker/monolith/start.sh` | Monolith startup script |
+
+### Environment Templates
+| File | Purpose |
+|------|---------|
 | `.env.production.example` | Frontend env template |
 | `backend/quickcon-api/.env.production.example` | Backend env template |
 

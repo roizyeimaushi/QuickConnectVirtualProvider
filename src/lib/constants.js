@@ -1,7 +1,29 @@
 // QuickConn Virtual - Constants and Configuration
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ||
-    (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:8000/api` : 'http://localhost:8000/api');
+// API URL Configuration:
+// - Production Monolith: Set NEXT_PUBLIC_API_URL to "" (empty) or "/api"
+// - Production Separate: Set NEXT_PUBLIC_API_URL to "https://your-backend.onrender.com/api"
+// - Development: Falls back to localhost:8000/api
+export const API_BASE_URL = (() => {
+    const envUrl = process.env.NEXT_PUBLIC_API_URL;
+
+    // If explicitly set to empty string or "/api" = monolith mode (same origin)
+    if (envUrl === '' || envUrl === '/api') {
+        return typeof window !== 'undefined' ? '/api' : 'http://localhost:8000/api';
+    }
+
+    // If set to a full URL = separate services mode
+    if (envUrl) {
+        return envUrl;
+    }
+
+    // Default: development mode (localhost with port 8000)
+    if (typeof window !== 'undefined') {
+        return `${window.location.protocol}//${window.location.hostname}:8000/api`;
+    }
+
+    return 'http://localhost:8000/api';
+})();
 
 export const USER_ROLES = {
     ADMIN: 'admin',
