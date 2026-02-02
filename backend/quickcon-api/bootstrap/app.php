@@ -17,6 +17,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/*',
         ]);
 
+        // Trust all proxies (needed for Render)
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'local.only' => \App\Http\Middleware\LocalNetworkOnly::class,
