@@ -29,8 +29,8 @@ php artisan migrate --force
 
 # Seed settings if empty
 echo "Checking database seeders..."
-php artisan db:seed --class=SettingsSeeder --force 2>/dev/null || true
-php artisan db:seed --class=EnsureAdminUserSeeder --force 2>/dev/null || true
+php artisan db:seed --class=SettingsSeeder --force || echo "SettingsSeeder failed or already run"
+php artisan db:seed --class=EnsureAdminUserSeeder --force || echo "EnsureAdminUserSeeder failed or already run"
 
 # Fix permissions
 chown -R www-data:www-data /var/www/html/storage

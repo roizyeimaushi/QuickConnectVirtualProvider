@@ -258,6 +258,10 @@ class ReportController extends Controller
             $allSchedules = \App\Models\Schedule::where('status', 'active')->get();
             $now = Carbon::now();
             
+            // Get admin ID for session creation (use first admin, or fallback to current user)
+            $adminUser = User::where('role', 'admin')->first();
+            $adminId = $adminUser ? $adminUser->id : $user->id;
+            
             foreach ($allSchedules as $schedule) {
                 // Calculate Shift Window for TODAY
                 $shiftStart = Carbon::parse($today . ' ' . $schedule->time_in);
@@ -286,7 +290,7 @@ class ReportController extends Controller
                         [
                             'status' => 'active',
                             'opened_at' => $now,
-                            'created_by' => 1, // System Admin ID (or user)
+                            'created_by' => $adminId,
                         ]
                     );
                     
@@ -319,7 +323,7 @@ class ReportController extends Controller
                                 [
                                     'status' => 'active',
                                     'opened_at' => $now,
-                                    'created_by' => 1, 
+                                    'created_by' => $adminId, 
                                 ]
                             );
                             $todaySession->load('schedule');

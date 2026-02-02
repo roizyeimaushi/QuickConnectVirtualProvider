@@ -91,7 +91,17 @@ class AttendanceRecordController extends Controller
      */
     public function confirm(Request $request, $sessionId)
     {
-        $session = AttendanceSession::with('schedule')->findOrFail($sessionId);
+        $session = AttendanceSession::with('schedule')->find($sessionId);
+        
+        // Return a clear error if session doesn't exist (instead of 500 error)
+        if (!$session) {
+            return response()->json([
+                'message' => 'Attendance session not found. Please ask your administrator to create a session for today.',
+                'error_code' => 'SESSION_NOT_FOUND',
+                'session_id' => $sessionId
+            ], 404);
+        }
+        
         $user = $request->user();
         $today = $this->getToday();
         $now = Carbon::now();
