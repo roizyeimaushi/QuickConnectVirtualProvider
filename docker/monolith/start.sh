@@ -4,7 +4,7 @@
 # Runs both Next.js + Laravel in one container
 # ============================================
 
-set -e
+# set -e (Disabled to prevent crash loop)
 
 echo "=== QuickConn Monolith Starting ==="
 echo "=== Next.js Frontend + Laravel API ==="
@@ -32,10 +32,10 @@ php artisan view:cache
 
 # Run migrations
 echo "Running database migrations..."
-php artisan migrate --force
+php artisan migrate --force || echo "❌ Migration failed! Check DB credentials."
 
 # Seed settings
-php artisan db:seed --class=SettingsSeeder --force 2>/dev/null || true
+php artisan db:seed --class=SettingsSeeder --force 2>/dev/null || echo "❌ Seeding failed!"
 
 # Fix permissions
 chown -R www-data:www-data /var/www/api/storage
