@@ -4,7 +4,7 @@ services:
   # ============================================
   - type: web
     name: quickconnect-virtul
-    image: docker.io/roizenx/quickconn-monolith:latest
+    image: roizenx/quickconn-monolith:latest
     region: singapore
     plan: free # or starter
     healthCheckPath: /api/health
