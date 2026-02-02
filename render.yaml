@@ -4,7 +4,6 @@ services:
   # ============================================
   - type: web
     name: quickconnect-virtul
-    name: quickconnect-virtul
     image: roizenx/quickconn-monolith:latest
     region: singapore
     plan: free # or starter
