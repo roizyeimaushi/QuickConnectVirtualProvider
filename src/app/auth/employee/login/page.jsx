@@ -142,7 +142,7 @@ export default function EmployeeLoginPage() {
                     <div className="w-full max-w-md mx-auto">
                         {/* Logo - using max-w to prevent stretching */}
                         <div className="flex justify-center mb-4 sm:mb-6">
-                            <img src="/logo.png" alt="QuickConn Logo" className="h-14 sm:h-16 md:h-30 lg:h-30 max-w-[300px] sm:max-w-[350px] object-contain" />
+                            <img src="/logo.png" alt="QuickConn Logo" className="h-auto max-h-16 md:max-h-24 w-auto max-w-[300px] sm:max-w-[350px] object-contain" />
                         </div>
 
                         {/* Subtitle */}
