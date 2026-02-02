@@ -15,7 +15,6 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Loader2, AlertCircle, User, KeyRound } from "lucide-react";
-import { API_BASE_URL } from "@/lib/constants";
 
 export default function AdminLoginPage() {
     const [email, setEmail] = useState("");
@@ -245,10 +244,6 @@ export default function AdminLoginPage() {
                         )}
                     </button>
 
-                    {/* Debug API URL - Temporary for troubleshooting */}
-                    <p className="text-[10px] text-white/40 text-center mt-4">
-                        API: {API_BASE_URL}
-                    </p>
                 </form>
             </div>
         </div>
