@@ -14,6 +14,11 @@ export const API_BASE_URL = (() => {
 
     // If set to a full URL or hostname = separate services mode
     if (envUrl) {
+        // Fix Render internal hostname issue (e.g. "quickconn-backend-dzag" -> "quickconn-backend-dzag.onrender.com")
+        if (!envUrl.includes('.') && !envUrl.includes('localhost') && !envUrl.startsWith('http')) {
+            envUrl = `${envUrl}.onrender.com`;
+        }
+
         // Ensure protocol
         if (!envUrl.startsWith('http')) {
             envUrl = `https://${envUrl}`;
