@@ -1,0 +1,105 @@
+# Render Blueprint - QuickConn Attendance Sheet System
+# This file configures automatic deployment on Render.com
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  # ============================================
+  # FRONTEND - Next.js Static Site
+  # ============================================
+  - type: web
+    name: quickconn-frontend
+    runtime: node
+    region: singapore  # Change to your preferred region
+    plan: free  # Use 'starter' for production
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: quickconn-backend
+          property: host
+      - key: NODE_ENV
+        value: production
+
+  # ============================================
+  # BACKEND - Laravel PHP API
+  # ============================================
+  - type: web
+    name: quickconn-backend
+    runtime: docker
+    region: singapore  # Same region as frontend
+    plan: free  # Use 'starter' for production
+    dockerfilePath: ./backend/quickcon-api/Dockerfile.render
+    dockerContext: ./backend/quickcon-api
+    healthCheckPath: /api/health
+    envVars:
+      - key: APP_NAME
+        value: "QuickConn Attendance"
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_URL
+        fromService:
+          type: web
+          name: quickconn-backend
+          property: host
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: LOG_LEVEL
+        value: error
+      - key: DB_CONNECTION
+        value: mysql
+      - key: DB_HOST
+        sync: false  # Set manually in Render dashboard
+      - key: DB_PORT
+        value: "3306"
+      - key: DB_DATABASE
+        sync: false  # Set manually in Render dashboard
+      - key: DB_USERNAME
+        sync: false  # Set manually in Render dashboard
+      - key: DB_PASSWORD
+        sync: false  # Set manually in Render dashboard
+      - key: SESSION_DRIVER
+        value: cookie
+      - key: SESSION_LIFETIME
+        value: "120"
+      - key: CACHE_STORE
+        value: file
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: FILESYSTEM_DISK
+        value: local
+      - key: BCRYPT_ROUNDS
+        value: "12"
+      - key: SANCTUM_STATEFUL_DOMAINS
+        sync: false  # Set to your frontend domain
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false  # Set to your frontend URL
+      - key: ALLOW_EXTERNAL_ACCESS
+        value: "true"
+      - key: MAIL_MAILER
+        value: log
+
+# ============================================
+# NOTES FOR DEPLOYMENT
+# ============================================
+# 
+# IMPORTANT: You need to set up a MySQL database separately.
+# Recommended providers:
+#   1. PlanetScale (https://planetscale.com) - FREE tier available
+#   2. Railway (https://railway.app) - MySQL available
+#   3. Aiven (https://aiven.io) - MySQL available
+#
+# After creating your database, update these env vars in Render Dashboard:
+#   - DB_HOST: Your database host
+#   - DB_DATABASE: Your database name
+#   - DB_USERNAME: Your database username
+#   - DB_PASSWORD: Your database password
+#   - SANCTUM_STATEFUL_DOMAINS: quickconn-frontend.onrender.com
+#   - CORS_ALLOWED_ORIGINS: https://quickconn-frontend.onrender.com

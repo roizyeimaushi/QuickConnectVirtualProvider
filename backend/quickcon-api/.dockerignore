@@ -1,0 +1,26 @@
+# Dependencies
+vendor
+node_modules
+
+# Environment
+.env
+
+# Storage (will be mounted as volume)
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+!storage/logs/.gitkeep
+!storage/framework/.gitkeep
+
+# IDE
+.idea
+.vscode
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Git
+.git
+.gitignore

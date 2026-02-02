@@ -1,0 +1,61 @@
+services:
+  # MySQL Database
+  database:
+    image: mysql:8.0
+    container_name: quickcon-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: quickcon_virtual
+      MYSQL_USER: quickcon
+      MYSQL_PASSWORD: quickcon_secret
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Laravel Backend API
+  backend:
+    build:
+      context: ./backend/quickcon-api
+      dockerfile: Dockerfile
+    container_name: quickcon-backend
+    restart: unless-stopped
+    environment:
+      APP_NAME: "QuickCon Virtual"
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: http://localhost:8000
+      DB_CONNECTION: mysql
+      DB_HOST: database
+      DB_PORT: 3306
+      DB_DATABASE: quickcon_virtual
+      DB_USERNAME: quickcon
+      DB_PASSWORD: quickcon_secret
+    ports:
+      - "8000:8000"
+    depends_on:
+      database:
+        condition: service_healthy
+
+  # Next.js Frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: quickcon-frontend
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  db_data:

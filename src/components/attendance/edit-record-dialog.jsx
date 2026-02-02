@@ -1,0 +1,179 @@
+"use client";
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { attendanceApi } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+
+export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
+    const { toast } = useToast();
+    const [loading, setLoading] = useState(false);
+    const [formData, setFormData] = useState({
+        status: record?.status || "present",
+        time_in: record?.time_in ? format(new Date(record.time_in), "yyyy-MM-dd'T'HH:mm") : "",
+        time_out: record?.time_out ? format(new Date(record.time_out), "yyyy-MM-dd'T'HH:mm") : "",
+        break_start: record?.break_start ? format(new Date(record.break_start), "yyyy-MM-dd'T'HH:mm") : "",
+        break_end: record?.break_end ? format(new Date(record.break_end), "yyyy-MM-dd'T'HH:mm") : "",
+        reason: "",
+    });
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        if (!formData.reason || formData.reason.length < 5) {
+            toast({
+                title: "Validation Error",
+                description: "A reason is required (min 5 chars) for audit logging.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const payload = {
+                ...formData,
+                // Ensure empty strings are null
+                time_in: formData.time_in || null,
+                time_out: formData.time_out || null,
+                break_start: formData.break_start || null,
+                break_end: formData.break_end || null,
+            };
+
+            await attendanceApi.update(record.id, payload);
+
+            toast({
+                title: "Success",
+                description: "Attendance record updated successfully",
+                variant: "success",
+            });
+
+            onSuccess();
+            onOpenChange(false);
+        } catch (error) {
+            console.error("Update failed:", error);
+            toast({
+                title: "Error",
+                description: "Failed to update record",
+                variant: "destructive",
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader className="items-center sm:text-center">
+                    <DialogTitle>Edit Attendance Record</DialogTitle>
+                    <DialogDescription className="text-center">
+                        Modify attendance details. All changes are logged.
+                    </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4 py-4">
+                    {/* ... form fields ... */}
+                    <div className="grid gap-2">
+                        <Label htmlFor="status">Status</Label>
+                        <Select
+                            value={formData.status}
+                            onValueChange={(val) => setFormData({ ...formData, status: val })}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="present">Present</SelectItem>
+                                <SelectItem value="late">Late</SelectItem>
+                                <SelectItem value="absent">Absent</SelectItem>
+                                <SelectItem value="excused">Excused</SelectItem>
+                                <SelectItem value="left_early">Left Early</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="time_in">Time In</Label>
+                            <Input
+                                id="time_in"
+                                type="datetime-local"
+                                value={formData.time_in}
+                                onChange={(e) => setFormData({ ...formData, time_in: e.target.value })}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="time_out">Time Out</Label>
+                            <Input
+                                id="time_out"
+                                type="datetime-local"
+                                value={formData.time_out}
+                                onChange={(e) => setFormData({ ...formData, time_out: e.target.value })}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="break_start">Break Start</Label>
+                            <Input
+                                id="break_start"
+                                type="datetime-local"
+                                value={formData.break_start}
+                                onChange={(e) => setFormData({ ...formData, break_start: e.target.value })}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="break_end">Break End</Label>
+                            <Input
+                                id="break_end"
+                                type="datetime-local"
+                                value={formData.break_end}
+                                onChange={(e) => setFormData({ ...formData, break_end: e.target.value })}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid gap-2">
+                        <Label htmlFor="reason">Reason for Correction <span className="text-red-500">*</span></Label>
+                        <Textarea
+                            id="reason"
+                            placeholder="Explain why you are modifying this record..."
+                            value={formData.reason}
+                            onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+                            required
+                        />
+                    </div>
+
+                    <DialogFooter className="sm:justify-center gap-2">
+                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" disabled={loading}>
+                            {loading ? "Saving..." : "Save Changes"}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+}

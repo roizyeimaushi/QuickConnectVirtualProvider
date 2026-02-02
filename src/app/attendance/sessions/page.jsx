@@ -1,0 +1,708 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { DashboardLayout } from "@/components/layout/dashboard-layout";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { sessionsApi } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
+import { formatDate, formatTime24 } from "@/lib/utils";
+import {
+    Plus,
+    MoreHorizontal,
+    Lock,
+    Unlock,
+    Calendar,
+    Clock,
+    Users,
+    CheckCircle2,
+    AlertCircle,
+    Timer,
+    Trash2,
+} from "lucide-react";
+
+function SessionsTableSkeleton() {
+    return (
+        <div className="space-y-4">
+            {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="flex items-center gap-4 p-4 border-b">
+                    <div>
+                        <Skeleton className="h-4 w-24 mb-1" />
+                        <Skeleton className="h-3 w-16" />
+                    </div>
+                    <div className="space-y-2 flex-1 ml-4">
+                        <Skeleton className="h-4 w-32" />
+                    </div>
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-6 w-16" />
+                    <Skeleton className="h-8 w-8" />
+                </div>
+            ))}
+        </div>
+    );
+}
+
+function ActiveSessionSkeleton() {
+    return (
+        <Card className="border-muted bg-muted/20">
+            <CardContent className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-6">
+                <div className="flex items-center gap-4">
+                    <Skeleton className="h-12 w-12 rounded-lg" />
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <Skeleton className="h-5 w-32" />
+                            <Skeleton className="h-5 w-16 rounded-full" />
+                        </div>
+                        <Skeleton className="h-4 w-48" />
+                    </div>
+                </div>
+                <div className="flex items-center gap-6">
+                    <div className="text-center space-y-1">
+                        <Skeleton className="h-8 w-8 mx-auto" />
+                        <Skeleton className="h-3 w-12 mx-auto" />
+                    </div>
+                    <div className="text-center space-y-1">
+                        <Skeleton className="h-8 w-8 mx-auto" />
+                        <Skeleton className="h-3 w-12 mx-auto" />
+                    </div>
+                    <Skeleton className="h-9 w-32" />
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+function SessionStatsCardsSkeleton() {
+    return (
+        <div className="grid gap-4 md:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+                <Card key={i}>
+                    <CardContent className="flex items-center gap-4 p-6">
+                        <Skeleton className="h-12 w-12 rounded-lg" />
+                        <div className="space-y-2">
+                            <Skeleton className="h-8 w-12" />
+                            <Skeleton className="h-4 w-24" />
+                        </div>
+                    </CardContent>
+                </Card>
+            ))}
+        </div>
+    );
+}
+
+export default function AttendanceSessionsPage() {
+    const [sessions, setSessions] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [lockDialog, setLockDialog] = useState({ open: false, session: null });
+    const [unlockDialog, setUnlockDialog] = useState({ open: false, session: null });
+    const [deleteDialog, setDeleteDialog] = useState({ open: false, session: null });
+    const { toast } = useToast();
+
+    useEffect(() => {
+        const fetchSessions = async (isPolling = false) => {
+            try {
+                if (!isPolling) setLoading(true); // Show loader on initial load or manual refresh
+                const response = await sessionsApi.getAll();
+                // Check pagination structure: response.data is the array if using Laravel paginate()
+                const data = response.data || response;
+                const sessionsData = (Array.isArray(data) ? data : data.data || []).map(s => ({
+                    id: s.id,
+                    date: s.date,
+                    schedule: s.schedule ? {
+                        name: s.schedule.name,
+                        time_in: s.schedule.time_in,
+                        time_out: s.schedule.time_out,
+                    } : null,
+                    status: s.status,
+                    confirmed_count: s.confirmed_count || 0,
+                    total_employees: s.total_employees_count || 0,
+                }));
+                setSessions(sessionsData);
+            } catch (error) {
+                const errorMessage = error?.message ||
+                    (error && Object.keys(error).length > 0 ? JSON.stringify(error) : 'Unknown error');
+                console.error("Failed to fetch sessions:", errorMessage);
+                toast({
+                    title: "Error",
+                    description: errorMessage || "Failed to load sessions",
+                    variant: "destructive",
+                });
+            } finally {
+                if (!isPolling) setLoading(false);
+            }
+        };
+
+        fetchSessions();
+        const interval = setInterval(() => fetchSessions(true), 5000); // Poll every 5s
+        return () => clearInterval(interval);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const handleLockSession = async () => {
+        if (!lockDialog.session) return;
+
+        try {
+            await sessionsApi.lock(lockDialog.session.id);
+            setSessions((prev) =>
+                prev.map((s) =>
+                    s.id === lockDialog.session.id ? { ...s, status: "locked" } : s
+                )
+            );
+
+            toast({
+                title: "Session locked",
+                description: "The attendance session has been locked.",
+            });
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: error.message || "Failed to lock session",
+                variant: "destructive",
+            });
+        } finally {
+            setLockDialog({ open: false, session: null });
+        }
+    };
+
+    const handleUnlockSession = async () => {
+        if (!unlockDialog.session) return;
+
+        try {
+            await sessionsApi.unlock(unlockDialog.session.id);
+            setSessions((prev) =>
+                prev.map((s) =>
+                    s.id === unlockDialog.session.id ? { ...s, status: "active" } : s
+                )
+            );
+
+            toast({
+                title: "Session unlocked",
+                description: "The attendance session has been unlocked.",
+                variant: "success",
+            });
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: error.message || "Failed to unlock session",
+                variant: "destructive",
+            });
+        } finally {
+            setUnlockDialog({ open: false, session: null });
+        }
+    };
+
+    const handleDeleteSession = async () => {
+        if (!deleteDialog.session) return;
+
+        try {
+            await sessionsApi.delete(deleteDialog.session.id);
+            setSessions((prev) => prev.filter((s) => s.id !== deleteDialog.session.id));
+
+            toast({
+                title: "Session deleted",
+                description: "The attendance session has been deleted permanently.",
+                variant: "success",
+            });
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: error.message || "Failed to delete session",
+                variant: "destructive",
+            });
+        } finally {
+            setDeleteDialog({ open: false, session: null });
+        }
+    };
+
+    const statusConfig = {
+        active: {
+            label: "Active",
+            color: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400",
+            icon: CheckCircle2,
+        },
+        pending: {
+            label: "Pending",
+            color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+            icon: Timer,
+        },
+        locked: {
+            label: "Locked",
+            color: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
+            icon: Lock,
+        },
+        completed: {
+            label: "Completed",
+            color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+            icon: CheckCircle2,
+        },
+    };
+
+    const activeSession = sessions.find((s) => s.status === "active");
+
+    if (loading) {
+        return (
+            <DashboardLayout title="Attendance Sessions">
+                <div className="flex items-center justify-center h-[60vh]">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                </div>
+            </DashboardLayout>
+        );
+    }
+
+
+    return (
+        <DashboardLayout title="Attendance Sessions">
+            <div className="space-y-6 animate-fade-in">
+                {/* Header */}
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight">Attendance Sessions</h1>
+                        <p className="text-muted-foreground">
+                            Create and manage daily attendance sessions.
+                        </p>
+                    </div>
+                    <Button asChild className="w-full md:w-auto">
+                        <Link href="/attendance/sessions/create">
+                            <Plus className="mr-2 h-4 w-4" />
+                            Create Session
+                        </Link>
+                    </Button>
+                </div>
+
+                {/* Active Session Card */}
+                {loading ? (
+                    <ActiveSessionSkeleton />
+                ) : activeSession ? (
+                    <Card className="border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/50 dark:bg-emerald-950/20">
+                        <CardContent className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-6">
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                                    <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="font-semibold">Active Session</h3>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">
+                                        {activeSession.schedule?.name} • {formatDate(activeSession.date, "MMMM d, yyyy")}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-6">
+                                <div className="text-center">
+                                    <p className="text-2xl font-bold text-emerald-600">
+                                        {activeSession.confirmed_count}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">Confirmed</p>
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-2xl font-bold text-muted-foreground">
+                                        {activeSession.total_employees - activeSession.confirmed_count}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">Pending</p>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setLockDialog({ open: true, session: activeSession })}
+                                >
+                                    <Lock className="mr-2 h-4 w-4" />
+                                    Lock Session
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ) : null}
+
+                {/* Stats Cards */}
+                {loading ? (
+                    <SessionStatsCardsSkeleton />
+                ) : (
+                    <div className="grid gap-4 md:grid-cols-3">
+                        <Card>
+                            <CardContent className="flex items-center gap-4 p-6">
+                                <div className="p-3 rounded-lg bg-primary/10">
+                                    <Calendar className="h-6 w-6 text-primary" />
+                                </div>
+                                <div>
+                                    <p className="text-2xl font-bold">{sessions.length}</p>
+                                    <p className="text-sm text-muted-foreground">Total Sessions</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardContent className="flex items-center gap-4 p-6">
+                                <div className="p-3 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                                    <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+                                </div>
+                                <div>
+                                    <p className="text-2xl font-bold">
+                                        {sessions.filter((s) => s.status === "completed").length}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">Completed</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardContent className="flex items-center gap-4 p-6">
+                                <div className="p-3 rounded-lg bg-gray-100 dark:bg-gray-900/30">
+                                    <Lock className="h-6 w-6 text-gray-600" />
+                                </div>
+                                <div>
+                                    <p className="text-2xl font-bold">
+                                        {sessions.filter((s) => s.status === "locked").length}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">Locked</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                )}
+
+                {/* Sessions Table */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Session History</CardTitle>
+                        <CardDescription>All past and current attendance sessions.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {loading ? (
+                            <SessionsTableSkeleton />
+                        ) : sessions.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-12 text-center">
+                                <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
+                                <h3 className="text-lg font-semibold">No sessions yet</h3>
+                                <p className="text-sm text-muted-foreground mb-4">
+                                    Create your first attendance session to get started
+                                </p>
+                                <Button asChild>
+                                    <Link href="/attendance/sessions/create">
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Create Session
+                                    </Link>
+                                </Button>
+                            </div>
+                        ) : (
+                            <>
+                                {/* Mobile Card View */}
+                                <div className="block md:hidden space-y-3">
+                                    {sessions.map((session) => {
+                                        const status = statusConfig[session.status] || statusConfig.pending;
+                                        const StatusIcon = status.icon;
+                                        const attendanceRate = Math.round(
+                                            (session.confirmed_count / session.total_employees) * 100
+                                        ) || 0;
+
+                                        return (
+                                            <div key={session.id} className="border rounded-lg p-4 space-y-3">
+                                                {/* Header: Date + Status */}
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="p-2 rounded-lg bg-muted">
+                                                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-medium">{formatDate(session.date, "MMM d, yyyy")}</p>
+                                                            <p className="text-xs text-muted-foreground">{formatDate(session.date, "EEEE")}</p>
+                                                        </div>
+                                                    </div>
+                                                    <Badge className={status.color}>
+                                                        <StatusIcon className="mr-1 h-3 w-3" />
+                                                        {status.label}
+                                                    </Badge>
+                                                </div>
+
+                                                {/* Schedule & Time */}
+                                                <div className="grid grid-cols-2 gap-2 text-sm">
+                                                    <div className="bg-muted/50 rounded p-2">
+                                                        <p className="text-xs text-muted-foreground">Schedule</p>
+                                                        <p className="font-medium truncate">{session.schedule?.name}</p>
+                                                    </div>
+                                                    <div className="bg-muted/50 rounded p-2">
+                                                        <p className="text-xs text-muted-foreground">Time</p>
+                                                        <p className="font-mono text-xs">
+                                                            {formatTime24(session.schedule?.time_in)} - {formatTime24(session.schedule?.time_out)}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Attendance Progress */}
+                                                <div className="space-y-1">
+                                                    <div className="flex items-center justify-between text-sm">
+                                                        <span className="text-muted-foreground">Attendance</span>
+                                                        <span className="font-medium">{session.confirmed_count}/{session.total_employees}</span>
+                                                    </div>
+                                                    <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                                                        <div
+                                                            className="h-full bg-primary transition-all"
+                                                            style={{ width: `${attendanceRate}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                {/* Actions */}
+                                                <div className="flex gap-2 pt-2 border-t">
+                                                    <Button asChild variant="outline" size="sm" className="flex-1">
+                                                        <Link href={`/attendance/sessions/${session.id}`}>
+                                                            <Users className="mr-2 h-4 w-4" />
+                                                            View Details
+                                                        </Link>
+                                                    </Button>
+                                                    {session.status === "active" && (
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => setLockDialog({ open: true, session })}
+                                                        >
+                                                            <Lock className="h-4 w-4" />
+                                                        </Button>
+                                                    )}
+                                                    {session.status === "locked" && (
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => setUnlockDialog({ open: true, session })}
+                                                        >
+                                                            <Unlock className="h-4 w-4" />
+                                                        </Button>
+                                                    )}
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="text-destructive hover:text-destructive"
+                                                        onClick={() => setDeleteDialog({ open: true, session })}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Desktop Table View */}
+                                <div className="hidden md:block overflow-x-auto">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Date</TableHead>
+                                                <TableHead>Schedule</TableHead>
+                                                <TableHead className="text-center">Time</TableHead>
+                                                <TableHead className="text-center">Attendance</TableHead>
+                                                <TableHead className="text-center">Status</TableHead>
+                                                <TableHead className="w-[70px] text-center">Actions</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {sessions.map((session) => {
+                                                const status = statusConfig[session.status] || statusConfig.pending;
+                                                const StatusIcon = status.icon;
+                                                const attendanceRate = Math.round(
+                                                    (session.confirmed_count / session.total_employees) * 100
+                                                ) || 0;
+
+                                                return (
+                                                    <TableRow key={session.id}>
+                                                        <TableCell>
+                                                            <div className="flex items-center gap-2">
+                                                                <Calendar className="h-4 w-4 text-muted-foreground" />
+                                                                <div className="flex flex-col">
+                                                                    <span className="font-medium">{formatDate(session.date, "MMM d, yyyy")}</span>
+                                                                    <span className="text-xs text-muted-foreground">{formatDate(session.date, "EEEE")}</span>
+                                                                </div>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <span className="font-medium">{session.schedule?.name}</span>
+                                                        </TableCell>
+                                                        <TableCell className="text-center">
+                                                            <div className="flex items-center justify-center gap-2 font-mono text-sm">
+                                                                <Clock className="h-4 w-4 text-muted-foreground" />
+                                                                {formatTime24(session.schedule?.time_in)} -{" "}
+                                                                {formatTime24(session.schedule?.time_out)}
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="text-center">
+                                                            <div className="flex items-center justify-center gap-2">
+                                                                <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                                                                    <div
+                                                                        className="h-full bg-primary transition-all"
+                                                                        style={{ width: `${attendanceRate}%` }}
+                                                                    />
+                                                                </div>
+                                                                <span className="text-sm text-muted-foreground">
+                                                                    {session.confirmed_count}/{session.total_employees}
+                                                                </span>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="text-center">
+                                                            <Badge className={status.color}>
+                                                                <StatusIcon className="mr-1 h-3 w-3" />
+                                                                {status.label}
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell className="text-center">
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild>
+                                                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                                        <MoreHorizontal className="h-4 w-4" />
+                                                                    </Button>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="end">
+                                                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                                    <DropdownMenuItem asChild>
+                                                                        <Link href={`/attendance/sessions/${session.id}`}>
+                                                                            <Users className="mr-2 h-4 w-4" />
+                                                                            View Details
+                                                                        </Link>
+                                                                    </DropdownMenuItem>
+                                                                    {session.status === "active" && (
+                                                                        <DropdownMenuItem
+                                                                            onClick={() => setLockDialog({ open: true, session })}
+                                                                        >
+                                                                            <Lock className="mr-2 h-4 w-4" />
+                                                                            Lock Session
+                                                                        </DropdownMenuItem>
+                                                                    )}
+                                                                    {session.status === "locked" && (
+                                                                        <DropdownMenuItem
+                                                                            onClick={() => setUnlockDialog({ open: true, session })}
+                                                                        >
+                                                                            <Unlock className="mr-2 h-4 w-4" />
+                                                                            Unlock Session
+                                                                        </DropdownMenuItem>
+                                                                    )}
+                                                                    <DropdownMenuSeparator />
+                                                                    <DropdownMenuItem
+                                                                        className="text-destructive focus:text-destructive"
+                                                                        onClick={() => setDeleteDialog({ open: true, session })}
+                                                                    >
+                                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                                        Delete Session
+                                                                    </DropdownMenuItem>
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                );
+                                            })}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            </>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* Lock Confirmation Dialog */}
+                <AlertDialog
+                    open={lockDialog.open}
+                    onOpenChange={(open) => setLockDialog({ open, session: lockDialog.session })}
+                >
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Lock Session</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Are you sure you want to lock this session? This will prevent any further
+                                attendance confirmations for{" "}
+                                <strong>{formatDate(lockDialog.session?.date, "MMMM d, yyyy")}</strong>.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleLockSession}>
+                                <Lock className="mr-2 h-4 w-4" />
+                                Lock Session
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+
+                {/* Unlock Confirmation Dialog */}
+                <AlertDialog
+                    open={unlockDialog.open}
+                    onOpenChange={(open) => setUnlockDialog({ open, session: unlockDialog.session })}
+                >
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Unlock Session</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Are you sure you want to unlock this session? This will allow attendance
+                                confirmations again for{" "}
+                                <strong>{formatDate(unlockDialog.session?.date, "MMMM d, yyyy")}</strong>.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleUnlockSession}>
+                                <Unlock className="mr-2 h-4 w-4" />
+                                Unlock Session
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+
+                {/* Delete Confirmation Dialog */}
+                <AlertDialog
+                    open={deleteDialog.open}
+                    onOpenChange={(open) => setDeleteDialog({ open, session: deleteDialog.session })}
+                >
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Session</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Are you sure you want to permanently delete this session?
+                                <br /><br />
+                                <strong>Date: {formatDate(deleteDialog.session?.date, "MMMM d, yyyy")}</strong>
+                                <br />
+                                <strong>Schedule: {deleteDialog.session?.schedule?.name}</strong>
+                                <br /><br />
+                                <span className="text-destructive font-semibold">Warning: This will delete ALL attendance records associated with this session. This action cannot be undone.</span>
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                                onClick={handleDeleteSession}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete Session
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </div>
+        </DashboardLayout>
+    );
+}
