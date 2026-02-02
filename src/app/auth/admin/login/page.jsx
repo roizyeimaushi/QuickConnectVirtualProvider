@@ -15,6 +15,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Loader2, AlertCircle, User, KeyRound } from "lucide-react";
+import { API_BASE_URL } from "@/lib/constants";
 
 export default function AdminLoginPage() {
     const [email, setEmail] = useState("");
@@ -164,60 +165,7 @@ export default function AdminLoginPage() {
                 </p>
 
                 <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
-                    {/* Email Input */}
-                    <div className="relative">
-                        <div className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-white/60">
-                            <User className="h-4 w-4 sm:h-5 sm:w-5" />
-                        </div>
-                        <input
-                            type="email"
-                            placeholder="Enter your email address"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                            autoComplete="email"
-                            className="w-full h-10 sm:h-12 pl-10 sm:pl-12 pr-4 bg-transparent border border-white/30 rounded-md text-white text-xs sm:text-sm placeholder:text-white/50 focus:outline-none focus:border-[#3da36e] transition-colors"
-                        />
-                    </div>
-
-                    {/* Password Input */}
-                    <div className="relative">
-                        <div className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-white/60">
-                            <KeyRound className="h-4 w-4 sm:h-5 sm:w-5" />
-                        </div>
-                        <input
-                            type={showPassword ? "text" : "password"}
-                            placeholder="Enter your password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            autoComplete="current-password"
-                            className="w-full h-10 sm:h-12 pl-10 sm:pl-12 pr-10 sm:pr-12 bg-transparent border border-white/30 rounded-md text-white text-xs sm:text-sm placeholder:text-white/50 focus:outline-none focus:border-[#3da36e] transition-colors"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors"
-                        >
-                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                    </div>
-
-                    <div className="flex items-center space-x-2 mb-2 sm:mb-4">
-                        <Checkbox
-                            id="remember"
-                            className="border-white/50 h-3 w-3 sm:h-4 sm:w-4 data-[state=checked]:bg-[#3da36e] data-[state=checked]:border-[#3da36e]"
-                            checked={remember}
-                            onCheckedChange={setRemember}
-                        />
-                        <Label
-                            htmlFor="remember"
-                            className="text-xs sm:text-sm text-white/80 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                        >
-                            Remember me
-                        </Label>
-                    </div>
-
+                    {/* ... existing form elements ... */}
                     {/* Login Button */}
                     <button
                         type="submit"
@@ -244,6 +192,11 @@ export default function AdminLoginPage() {
                             "Login"
                         )}
                     </button>
+
+                    {/* Debug API URL - Temporary for troubleshooting */}
+                    <p className="text-[10px] text-white/40 text-center mt-4">
+                        API: {API_BASE_URL}
+                    </p>
                 </form>
             </div>
         </div>
