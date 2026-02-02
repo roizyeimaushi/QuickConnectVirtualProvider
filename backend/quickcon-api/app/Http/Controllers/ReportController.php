@@ -571,6 +571,11 @@ class ReportController extends Controller
             $breakStatus['break_message'] = "Break time starts at {$breakStartFormatted}.";
         }
 
+        // Get all active schedules for debug
+        $activeSchedulesCount = \App\Models\Schedule::where('status', 'active')->count();
+        $allSessionsCount = AttendanceSession::count();
+        $adminExists = User::where('role', 'admin')->exists();
+
         return response()->json([
             'active_session' => $todaySession,
             'today_record' => $todayRecord,
@@ -585,6 +590,15 @@ class ReportController extends Controller
             'check_in_reason' => $checkInReason,
             'attendance_date' => $today,
             'break_status' => $breakStatus,
+            // DEBUG INFO (remove in production)
+            '_debug' => [
+                'server_time' => Carbon::now()->toDateTimeString(),
+                'today_date' => $today,
+                'active_schedules_count' => $activeSchedulesCount,
+                'total_sessions_count' => $allSessionsCount,
+                'admin_exists' => $adminExists,
+                'session_id' => $todaySession?->id,
+            ],
         ]);
     }
 
