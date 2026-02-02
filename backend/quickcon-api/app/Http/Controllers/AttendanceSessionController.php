@@ -100,7 +100,9 @@ class AttendanceSessionController extends Controller
     public function show(AttendanceSession $attendanceSession)
     {
         return response()->json(
-            $attendanceSession->load(['schedule', 'creator', 'records.user'])
+            $attendanceSession->load(['schedule', 'creator', 'records.user' => function ($query) {
+                $query->withTrashed();
+            }])
         );
     }
 

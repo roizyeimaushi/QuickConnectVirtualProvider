@@ -625,7 +625,9 @@ class ReportController extends Controller
         $perPage = request()->input('per_page', 20); // Use helper request() since we didn't inject Request $request in method signature
         
         $paginator = (clone $baseQuery)
-            ->with(['user', 'session.schedule'])
+            ->with(['user' => function ($query) {
+                $query->withTrashed();
+            }, 'session.schedule'])
             ->orderBy('created_at', 'desc') // Order by check-in time effectively
             ->paginate($perPage);
 

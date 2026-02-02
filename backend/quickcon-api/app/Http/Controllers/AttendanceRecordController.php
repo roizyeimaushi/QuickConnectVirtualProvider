@@ -43,7 +43,10 @@ class AttendanceRecordController extends Controller
      */
     public function index(Request $request)
     {
-        $query = AttendanceRecord::with(['session.schedule', 'user']);
+        // Include soft-deleted users to prevent "Unknown User" for historical records
+        $query = AttendanceRecord::with(['session.schedule', 'user' => function ($q) {
+            $q->withTrashed();
+        }]);
 
         if ($request->has('status') && $request->status) {
             $query->where('status', $request->status);
@@ -61,10 +64,14 @@ class AttendanceRecordController extends Controller
         // Support search by employee name or ID
         if ($request->has('search') && $request->search) {
             $search = $request->search;
+            // Use whereHas but explicitly allow trashed users
             $query->whereHas('user', function ($q) use ($search) {
-                $q->where('first_name', 'like', "%$search%")
-                  ->orWhere('last_name', 'like', "%$search%")
-                  ->orWhere('employee_id', 'like', "%$search%");
+                $q->withTrashed()
+                  ->where(function($subQ) use ($search) {
+                       $subQ->where('first_name', 'like', "%$search%")
+                            ->orWhere('last_name', 'like', "%$search%")
+                            ->orWhere('employee_id', 'like', "%$search%");
+                  });
             });
         }
 
