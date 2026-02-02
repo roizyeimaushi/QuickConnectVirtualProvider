@@ -1,8 +1,11 @@
 services:
+  # ============================================
+  # SINGLE SERVICE - Monolith (Docker Image)
+  # ============================================
   - type: web
     name: "quickconnect-virtual"
     image:
-      url: docker.io/roizenx/quickconn-monolith:latest
+      name: "roizenx/quickconn-monolith:latest"
     region: "singapore"
     plan: "free"
     healthCheckPath: "/api/health"
