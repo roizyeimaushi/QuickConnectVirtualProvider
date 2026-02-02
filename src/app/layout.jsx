@@ -1,5 +1,6 @@
 import { Inter } from "next/font/google";
 import { Toaster } from "@/components/ui/toaster";
+import { Suspense } from "react";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { SettingsProvider } from "@/components/providers/settings-provider";
 import { UrlHider } from "@/components/system/url-hider";
@@ -43,7 +44,9 @@ export default function RootLayout({ children }) {
             >
                 <SettingsProvider>
                     <AuthProvider>
-                        <UrlHider />
+                        <Suspense fallback={null}>
+                            <UrlHider />
+                        </Suspense>
                         {children}
                         <Toaster />
                     </AuthProvider>
