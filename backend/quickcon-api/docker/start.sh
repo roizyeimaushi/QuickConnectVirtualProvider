@@ -30,6 +30,7 @@ php artisan migrate --force
 # Seed settings if empty
 echo "Checking database seeders..."
 php artisan db:seed --class=SettingsSeeder --force 2>/dev/null || true
+php artisan db:seed --class=EnsureAdminUserSeeder --force 2>/dev/null || true
 
 # Fix permissions
 chown -R www-data:www-data /var/www/html/storage
