@@ -1,41 +1,36 @@
-# ===== Build Stage =====
+# Stage 1: Build frontend
 FROM node:20-alpine AS builder
+
+# Optional: pin npm version to match lockfile
+RUN npm install -g npm@10.8.2
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy lockfile first to leverage Docker cache
+COPY package.json package-lock.json ./
 
 # Install dependencies
 RUN npm ci
 
-# Copy source code
+# Copy all source code
 COPY . .
 
-# Build the application
+# Build Next.js
 RUN npm run build
 
-# ===== Production Stage =====
-FROM node:20-alpine AS runner
+# Stage 2: Production image
+FROM node:20-alpine AS production
 
 WORKDIR /app
 
-ENV NODE_ENV=production
-
-# Create non-root user
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-# Copy built assets
+# Copy only necessary files from builder
+COPY --from=builder /app/package.json /app/package-lock.json ./
+COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
 
-USER nextjs
+# Install only production dependencies
+RUN npm ci --omit=dev
 
 EXPOSE 3000
 
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-
-CMD ["node", "server.js"]
+CMD ["npm", "start"]
