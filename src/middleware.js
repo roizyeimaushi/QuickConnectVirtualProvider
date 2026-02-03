@@ -26,9 +26,9 @@ export function middleware(request) {
 
     // Allow public routes
     if (publicRoutes.some(route => pathname.startsWith(route))) {
-        // If already logged in, redirect to dashboard
-        if (token && pathname === "/auth/login") {
-            return NextResponse.redirect(new URL("/dashboard/admin", request.url));
+        // If already logged in, redirect to dashboard (client routes by role)
+        if (token && pathname.startsWith("/auth/")) {
+            return NextResponse.redirect(new URL("/dashboard", request.url));
         }
         return NextResponse.next();
     }
@@ -55,6 +55,6 @@ export const config = {
          * - public files (public folder)
          * - api routes
          */
-        "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$|api).*)",
+        "/((?!_next/static|_next/image|favicon.ico|manifest.json|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$|api).*)",
     ],
 };

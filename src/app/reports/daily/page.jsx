@@ -74,64 +74,66 @@ export default function DailyReportsPage() {
     const [initialLoad, setInitialLoad] = useState(true);
     const [report, setReport] = useState({ summary: { total: 0, present: 0, late: 0, absent: 0, pending: 0 }, records: [] });
 
-    // Pagination State
+    // Pagination State (server-side: backend returns one page)
     const [currentPage, setCurrentPage] = useState(1);
-    const perPage = 10;
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalRecords, setTotalRecords] = useState(0);
+    const perPage = 20;
 
-    // Safety check - ensure records is an array before accessing length
+    // Records for current page from API
     const recordsList = (Array.isArray(report?.records) ? report.records : []).filter(r => r && typeof r === 'object');
-    const totalRecords = recordsList.length;
 
-    // Ensure pagination state is initialized
-    const totalPages = Math.ceil(totalRecords / perPage);
-
-    const fetchReport = useCallback(async (selectedDate, isPolling = false) => {
+    const fetchReport = useCallback(async (selectedDate, page = 1, isPolling = false) => {
         try {
             const dateStr = format(selectedDate, "yyyy-MM-dd");
-            // Request a large page size to handle client-side pagination behavior
-            const response = await reportsApi.getDailyReport(dateStr, { per_page: 5000 });
+            const response = await reportsApi.getDailyReport(dateStr, { per_page: perPage, page });
 
-            // Handle backend pagination (response.records might be a Paginator object)
-            const dailyRecords = response.records?.data
-                ? response.records.data
+            // Backend returns { date, summary, records: Paginator }
+            const paginator = response.records;
+            const dailyRecords = paginator?.data
+                ? paginator.data
                 : (Array.isArray(response.records) ? response.records : []);
 
             setReport({
                 summary: response.summary || { total: 0, present: 0, late: 0, absent: 0, pending: 0 },
                 records: Array.isArray(dailyRecords) ? dailyRecords.filter(r => r && typeof r === 'object') : [],
             });
+            setTotalPages(paginator?.last_page ?? 1);
+            setTotalRecords(paginator?.total ?? 0);
         } catch (error) {
-            // console.error("Failed to fetch daily report:", error);
-            if (!isPolling) setReport({ summary: { total: 0, present: 0, late: 0, absent: 0, pending: 0 }, records: [] });
+            if (!isPolling) {
+                setReport({ summary: { total: 0, present: 0, late: 0, absent: 0, pending: 0 }, records: [] });
+                setTotalPages(1);
+                setTotalRecords(0);
+            }
         } finally {
             if (initialLoad) setInitialLoad(false);
         }
-    }, [initialLoad]);
+    }, [initialLoad, perPage]);
 
     useEffect(() => {
-        // Reset pagination when date changes
         setCurrentPage(1);
-        // Fetch report when date changes (no full-page loader for filter changes)
-        fetchReport(date, false);
+        fetchReport(date, 1, false);
 
-        // Polling only if viewing today's report
         let interval;
         if (isSameDay(date, new Date())) {
-            interval = setInterval(() => {
-                fetchReport(date, true);
-            }, 5000);
+            // Fallback polling every 60 seconds (WebSocket handles real-time updates)
+            interval = setInterval(() => fetchReport(date, 1, true), 60000);
         }
-
-        return () => {
-            if (interval) clearInterval(interval);
-        };
+        return () => { if (interval) clearInterval(interval); };
     }, [date]);
 
+    // Refetch when page changes (server-side pagination)
+    useEffect(() => {
+        if (currentPage === 1) return;
+        fetchReport(date, currentPage, false);
+    }, [currentPage]);
+
     const chartData = [
-        { status: "Present", count: report.summary.present, fill: statusConfig.present.color },
-        { status: "Late", count: report.summary.late, fill: statusConfig.late.color },
-        { status: "Absent", count: report.summary.absent, fill: statusConfig.absent.color },
-        { status: "Pending", count: report.summary.pending, fill: statusConfig.pending.color },
+        { status: "Present", count: report?.summary?.present ?? 0, fill: statusConfig.present.color },
+        { status: "Late", count: report?.summary?.late ?? 0, fill: statusConfig.late.color },
+        { status: "Absent", count: report?.summary?.absent ?? 0, fill: statusConfig.absent.color },
+        { status: "Pending", count: report?.summary?.pending ?? 0, fill: statusConfig.pending.color },
     ].filter(item => item.count > 0);
 
     const chartConfig = {
@@ -185,14 +187,14 @@ export default function DailyReportsPage() {
                             <PopoverTrigger asChild>
                                 <Button variant="outline" className="w-full sm:w-auto sm:min-w-[200px] h-10 px-3 justify-between font-normal">
                                     <div className="flex items-center truncate">
-                                        <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0" />
+                                        <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
                                         <span className="truncate">{format(date, "PPP")}</span>
                                     </div>
-                                    <ChevronDown className="ml-2 h-4 w-4 opacity-50 flex-shrink-0" />
+                                    <ChevronDown className="ml-2 h-4 w-4 opacity-50 shrink-0" />
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent
-                                className="w-auto p-0 max-h-[var(--radix-popover-content-available-height)] overflow-y-auto"
+                                className="w-auto p-0 max-h-(--radix-popover-content-available-height) overflow-y-auto"
                                 align="center"
                                 side="bottom"
                                 sideOffset={4}
@@ -212,8 +214,9 @@ export default function DailyReportsPage() {
                         </Popover>
                         <Button
                             className="w-full sm:w-auto"
-                            onClick={() => {
-                                if (recordsList.length === 0) {
+                            onClick={async () => {
+                                const dateStr = format(date, "yyyy-MM-dd");
+                                if (totalRecords === 0) {
                                     toast({
                                         title: "No records to export",
                                         description: "There are no attendance records for this date.",
@@ -221,47 +224,46 @@ export default function DailyReportsPage() {
                                     });
                                     return;
                                 }
-                                // Generate CSV
-                                const headers = ["Employee ID", "Name", "Schedule", "Time In", "Break", "Time Out", "Hours", "Status"];
-                                const rows = recordsList.map(r => [
-                                    r.employee_id,
-                                    r.name,
-                                    r.schedule || "",
-                                    r.time_in || "",
-                                    r.break_time || "",
-                                    r.time_out || "",
-                                    r.hours || "",
-                                    r.status
-                                ]);
+                                try {
+                                    const response = await reportsApi.getDailyReport(dateStr, { per_page: 5000, page: 1 });
+                                    const paginator = response.records;
+                                    const allRecords = paginator?.data ? paginator.data : (Array.isArray(response.records) ? response.records : []);
+                                    const rows = (Array.isArray(allRecords) ? allRecords : []).filter(r => r && typeof r === 'object');
 
-                                // Create Excel workbook
-                                const wsData = [headers, ...rows];
-                                const ws = XLSX.utils.aoa_to_sheet(wsData);
+                                    const headers = ["Employee ID", "Name", "Schedule", "Time In", "Break", "Time Out", "Hours", "Status"];
+                                    const rowData = rows.map(r => [
+                                        r.employee_id,
+                                        r.name,
+                                        r.schedule || "",
+                                        r.time_in || "",
+                                        r.break_time || "",
+                                        r.time_out || "",
+                                        r.hours || "",
+                                        r.status
+                                    ]);
 
-                                // Set column widths
-                                ws['!cols'] = [
-                                    { wch: 12 }, // Employee ID
-                                    { wch: 20 }, // Name
-                                    { wch: 15 }, // Schedule
-                                    { wch: 10 }, // Time In
-                                    { wch: 10 }, // Break
-                                    { wch: 10 }, // Time Out
-                                    { wch: 10 }, // Hours
-                                    { wch: 10 }, // Status
-                                ];
+                                    const wsData = [headers, ...rowData];
+                                    const ws = XLSX.utils.aoa_to_sheet(wsData);
+                                    ws['!cols'] = [
+                                        { wch: 12 }, { wch: 20 }, { wch: 15 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
+                                    ];
 
-                                const wb = XLSX.utils.book_new();
-                                XLSX.utils.book_append_sheet(wb, ws, "Attendance Report");
+                                    const wb = XLSX.utils.book_new();
+                                    XLSX.utils.book_append_sheet(wb, ws, "Attendance Report");
+                                    XLSX.writeFile(wb, `attendance-report-${dateStr}.xlsx`);
 
-                                // Download Excel file
-                                XLSX.writeFile(wb, `attendance-report-${format(date, "yyyy-MM-dd")}.xlsx`);
-
-                                toast({
-                                    title: "Export successful",
-                                    description: `Exported ${recordsList.length} records to Excel.`,
-                                });
+                                    toast({
+                                        title: "Export successful",
+                                        description: `Exported ${rows.length} records to Excel.`,
+                                    });
+                                } catch (err) {
+                                    toast({
+                                        title: "Export failed",
+                                        description: err?.message || "Could not export report.",
+                                        variant: "destructive",
+                                    });
+                                }
                             }}
-
                         >
                             <Download className="mr-2 h-4 w-4" />
                             Export
@@ -277,7 +279,7 @@ export default function DailyReportsPage() {
                             <Users className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{report.summary.total}</div>
+                            <div className="text-2xl font-bold">{report?.summary?.total ?? 0}</div>
                         </CardContent>
                     </Card>
                     <Card>
@@ -286,7 +288,7 @@ export default function DailyReportsPage() {
                             <CheckCircle2 className="h-4 w-4 text-green-500" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-green-600">{report.summary.present}</div>
+                            <div className="text-2xl font-bold text-green-600">{report?.summary?.present ?? 0}</div>
                         </CardContent>
                     </Card>
                     <Card>
@@ -295,7 +297,7 @@ export default function DailyReportsPage() {
                             <AlertTriangle className="h-4 w-4 text-amber-500" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-amber-600">{report.summary.late}</div>
+                            <div className="text-2xl font-bold text-amber-600">{report?.summary?.late ?? 0}</div>
                         </CardContent>
                     </Card>
                     <Card>
@@ -313,13 +315,13 @@ export default function DailyReportsPage() {
                             <Clock className="h-4 w-4 text-blue-500" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-blue-600">{report.summary.pending}</div>
+                            <div className="text-2xl font-bold text-blue-600">{report?.summary?.pending ?? 0}</div>
                         </CardContent>
                     </Card>
                 </div>
 
                 {/* Charts Area */}
-                {report.summary.total > 0 && (
+                {(report?.summary?.total ?? 0) > 0 && (
                     <div className="grid gap-4 md:grid-cols-2 lg:col-span-7">
                         <Card className="col-span-4 lg:col-span-3">
                             <CardHeader>
@@ -383,7 +385,7 @@ export default function DailyReportsPage() {
                 )}
 
                 {/* Attendance Table */}
-                <Card className={report.summary.total > 0 ? "col-span-4 lg:col-span-7" : ""}>
+                <Card className={(report?.summary?.total ?? 0) > 0 ? "col-span-4 lg:col-span-7" : ""}>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Clock className="h-5 w-5 text-primary" />
@@ -394,7 +396,7 @@ export default function DailyReportsPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {report.records.length === 0 ? (
+                        {recordsList.length === 0 ? (
                             <div className="text-center py-8 text-muted-foreground">
                                 No attendance records found for this date
                             </div>
@@ -402,54 +404,52 @@ export default function DailyReportsPage() {
                             <>
                                 {/* Mobile Card View */}
                                 <div className="block md:hidden space-y-3">
-                                    {recordsList
-                                        .slice((currentPage - 1) * 10, currentPage * 10)
-                                        .map((record) => {
-                                            const config = statusConfig[record.status] || statusConfig.present;
-                                            const StatusIcon = config.icon;
-                                            return (
+                                    {recordsList.map((record) => {
+                                        const config = statusConfig[record.status] || statusConfig.present;
+                                        const StatusIcon = config.icon;
+                                        return (
 
-                                                <div key={record.id} className="border rounded-lg p-4 space-y-3">
-                                                    {/* Header: Employee Info + Status */}
-                                                    <div className="flex items-start justify-between gap-3">
-                                                        <div>
-                                                            <p className="font-medium">{record.name}</p>
-                                                            <p className="text-xs font-mono text-muted-foreground">{record.employee_id}</p>
-                                                        </div>
-                                                        <Badge className={`gap-1 ${config.badgeClass}`}>
-                                                            <StatusIcon className="h-3 w-3" />
-                                                            {config.label}
-                                                        </Badge>
+                                            <div key={record.id} className="border rounded-lg p-4 space-y-3">
+                                                {/* Header: Employee Info + Status */}
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <div>
+                                                        <p className="font-medium">{record.name}</p>
+                                                        <p className="text-xs font-mono text-muted-foreground">{record.employee_id}</p>
                                                     </div>
+                                                    <Badge className={`gap-1 ${config.badgeClass}`}>
+                                                        <StatusIcon className="h-3 w-3" />
+                                                        {config.label}
+                                                    </Badge>
+                                                </div>
 
-                                                    {/* Schedule */}
-                                                    <div className="bg-muted/50 rounded p-2 text-sm">
-                                                        <p className="text-xs text-muted-foreground">Schedule</p>
-                                                        <p className="font-medium">{record.schedule || "—"}</p>
+                                                {/* Schedule */}
+                                                <div className="bg-muted/50 rounded p-2 text-sm">
+                                                    <p className="text-xs text-muted-foreground">Schedule</p>
+                                                    <p className="font-medium">{record.schedule || "—"}</p>
+                                                </div>
+
+                                                {/* Times Grid */}
+                                                <div className="grid grid-cols-4 gap-2 text-sm">
+                                                    <div className="bg-muted/50 rounded p-2 text-center">
+                                                        <p className="text-xs text-muted-foreground">Time In</p>
+                                                        <p className="font-mono font-medium">{record.time_in || "—"}</p>
                                                     </div>
-
-                                                    {/* Times Grid */}
-                                                    <div className="grid grid-cols-4 gap-2 text-sm">
-                                                        <div className="bg-muted/50 rounded p-2 text-center">
-                                                            <p className="text-xs text-muted-foreground">Time In</p>
-                                                            <p className="font-mono font-medium">{record.time_in || "—"}</p>
-                                                        </div>
-                                                        <div className="bg-muted/50 rounded p-2 text-center">
-                                                            <p className="text-xs text-muted-foreground">Break</p>
-                                                            <p className="font-mono font-medium">{record.break_time || "—"}</p>
-                                                        </div>
-                                                        <div className="bg-muted/50 rounded p-2 text-center">
-                                                            <p className="text-xs text-muted-foreground">Time Out</p>
-                                                            <p className="font-mono font-medium">{record.time_out || "—"}</p>
-                                                        </div>
-                                                        <div className="bg-muted/50 rounded p-2 text-center">
-                                                            <p className="text-xs text-muted-foreground">Hours</p>
-                                                            <p className="font-mono font-medium">{record.hours || "—"}</p>
-                                                        </div>
+                                                    <div className="bg-muted/50 rounded p-2 text-center">
+                                                        <p className="text-xs text-muted-foreground">Break</p>
+                                                        <p className="font-mono font-medium">{record.break_time || "—"}</p>
+                                                    </div>
+                                                    <div className="bg-muted/50 rounded p-2 text-center">
+                                                        <p className="text-xs text-muted-foreground">Time Out</p>
+                                                        <p className="font-mono font-medium">{record.time_out || "—"}</p>
+                                                    </div>
+                                                    <div className="bg-muted/50 rounded p-2 text-center">
+                                                        <p className="text-xs text-muted-foreground">Hours</p>
+                                                        <p className="font-mono font-medium">{record.hours || "—"}</p>
                                                     </div>
                                                 </div>
-                                            );
-                                        })}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
 
                                 {/* Desktop Table View */}
@@ -468,29 +468,27 @@ export default function DailyReportsPage() {
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {recordsList
-                                                .slice((currentPage - 1) * 10, currentPage * 10)
-                                                .map((record) => {
-                                                    const config = statusConfig[record.status] || statusConfig.present;
-                                                    const StatusIcon = config.icon;
-                                                    return (
-                                                        <TableRow key={record.id}>
-                                                            <TableCell className="font-mono">{record.employee_id}</TableCell>
-                                                            <TableCell className="font-medium">{record.name}</TableCell>
-                                                            <TableCell>{record.schedule || "—"}</TableCell>
-                                                            <TableCell className="font-mono text-center">{record.time_in || "—"}</TableCell>
-                                                            <TableCell className="font-mono text-center">{record.break_time || "—"}</TableCell>
-                                                            <TableCell className="font-mono text-center">{record.time_out || "—"}</TableCell>
-                                                            <TableCell className="font-mono text-center">{record.hours || "—"}</TableCell>
-                                                            <TableCell className="text-center">
-                                                                <Badge className={`gap-1 ${config.badgeClass}`}>
-                                                                    <StatusIcon className="h-3 w-3" />
-                                                                    {config.label}
-                                                                </Badge>
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    );
-                                                })}
+                                            {recordsList.map((record) => {
+                                                const config = statusConfig[record.status] || statusConfig.present;
+                                                const StatusIcon = config.icon;
+                                                return (
+                                                    <TableRow key={record.id}>
+                                                        <TableCell className="font-mono">{record.employee_id}</TableCell>
+                                                        <TableCell className="font-medium">{record.name}</TableCell>
+                                                        <TableCell>{record.schedule || "—"}</TableCell>
+                                                        <TableCell className="font-mono text-center">{record.time_in || "—"}</TableCell>
+                                                        <TableCell className="font-mono text-center">{record.break_time || "—"}</TableCell>
+                                                        <TableCell className="font-mono text-center">{record.time_out || "—"}</TableCell>
+                                                        <TableCell className="font-mono text-center">{record.hours || "—"}</TableCell>
+                                                        <TableCell className="text-center">
+                                                            <Badge className={`gap-1 ${config.badgeClass}`}>
+                                                                <StatusIcon className="h-3 w-3" />
+                                                                {config.label}
+                                                            </Badge>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                );
+                                            })}
                                         </TableBody>
                                     </Table>
                                 </div>
@@ -500,8 +498,7 @@ export default function DailyReportsPage() {
                                     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4 pt-6 border-t mt-4">
                                         <p className="text-sm text-muted-foreground text-center sm:text-left">
                                             Showing {(currentPage - 1) * perPage + 1} to{" "}
-                                            {Math.min(currentPage * perPage, totalRecords)} of{" "}
-                                            {totalRecords} records
+                                            {Math.min(currentPage * perPage, totalRecords)} of {totalRecords} records
                                         </p>
                                         <div className="flex items-center gap-2">
                                             <Button

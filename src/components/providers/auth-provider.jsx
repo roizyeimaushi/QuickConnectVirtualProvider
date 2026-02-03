@@ -9,14 +9,11 @@ import { USER_ROLES, ROUTES } from "@/lib/constants";
 const AuthContext = createContext(null);
 
 // ===============================
-// DEMO MODE CREDENTIALS
+// DEMO MODE (development only)
 // ===============================
-// These are for demonstration purposes only.
-// In production, authentication will be handled by the Laravel backend.
+const DEMO_MODE = process.env.NODE_ENV === "development" && false; // Disabled; enable only for local demo
 
-const DEMO_MODE = false; // Set to true for demo mode with mock users
-
-const DEMO_USERS = {
+const DEMO_USERS = process.env.NODE_ENV === "development" ? {
     admin: {
         id: 1,
         employee_id: "QCV-000001",
@@ -39,7 +36,7 @@ const DEMO_USERS = {
         position: "Senior Developer",
         status: "active",
     },
-};
+} : {};
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
@@ -78,23 +75,34 @@ export function AuthProvider({ children }) {
                 return;
             }
 
-            const response = await authApi.me();
+            // Timeout so we don't hang forever if backend is unreachable (e.g. Laravel not running)
+            const timeoutMs = 8000;
+            const mePromise = authApi.me();
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject({ status: 0, message: 'Request timed out' }), timeoutMs)
+            );
+            const response = await Promise.race([mePromise, timeoutPromise]);
             setUser(response.data || response.user || response);
         } catch (error) {
             // Silence 401/Unauthorized and network (status 0) errors — expected when token expires or backend unreachable
             const isUnauthorized = error?.status === 401 || error?.message === 'Unauthorized';
             const isNetworkError = error?.status === 0;
-            if (isUnauthorized || isNetworkError) {
-                // Clear token and move on; no noisy console
+
+            if (isUnauthorized) {
+                // Only clear tokens on actual 401 errors (token expired/invalid)
+                Cookies.remove("quickcon_token");
+                localStorage.removeItem("quickcon_token");
+                localStorage.removeItem("quickcon_user");
+                setUser(null);
+            } else if (isNetworkError) {
+                // Network error - keep user logged in, don't clear tokens
+                // User can retry when connection is restored
+                console.warn("Network error fetching user - keeping session");
             } else {
                 const msg = error?.message ?? error?.status ?? (typeof error === 'object' && error !== null ? JSON.stringify(error) : String(error));
                 console.error("Failed to fetch user:", msg || "Unknown error");
+                // Don't clear tokens on unknown errors - might be temporary
             }
-
-            Cookies.remove("quickcon_token");
-            localStorage.removeItem("quickcon_token");
-            localStorage.removeItem("quickcon_user");
-            setUser(null);
         } finally {
             setLoading(false);
         }
@@ -242,14 +250,8 @@ export function useAuth() {
     return context;
 }
 
-// Export demo credentials for reference
-export const DEMO_CREDENTIALS = {
-    admin: {
-        email: DEMO_USERS.admin.email,
-        password: DEMO_USERS.admin.password,
-    },
-    employee: {
-        email: DEMO_USERS.employee.email,
-        password: DEMO_USERS.employee.password,
-    },
-};
+// Export demo credentials for reference (dev only)
+export const DEMO_CREDENTIALS = DEMO_USERS.admin ? {
+    admin: { email: DEMO_USERS.admin.email, password: DEMO_USERS.admin.password },
+    employee: { email: DEMO_USERS.employee?.email, password: DEMO_USERS.employee?.password },
+} : {};

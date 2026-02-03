@@ -125,7 +125,9 @@ export default function EmployeeReportDetailPage() {
         );
     }
 
-    const { employee, stats, records } = data;
+    const employee = data.employee;
+    const stats = data.stats || {};
+    const records = Array.isArray(data.records) ? data.records : (data.records?.data || []);
 
     const handleExport = async () => {
         try {

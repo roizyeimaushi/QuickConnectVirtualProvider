@@ -24,8 +24,22 @@ import {
     User,
     AlertTriangle,
     CheckCircle2,
-    Clock
+    Clock,
+    Edit,
+    Trash2
 } from "lucide-react";
+import { useAuth } from "@/components/providers/auth-provider";
+import { EditBreakDialog } from "@/components/attendance/edit-break-dialog";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 function HistorySkeleton() {
     return (
@@ -48,9 +62,44 @@ function HistorySkeleton() {
 
 export default function BreakHistoryPage() {
     const { toast } = useToast();
+    const { user } = useAuth();
     const [loading, setLoading] = useState(true);
     const [groupedRecords, setGroupedRecords] = useState([]);
-    const [forceUpdate, setForceUpdate] = useState(0); // For triggering re-renders of live timer
+    const [forceUpdate, setForceUpdate] = useState(0);
+
+    // Dialog States
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    const [editingRecord, setEditingRecord] = useState(null);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [recordToDelete, setRecordToDelete] = useState(null);
+
+    const handleDeleteRecord = (id) => {
+        setRecordToDelete(id);
+        setDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!recordToDelete) return;
+        try {
+            await breakApi.delete(recordToDelete);
+            toast({
+                title: "Deleted",
+                description: "Break record deleted successfully",
+                variant: "success",
+            });
+            fetchHistory(true); // silent refresh
+        } catch (error) {
+            console.error("Delete failed:", error);
+            toast({
+                title: "Error",
+                description: "Failed to delete break record",
+                variant: "destructive",
+            });
+        } finally {
+            setDeleteDialogOpen(false);
+            setRecordToDelete(null);
+        }
+    };
 
     // Helper for key
     const formatDateKey = (dateStr) => {
@@ -117,7 +166,9 @@ export default function BreakHistoryPage() {
                     type: typeLabel,
                     duration: duration,
                     status: status,
-                    break_start: record.break_start // needed for sort
+                    break_start: record.break_start,
+                    break_end: record.break_end,
+                    break_type: record.break_type // raw type for editing
                 };
             }).sort((a, b) => new Date(b.break_start) - new Date(a.break_start));
 
@@ -250,6 +301,31 @@ export default function BreakHistoryPage() {
                                                         </div>
                                                     </div>
                                                 </div>
+                                                {user?.role === 'admin' && (
+                                                    <div className="flex gap-2 pt-2 border-t mt-2">
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="flex-1"
+                                                            onClick={() => {
+                                                                setEditingRecord(record);
+                                                                setIsEditDialogOpen(true);
+                                                            }}
+                                                        >
+                                                            <Edit className="h-4 w-4 mr-2" />
+                                                            Edit
+                                                        </Button>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                            onClick={() => handleDeleteRecord(record.id)}
+                                                        >
+                                                            <Trash2 className="h-4 w-4 mr-2" />
+                                                            Delete
+                                                        </Button>
+                                                    </div>
+                                                )}
                                             </CardContent>
                                         </Card>
                                     ))}
@@ -265,6 +341,7 @@ export default function BreakHistoryPage() {
                                                 <TableHead className="text-center">Break Type</TableHead>
                                                 <TableHead className="text-center">Duration</TableHead>
                                                 <TableHead className="text-center">Status</TableHead>
+                                                {user?.role === 'admin' && <TableHead className="text-center">Actions</TableHead>}
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -307,6 +384,30 @@ export default function BreakHistoryPage() {
                                                             </Badge>
                                                         )}
                                                     </TableCell>
+                                                    {user?.role === 'admin' && (
+                                                        <TableCell className="text-center">
+                                                            <div className="flex items-center justify-center gap-1">
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    onClick={() => {
+                                                                        setEditingRecord(record);
+                                                                        setIsEditDialogOpen(true);
+                                                                    }}
+                                                                >
+                                                                    <Edit className="h-4 w-4" />
+                                                                </Button>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                                    onClick={() => handleDeleteRecord(record.id)}
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </Button>
+                                                            </div>
+                                                        </TableCell>
+                                                    )}
                                                 </TableRow>
                                             ))}
                                         </TableBody>
@@ -317,6 +418,29 @@ export default function BreakHistoryPage() {
                     </CardContent>
                 </Card>
             </div>
+            <EditBreakDialog
+                record={editingRecord}
+                open={isEditDialogOpen}
+                onOpenChange={setIsEditDialogOpen}
+                onSuccess={() => fetchHistory(true)}
+            />
+
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete this break record. This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </DashboardLayout>
     );
 }

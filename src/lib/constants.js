@@ -3,13 +3,36 @@
 // API URL Configuration:
 // - Production Monolith: Set NEXT_PUBLIC_API_URL to "" (empty) or "/api"
 // - Production Separate: Set NEXT_PUBLIC_API_URL to "https://your-backend.onrender.com/api"
-// - Development: Falls back to localhost:8000/api
+// - Development: Falls back to same-hostname:8000/api (supports mobile/LAN access)
 export const API_BASE_URL = (() => {
     let envUrl = process.env.NEXT_PUBLIC_API_URL;
 
-    // If explicitly set to empty string or "/api" = monolith mode (same origin)
-    if (envUrl === '' || envUrl === '/api') {
-        return typeof window !== 'undefined' ? '/api' : 'http://localhost:8000/api';
+    // If empty, undefined, or "/api"
+    if (!envUrl || envUrl === '' || envUrl === '/api') {
+        if (typeof window !== 'undefined') {
+            const hostname = window.location.hostname;
+
+            // Development mode: localhost, 127.0.0.1, or LAN IP addresses (192.168.x.x, 10.x.x.x, etc.)
+            // Use the same hostname with Laravel's port 8000
+            const isLocalDev = hostname === 'localhost' ||
+                hostname === '127.0.0.1' ||
+                hostname.startsWith('192.168.') ||
+                hostname.startsWith('10.') ||
+                hostname.startsWith('172.16.') ||
+                hostname.startsWith('172.17.') ||
+                hostname.startsWith('172.18.') ||
+                hostname.startsWith('172.19.') ||
+                hostname.startsWith('172.2') ||
+                hostname.startsWith('172.30.') ||
+                hostname.startsWith('172.31.');
+
+            if (isLocalDev) {
+                // Use same hostname but Laravel's port (8000) for development
+                return `${window.location.protocol}//${hostname}:8000/api`;
+            }
+        }
+        // Production monolith: same-origin API
+        return '/api';
     }
 
     // If set to a full URL or hostname = separate services mode
@@ -32,11 +55,11 @@ export const API_BASE_URL = (() => {
         return envUrl;
     }
 
-    // Default: development mode (localhost with port 8000)
+    // Default: development mode (same-hostname with port 8000) — client only
     if (typeof window !== 'undefined') {
         return `${window.location.protocol}//${window.location.hostname}:8000/api`;
     }
-
+    // Server fallback when no env set (e.g. dev build)
     return 'http://localhost:8000/api';
 })();
 

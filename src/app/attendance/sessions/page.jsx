@@ -163,7 +163,8 @@ export default function AttendanceSessionsPage() {
         };
 
         fetchSessions();
-        const interval = setInterval(() => fetchSessions(true), 5000); // Poll every 5s
+        // Fallback polling every 60 seconds (WebSocket handles real-time updates)
+        const interval = setInterval(() => fetchSessions(true), 60000);
         return () => clearInterval(interval);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);

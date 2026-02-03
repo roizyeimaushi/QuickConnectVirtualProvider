@@ -3,6 +3,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Suspense } from "react";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { SettingsProvider } from "@/components/providers/settings-provider";
+import { SWRProvider } from "@/components/providers/swr-provider";
+import { RealTimeProvider } from "@/components/providers/realtime-provider";
 import { UrlHider } from "@/components/system/url-hider";
 import "./globals.css";
 
@@ -13,18 +15,19 @@ const inter = Inter({
 });
 
 export const metadata = {
-    title: "QuickConn Virtual | Enterprise Attendance Sheet System",
+    title: "QuickConn Virtual | Attendance Sheet System",
     description:
-        "QuickConn Virtual is a secure, enterprise-grade attendance sheet system for organizations, enabling administrators to manage employees, enforce 24-hour attendance schedules, and generate audit-ready reports with precision and efficiency.",
+        "QuickConn Virtual is a secure attendance sheet system for organizations, enabling administrators to manage employees, enforce 24-hour attendance schedules, and generate audit-ready reports with precision and efficiency.",
     keywords:
-        "attendance system, employee attendance, HR management, enterprise attendance, workforce tracking, QuickConn Virtual",
+        "attendance system, employee attendance, HR management, workforce tracking, QuickConn Virtual",
     authors: [{ name: "QuickConn Virtual" }],
     openGraph: {
-        title: "QuickConn Virtual | Enterprise Attendance Management",
+        title: "QuickConn Virtual | Attendance Management",
         description:
             "A professional attendance management platform designed for modern organizations with admin-controlled schedules and secure employee tracking.",
         type: "website",
     },
+    manifest: '/manifest.json',
 };
 
 
@@ -42,16 +45,21 @@ export default function RootLayout({ children }) {
             <body
                 className={`${inter.variable} font-sans antialiased`}
             >
-                <SettingsProvider>
-                    <AuthProvider>
-                        <Suspense fallback={null}>
-                            <UrlHider />
-                        </Suspense>
-                        {children}
-                        <Toaster />
-                    </AuthProvider>
-                </SettingsProvider>
+                <SWRProvider>
+                    <SettingsProvider>
+                        <AuthProvider>
+                            <RealTimeProvider>
+                                <Suspense fallback={null}>
+                                    <UrlHider />
+                                </Suspense>
+                                {children}
+                                <Toaster />
+                            </RealTimeProvider>
+                        </AuthProvider>
+                    </SettingsProvider>
+                </SWRProvider>
             </body>
         </html>
     );
 }
+

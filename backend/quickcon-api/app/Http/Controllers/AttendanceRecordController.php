@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\AttendanceRecord;
 use App\Models\AttendanceSession;
 use App\Models\AuditLog;
+use App\Events\AttendanceUpdated;
+use App\Events\BreakUpdated;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,8 +22,11 @@ class AttendanceRecordController extends Controller
     private function getToday(): string
     {
         $now = Carbon::now();
-        // If before 14:00 (2 PM), assume we are in the previous day's shift cycle (for Night Shift logic)
-        if ($now->hour < 14) {
+        // Customizable Shift Boundary (Default 14:00 for Night Shift Agencies)
+        // If current hour < Boundary, it counts as Previous Day
+        $boundary = (int) (Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
+        
+        if ($now->hour < $boundary) {
             return Carbon::yesterday()->toDateString();
         }
         return Carbon::today()->toDateString();
@@ -85,7 +90,9 @@ class AttendanceRecordController extends Controller
      */
     public function show(AttendanceRecord $attendanceRecord)
     {
-        return response()->json($attendanceRecord->load(['session.schedule', 'user']));
+        return response()->json($attendanceRecord->load(['session.schedule', 'user' => function ($q) {
+            $q->withTrashed();
+        }]));
     }
 
     /**
@@ -129,12 +136,12 @@ class AttendanceRecordController extends Controller
         // ============================================================
         // SETTINGS: Fetch Global Rules (consolidated into single query)
         // ============================================================
-        $settings = Setting::whereIn('key', ['allow_multi_checkin', 'grace_period', 'prevent_duplicate'])
+        $settings = Setting::whereIn('key', ['allow_multi_checkin', 'grace_period', 'prevent_duplicate_checkin'])
             ->pluck('value', 'key');
         
         $allowMultiCheckin = filter_var($settings->get('allow_multi_checkin', false), FILTER_VALIDATE_BOOLEAN);
         $globalGracePeriod = (int) ($settings->get('grace_period', 15) ?: 15);
-        $preventDuplicate = filter_var($settings->get('prevent_duplicate', true), FILTER_VALIDATE_BOOLEAN);
+        $preventDuplicate = filter_var($settings->get('prevent_duplicate_checkin', true), FILTER_VALIDATE_BOOLEAN);
 
         // ============================================================
         // RULE 0.5: Prevent Duplicate Time-ins (Block rapid clicks)
@@ -163,15 +170,26 @@ class AttendanceRecordController extends Controller
         // Shift End: 07:00 (next day)
         // Weekend: No work Saturday morning (Friday night ends Sat 07:00) and Sunday
         
+        // ============================================================
+        // RULE 0.6: Time-in Window (Dynamic based on Schedule)
+        // ============================================================
         $baseDate = Carbon::parse($today);
         
-        // Define Windows
-        $windowStart = $baseDate->copy()->setTime(18, 0, 0);          // Check-in opens
-        $shiftStart = $baseDate->copy()->setTime(23, 0, 0);           // Official shift start
-        $gracePeriodEnd = $baseDate->copy()->setTime(23, 15, 0);      // 15 min grace ends
-        $absentCutoff = $baseDate->copy()->addDay()->setTime(1, 0, 0); // Auto-absent after this
-        $windowClose = $baseDate->copy()->addDay()->setTime(1, 30, 0); // Check-in completely closes
-        $shiftEnd = $baseDate->copy()->addDay()->setTime(7, 0, 0);    // Shift ends
+        // Get Schedule Start Time from the Session (or default to 23:00 if missing)
+        $scheduleTimeIn = $session->schedule ? $session->schedule->time_in : '23:00:00';
+        $shiftStart = Carbon::parse($today . ' ' . $scheduleTimeIn);
+        
+        // Define Windows Relative to Shift Start
+        // Mimic legacy logic: 23:00 Start -> 18:00 Open (-5h), 01:30 Close (+2.5h)
+        $windowStart = $shiftStart->copy()->subHours(5);
+        $windowClose = $shiftStart->copy()->addHours(2)->addMinutes(30);
+        
+        // Grace Period
+        $gracePeriodEnd = $shiftStart->copy()->addMinutes($globalGracePeriod);
+        
+        // Shift End (Usually +8/9 hours, but we rely on schedule time_out)
+        // This variable was unused in logic but useful for context
+        // $shiftEnd = ...
         
         // ============================================================
         // WEEKEND CHECK: No work Saturday morning & Sunday
@@ -416,6 +434,9 @@ class AttendanceRecordController extends Controller
 
             DB::commit();
 
+            // Broadcast real-time update to all connected clients
+            event(new AttendanceUpdated($record, 'confirmed'));
+
             return response()->json([
                 'message' => 'Attendance confirmed successfully',
                 'record' => $record->load(['session.schedule', 'user']),
@@ -542,10 +563,14 @@ class AttendanceRecordController extends Controller
 
 
 
-        // Time Constraints (Official Rules)
+        // Time Constraints (Official Rules - Dynamic)
         $baseDate = Carbon::parse($today);
-        $windowStart = $baseDate->copy()->setTime(18, 0, 0);
-        $windowClose = $baseDate->copy()->addDay()->setTime(1, 30, 0);
+        
+        $scheduleTimeIn = $session->schedule ? $session->schedule->time_in : '23:00:00';
+        $shiftStart = Carbon::parse($today . ' ' . $scheduleTimeIn);
+        
+        $windowStart = $shiftStart->copy()->subHours(5);
+        $windowClose = $shiftStart->copy()->addHours(2)->addMinutes(30);
         
         $now = Carbon::now();
         
@@ -583,7 +608,9 @@ class AttendanceRecordController extends Controller
      */
     public function bySession($sessionId)
     {
-        $records = AttendanceRecord::with('user')
+        $records = AttendanceRecord::with(['user' => function ($q) {
+                $q->withTrashed();
+            }])
                                    ->where('session_id', $sessionId)
                                    ->orderBy('time_in', 'asc')
                                    ->get();
@@ -658,26 +685,41 @@ class AttendanceRecordController extends Controller
             ], 400);
         }
 
-        // AUTO-END BREAK: If on break, end it now
-        if ($attendanceRecord->break_start && !$attendanceRecord->break_end) {
-            $attendanceRecord->break_end = Carbon::now();
+        // AUTO-END BREAK: If on break (EmployeeBreak logic), end it now
+        $activeBreak = $attendanceRecord->activeBreak;
+        if ($activeBreak) {
+             $activeBreak->update([
+                 'break_end' => $now,
+                 'duration_minutes' => Carbon::parse($activeBreak->break_start)->diffInMinutes($now)
+             ]);
+             // Sync legacy columns just in case
+             $attendanceRecord->break_end = $now;
+        } elseif ($attendanceRecord->break_start && !$attendanceRecord->break_end) {
+             // Fallback for purely legacy records
+             $attendanceRecord->break_end = $now;
         }
 
-        $now = Carbon::now();
         $attendanceRecord->time_out = $now;
+        $attendanceRecord->save(); // Save time_out immediately to prevent race conditions
         
         // Calculate hours worked (subtracting break)
         $timeIn = Carbon::parse($attendanceRecord->time_in);
-        $diffInMinutes = $now->diffInMinutes($timeIn);
-
-        if ($attendanceRecord->break_start && $attendanceRecord->break_end) {
-            $breakStart = Carbon::parse($attendanceRecord->break_start);
-            $breakEnd = Carbon::parse($attendanceRecord->break_end);
-            $breakMinutes = $breakEnd->diffInMinutes($breakStart);
-            $diffInMinutes = max(0, $diffInMinutes - $breakMinutes);
+        $grossMinutes = $now->diffInMinutes($timeIn);
+        
+        // Calculate Total Break Duration from EmployeeBreak table (Single Source of Truth)
+        // This ensures multiple breaks and admin-edited breaks are accounted for.
+        $totalBreakMinutes = $attendanceRecord->breaks()->sum('duration_minutes');
+        
+        // Fallback: If no EmployeeBreaks found but Legacy columns exist (Old records), use Legacy
+        if ($totalBreakMinutes == 0 && $attendanceRecord->break_start && $attendanceRecord->break_end) {
+             $start = Carbon::parse($attendanceRecord->break_start);
+             $end = Carbon::parse($attendanceRecord->break_end);
+             $totalBreakMinutes = $end->diffInMinutes($start);
         }
 
-        $hoursWorked = round($diffInMinutes / 60, 2);
+        $netMinutes = max(0, $grossMinutes - $totalBreakMinutes);
+        $hoursWorked = round($netMinutes / 60, 2);
+        
         $attendanceRecord->hours_worked = $hoursWorked;
 
         // ============================================================
@@ -725,6 +767,9 @@ class AttendanceRecordController extends Controller
         }
 
         $attendanceRecord->save();
+
+        // Broadcast real-time update
+        event(new AttendanceUpdated($attendanceRecord, 'checked_out'));
 
         AuditLog::log(
             'check_out',
@@ -860,6 +905,9 @@ class AttendanceRecordController extends Controller
             'break_start' => $now,
         ]);
 
+        // Broadcast real-time break update
+        event(new BreakUpdated($attendanceRecord, 'started'));
+
         return response()->json([
             'message' => 'Break started',
             'record' => $attendanceRecord
@@ -949,6 +997,9 @@ class AttendanceRecordController extends Controller
                 }
             }
         }
+
+        // Broadcast real-time break update
+        event(new BreakUpdated($attendanceRecord, 'ended'));
 
         return response()->json([
             'message' => 'Break ended',

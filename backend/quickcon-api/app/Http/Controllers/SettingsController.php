@@ -36,13 +36,33 @@ class SettingsController extends Controller
     }
 
     /**
+     * Allowed setting keys (whitelist) - prevents arbitrary key creation.
+     */
+    private function getAllowedSettingKeys(): array
+    {
+        return [
+            'company_name', 'system_logo', 'timezone', 'language', 'date_format', 'time_format',
+            'grace_period', 'late_threshold', 'allow_multi_checkin', 'prevent_duplicate_checkin', 'auto_checkout',
+            'checkin_start', 'checkin_end', 'weekend_checkin', 'holiday_checkin',
+            'work_start', 'work_end', 'auto_absent_time', 'min_work_hours', 'allow_late_checkout', 'strict_mode',
+            'max_breaks', 'max_break_duration', 'auto_end_break', 'prevent_overlap_break',
+            'allow_overtime', 'min_overtime_minutes', 'overtime_rate', 'require_ot_approval', 'ot_rounding',
+            'break_duration', 'break_start_window', 'break_end_window', 'auto_resume', 'break_penalty',
+            'late_alerts', 'absent_alerts', 'break_alerts', 'notify_email', 'notify_sms', 'notify_inapp',
+            '2fa_enabled', 'session_timeout', 'max_login_attempts', 'pass_min_length', 'pass_special_chars',
+            'retention_policy',
+        ];
+    }
+
+    /**
      * Update settings.
      * Expects an array of key-value pairs.
-     * Creates settings that don't exist yet.
+     * Only allows whitelisted keys for new settings.
      */
     public function update(Request $request)
     {
-        $data = $request->all();
+        $allowedKeys = $this->getAllowedSettingKeys();
+        $data = array_intersect_key($request->all(), array_flip($allowedKeys));
         $updated = 0;
 
         foreach ($data as $key => $value) {
@@ -63,7 +83,7 @@ class SettingsController extends Controller
                 
                 Log::info("Setting updated: {$key} = {$value}");
             } else {
-                // Create the setting if it doesn't exist
+                // Create the setting only if key is in whitelist (already filtered above)
                 // Auto-detect type based on value
                 $type = 'string';
                 $storedValue = $value;
@@ -98,8 +118,9 @@ class SettingsController extends Controller
      */
     public function uploadLogo(Request $request)
     {
+        // SVG excluded - can contain scripts (XSS risk)
         $request->validate([
-            'logo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'logo' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         if ($request->file('logo')) {
@@ -162,8 +183,11 @@ class SettingsController extends Controller
             }
 
             \Illuminate\Support\Facades\DB::transaction(function () use ($data) {
-                // Disable FK checks for bulk restore
-                \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+                // Disable FK checks for bulk restore (MySQL only; PostgreSQL/SQLite don't use this)
+                $driver = \Illuminate\Support\Facades\DB::getDriverName();
+                if ($driver === 'mysql') {
+                    \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+                }
 
                 // 1. Settings (Upsert)
                 if (isset($data['settings'])) {
@@ -179,10 +203,18 @@ class SettingsController extends Controller
                     }
                 }
 
-                // 2. Users (Upsert)
+                // 2. Users (Upsert) - only safe fields, never role/password from backup (privilege escalation risk)
                 if (isset($data['users'])) {
-                    foreach ($data['users'] as $user) {
-                        \App\Models\User::updateOrCreate(['id' => $user['id']], $user);
+                    $safeUserFields = ['employee_id', 'first_name', 'last_name', 'email', 'position', 'avatar'];
+                    foreach ($data['users'] as $userData) {
+                        $id = $userData['id'] ?? null;
+                        if (!$id) continue;
+                        $safe = array_intersect_key($userData, array_flip($safeUserFields));
+                        $existing = \App\Models\User::find($id);
+                        if ($existing) {
+                            $existing->update($safe);
+                        }
+                        // Skip creating new users from backup (no password, security risk)
                     }
                 }
 
@@ -221,7 +253,9 @@ class SettingsController extends Controller
                     }
                 }
 
-                \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+                if ($driver === 'mysql') {
+                    \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+                }
 
                 // Log the restore
                 \App\Models\AuditLog::log('system_restore', 'System restored from backup file', \App\Models\AuditLog::STATUS_SUCCESS, auth()->id(), 'System', null);

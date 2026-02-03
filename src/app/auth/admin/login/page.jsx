@@ -55,7 +55,7 @@ export default function AdminLoginPage() {
         setLoading(true);
 
         try {
-            const result = await login({ email, password, remember });
+            const result = await login({ email, password, remember, login_type: 'admin' });
 
             if (result.role !== 'admin') {
                 setError("Access denied. This login is for administrators only.");
@@ -157,10 +157,10 @@ export default function AdminLoginPage() {
 
                 {/* Title */}
                 <h1 className="text-2xl sm:text-2xl font-bold text-white text-center mb-1 sm:mb-2">
-                    Welcome to QuickConn
+                    Welcome to <span className="text-[#22c55e]">QuickConn</span>
                 </h1>
                 <p className="text-white/70 text-xs sm:text-sm text-center mb-6 sm:mb-8">
-                    Sign in to access your administrator dashboard
+                    Sign in to access your administrator account
                 </p>
 
                 <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">

@@ -20,6 +20,7 @@ class AuthController extends Controller
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
+            'login_type' => 'nullable|string|in:admin,employee', // Optional: restrict login by role
         ]);
 
         // Security: Rate Limiting
@@ -69,6 +70,42 @@ class AuthController extends Controller
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
+        }
+
+        // Role-based login restriction
+        $loginType = $request->input('login_type');
+        if ($loginType) {
+            if ($loginType === 'employee' && $user->role === 'admin') {
+                // Admin trying to use employee login
+                AuditLog::logFailed(
+                    'login_failed',
+                    "Admin tried to login via employee portal: {$user->first_name} {$user->last_name}",
+                    $user->id,
+                    'User',
+                    $user->id,
+                    ['email' => $request->email, 'reason' => 'wrong_portal', 'login_type' => $loginType]
+                );
+                
+                throw ValidationException::withMessages([
+                    'email' => ['Access denied. Administrators must use the admin login portal.'],
+                ]);
+            }
+            
+            if ($loginType === 'admin' && $user->role !== 'admin') {
+                // Non-admin trying to use admin login
+                AuditLog::logFailed(
+                    'login_failed',
+                    "Non-admin tried to login via admin portal: {$user->first_name} {$user->last_name}",
+                    $user->id,
+                    'User',
+                    $user->id,
+                    ['email' => $request->email, 'reason' => 'wrong_portal', 'login_type' => $loginType]
+                );
+                
+                throw ValidationException::withMessages([
+                    'email' => ['Access denied. This login is for administrators only.'],
+                ]);
+            }
         }
 
         if ($user->status !== 'active') {
@@ -200,7 +237,29 @@ class AuthController extends Controller
 
     public function me(Request $request)
     {
-        return response()->json($request->user());
+        $user = $request->user();
+        
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
+        
+        // Get user's current schedule from their latest attendance record
+        $latestRecord = $user->attendanceRecords()
+            ->with('session.schedule')
+            ->orderBy('attendance_date', 'desc')
+            ->first();
+        
+        $schedule = $latestRecord?->session?->schedule;
+        
+        // Return user with schedule info
+        return response()->json([
+            'user' => array_merge($user->toArray(), [
+                'schedule' => $schedule ? [
+                    'id' => $schedule->id,
+                    'name' => $schedule->name,
+                ] : null
+            ])
+        ]);
     }
 
     public function refresh(Request $request)

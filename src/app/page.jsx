@@ -7,9 +7,8 @@ export default async function Home() {
     const token = cookieStore.get("quickcon_token");
 
     if (token) {
-        // User is authenticated, redirect to dashboard
-        // The actual role-based redirect will happen in the dashboard
-        redirect(ROUTES.ADMIN_DASHBOARD);
+        // User is authenticated, redirect to dashboard (client routes by role)
+        redirect("/dashboard");
     } else {
         // User is not authenticated, redirect to login
         redirect(ROUTES.LOGIN);

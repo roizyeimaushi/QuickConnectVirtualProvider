@@ -55,6 +55,16 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 function SessionDetailsSkeleton() {
     return (
@@ -118,6 +128,11 @@ export default function SessionDetailsPage() {
     const [recordToEdit, setRecordToEdit] = useState(null);
     const [editDialogOpen, setEditDialogOpen] = useState(false);
 
+    // Delete Dialog State
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [recordToDelete, setRecordToDelete] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
     const fetchSession = async (isPolling = false) => {
         if (!id) return;
 
@@ -152,28 +167,39 @@ export default function SessionDetailsPage() {
         }
     };
 
+    // Initial fetch
     useEffect(() => {
         fetchSession();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id]);
+
+    // Polling logic (fallback - WebSocket handles real-time updates)
+    useEffect(() => {
         // Disable polling when dialog is open to prevent overwriting edits/state
         if (!editDialogOpen) {
-            const interval = setInterval(() => fetchSession(true), 5000); // Poll every 5s
+            const interval = setInterval(() => fetchSession(true), 60000); // Fallback poll every 60s
             return () => clearInterval(interval);
         }
-    }, [id, editDialogOpen]);
+    }, [editDialogOpen]);
 
-    const handleDeleteRecord = async (recordId) => {
-        if (!confirm("Are you sure you want to delete this attendance record? This action cannot be undone.")) {
-            return;
-        }
+    const handleDeleteRecord = (record) => {
+        setRecordToDelete(record);
+        setDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!recordToDelete) return;
 
         try {
-            await attendanceApi.delete(recordId);
+            setIsDeleting(true);
+            await attendanceApi.delete(recordToDelete.id);
             toast({
                 title: "Deleted",
                 description: "Attendance record deleted successfully.",
                 variant: "success",
             });
             fetchSession(true);
+            setDeleteDialogOpen(false);
         } catch (error) {
             console.error("Delete failed:", error);
             toast({
@@ -181,6 +207,9 @@ export default function SessionDetailsPage() {
                 description: "Failed to delete record.",
                 variant: "destructive",
             });
+        } finally {
+            setIsDeleting(false);
+            setRecordToDelete(null);
         }
     };
 
@@ -205,6 +234,32 @@ export default function SessionDetailsPage() {
             color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
             icon: CheckCircle2,
         },
+        // Record Statuses (Matching History Page)
+        present: {
+            label: "Present",
+            color: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400",
+            icon: CheckCircle2,
+        },
+        late: {
+            label: "Late",
+            color: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+            icon: Timer,
+        },
+        absent: {
+            label: "Absent",
+            color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+            icon: AlertCircle,
+        },
+        excused: {
+            label: "Excused",
+            color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+            icon: CheckCircle2,
+        },
+        left_early: {
+            label: "Left Early",
+            color: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
+            icon: AlertCircle,
+        }
     };
 
     if (loading) {
@@ -352,17 +407,9 @@ export default function SessionDetailsPage() {
                                                 <div className="flex items-center gap-2">
                                                     <Badge
                                                         variant="outline"
-                                                        className={
-                                                            record.user?.status === 'inactive'
-                                                                ? "bg-red-50 text-red-700 border-red-200"
-                                                                : record.status === "present"
-                                                                    ? "bg-green-50 text-green-700 border-green-200"
-                                                                    : record.status === "late"
-                                                                        ? "bg-yellow-50 text-yellow-700 border-yellow-200"
-                                                                        : "bg-gray-50 text-gray-700 border-gray-200"
-                                                        }
+                                                        className={statusConfig[record.status] ? statusConfig[record.status].color : "bg-gray-50 text-gray-700 border-gray-200"}
                                                     >
-                                                        {record.user?.status === 'inactive' ? 'inactive' : record.status}
+                                                        {record.user?.status === 'inactive' ? 'inactive' : (statusConfig[record.status]?.label || record.status)}
                                                     </Badge>
 
                                                     <DropdownMenu>
@@ -380,7 +427,7 @@ export default function SessionDetailsPage() {
                                                                 <Pencil className="mr-2 h-4 w-4" /> Edit
                                                             </DropdownMenuItem>
                                                             <DropdownMenuSeparator />
-                                                            <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={() => handleDeleteRecord(record.id)}>
+                                                            <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={() => handleDeleteRecord(record)}>
                                                                 <Trash2 className="mr-2 h-4 w-4" /> Delete
                                                             </DropdownMenuItem>
                                                         </DropdownMenuContent>
@@ -484,17 +531,9 @@ export default function SessionDetailsPage() {
                                                     <TableCell className="text-center">
                                                         <Badge
                                                             variant="outline"
-                                                            className={
-                                                                record.user?.status === 'inactive'
-                                                                    ? "bg-red-50 text-red-700 border-red-200"
-                                                                    : record.status === "present"
-                                                                        ? "bg-green-50 text-green-700 border-green-200"
-                                                                        : record.status === "late"
-                                                                            ? "bg-yellow-50 text-yellow-700 border-yellow-200"
-                                                                            : "bg-gray-50 text-gray-700 border-gray-200"
-                                                            }
+                                                            className={statusConfig[record.status] ? statusConfig[record.status].color : "bg-gray-50 text-gray-700 border-gray-200"}
                                                         >
-                                                            {record.user?.status === 'inactive' ? 'inactive' : record.status}
+                                                            {record.user?.status === 'inactive' ? 'inactive' : (statusConfig[record.status]?.label || record.status)}
                                                         </Badge>
                                                     </TableCell>
                                                     <TableCell className="text-center text-xs text-muted-foreground">
@@ -532,7 +571,7 @@ export default function SessionDetailsPage() {
                                                             <Button
                                                                 variant="ghost"
                                                                 size="icon"
-                                                                onClick={() => handleDeleteRecord(record.id)}
+                                                                onClick={() => handleDeleteRecord(record)}
                                                             >
                                                                 <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
                                                             </Button>
@@ -563,6 +602,39 @@ export default function SessionDetailsPage() {
                     onSuccess={() => fetchSession(true)}
                 />
             )}
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the attendance record
+                            {recordToDelete && recordToDelete.user && ` for ${recordToDelete.user.first_name || recordToDelete.user.name}`}.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={(e) => {
+                                e.preventDefault();
+                                confirmDelete();
+                            }}
+                            disabled={isDeleting}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
+                            {isDeleting ? (
+                                <>
+                                    <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                    Deleting...
+                                </>
+                            ) : (
+                                "Delete"
+                            )}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </DashboardLayout>
     );
 }

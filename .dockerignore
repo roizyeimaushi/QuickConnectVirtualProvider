@@ -42,3 +42,22 @@ docker-compose.yml
 # IDE
 .idea
 .vscode
+
+# Backend debug/CLI scripts (exclude from production image)
+backend/quickcon-api/debug_*.php
+backend/quickcon-api/create_test_*.php
+backend/quickcon-api/insert_test_*.php
+backend/quickcon-api/reset_password.php
+backend/quickcon-api/reactivate_user.php
+backend/quickcon-api/dump_records.php
+backend/quickcon-api/manage_users.php
+backend/quickcon-api/get_email.php
+backend/quickcon-api/get_session_id.php
+backend/quickcon-api/reproduce_issue.php
+backend/quickcon-api/test_confirm.php
+backend/quickcon-api/test_status.php
+backend/quickcon-api/list_all_debug.php
+backend/quickcon-api/list_users.php
+backend/quickcon-api/error.json
+backend/quickcon-api/read_log.php
+backend/quickcon-api/check_records.php

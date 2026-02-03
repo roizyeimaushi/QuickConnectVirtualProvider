@@ -119,8 +119,8 @@ export default function EmployeesPage() {
 
 
     const fetchEmployees = async (search = "", isPolling = false) => {
+        if (!isPolling) setLoading(true);
         try {
-            // No loading state for search/filter - data updates seamlessly
             const params = {
                 search,
                 status: 'active',
@@ -153,7 +153,7 @@ export default function EmployeesPage() {
                 });
             }
         } finally {
-            // Only update first load state
+            if (!isPolling) setLoading(false);
             if (isFirstLoad) setIsFirstLoad(false);
         }
     };
@@ -350,7 +350,7 @@ export default function EmployeesPage() {
                                             {/* Header: Avatar, Name, Actions */}
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                                                    <Avatar className="h-12 w-12 flex-shrink-0">
+                                                    <Avatar className="h-12 w-12 shrink-0">
                                                         <AvatarImage src={employee.avatar} />
                                                         <AvatarFallback className="bg-primary/10 text-primary">
                                                             {getInitials(employee.first_name, employee.last_name)}
@@ -365,7 +365,7 @@ export default function EmployeesPage() {
                                                 </div>
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
                                                             <MoreHorizontal className="h-4 w-4" />
                                                         </Button>
                                                     </DropdownMenuTrigger>

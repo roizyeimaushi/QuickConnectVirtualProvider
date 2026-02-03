@@ -41,13 +41,13 @@ export default function BreakPage() {
                 const response = await breakApi.getStatus();
                 setBreakStatus(response);
             } catch (error) {
-                console.error("Failed to fetch break status:", error);
-                // Fallback to dashboard data
+                // API fetch failed - likely using fallback data
+                // Suppressing console error as requested since fallback handles it
                 if (dashboardResponse.break_status) {
                     setBreakStatus({
                         ...dashboardResponse.break_status,
                         has_checked_in: !!dashboardResponse.today_record,
-                        has_checked_out: dashboardResponse.today_record?.time_out !== null,
+                        has_checked_out: dashboardResponse.today_record ? dashboardResponse.today_record.time_out !== null : false,
                     });
                 }
             }
@@ -252,7 +252,7 @@ export default function BreakPage() {
                             </div>
                         ) : hasCheckedOut ? (
                             <div className="text-center p-4 bg-muted/50 rounded-lg">
-                                <p className="text-muted-foreground">You have checked out for the day.</p>
+                                <p className="text-muted-foreground">You have Timed Out for the day.</p>
                             </div>
                         ) : (
                             <div className="space-y-4">
@@ -260,7 +260,7 @@ export default function BreakPage() {
                                 <BreakTypeCard
                                     type="Coffee"
                                     label="Coffee Break"
-                                    duration="30 min"
+                                    duration="15 min"
                                     icon={<Coffee className="h-4 w-4" />}
                                     isUsed={breakStatus?.coffee_used}
                                     isActive={isOnBreak && breakStatus?.current_break?.break_type === 'Coffee'}

@@ -62,20 +62,16 @@ class ReportController extends Controller
             }
 
             // FIX: Calculate stats based on DATE, not just the active session
-            // This ensures stats are visible even if session is closed/locked
-            $presentToday = AttendanceRecord::where('attendance_date', $today)
-                                            ->where('status', 'present')
-                                            ->count();
-                                            
-            $lateToday = AttendanceRecord::where('attendance_date', $today)
-                                         ->where('status', 'late')
-                                         ->count();
+            // Fetch all records for today once to avoid multiple queries
+            $todayRecords = AttendanceRecord::where('attendance_date', $today)->get();
+            
+            $presentToday = $todayRecords->whereIn('status', ['present', 'left_early'])->count();
+            $lateToday = $todayRecords->where('status', 'late')->count();
+            $manualAbsentToday = $todayRecords->whereIn('status', ['absent', 'excused'])->count();
                                          
-            $confirmedCount = $presentToday + $lateToday;
+            $confirmedCount = $presentToday + $lateToday + $manualAbsentToday;
             
             // --- ABSENT vs PENDING Logic ---
-            // Pending: Employees who haven't timed in, but the window is still OPEN
-            // Absent: Employees who haven't timed in, and the window is CLOSED
             
             $absentToday = 0;
             $pendingToday = 0;
@@ -84,25 +80,24 @@ class ReportController extends Controller
             // Official Rule: Absent cutoff at 01:00 AM (Next Day)
             $windowClose = Carbon::parse($today)->addDay()->setTime(1, 0, 0);
             
-            // LOGIC FIX:
-            // 1. If there is an ACTIVE session running, people are PENDING (they can still arrive).
-            // 2. If the session is LOCKED or NO SESSION, we rely on the Time Window logic.
-            
             $isSessionActive = $todaySession && $todaySession->status === 'active';
 
             if ($isSessionActive) {
                 // Session is open -> Everyone remaining is PENDING
-                $absentToday = 0;
+                $autoAbsent = 0;
                 $pendingToday = $remainingCount;
             } elseif (Carbon::now()->gt($windowClose)) {
                 // Window Closed AND No Active Session -> Everyone remaining is ABSENT
-                $absentToday = $remainingCount;
+                $autoAbsent = $remainingCount;
                 $pendingToday = 0;
             } else {
                 // Window still valid -> Everyone remaining is PENDING
-                $absentToday = 0;
+                $autoAbsent = 0;
                 $pendingToday = $remainingCount;
             }
+            
+            // Total Absent = Manual Absent + Auto Absent
+            $absentToday = $manualAbsentToday + $autoAbsent;
 
             $activeSessions = AttendanceSession::where('status', 'active')->count();
 
@@ -150,10 +145,20 @@ class ReportController extends Controller
         $now = Carbon::now();
         
         // Use consistent date logic with AttendanceRecordController
-        // If before 14:00 (2 PM), we're still in previous day's shift cycle
-        $today = $now->hour < 14 
-            ? Carbon::yesterday()->toDateString() 
-            : Carbon::today()->toDateString();
+        // Priority: Check for session on REAL today. If none, fall back to "Yesterday" logic (for overnight shifts)
+        $realToday = Carbon::today()->toDateString();
+        $fallbackDate = $now->hour < 14 ? Carbon::yesterday()->toDateString() : $realToday;
+
+        $sessionForToday = AttendanceSession::with('schedule')
+            ->whereDate('date', $realToday)
+            ->whereIn('status', ['active', 'locked'])
+            ->first();
+
+        // If today has a session, force TODAY. Otherwise fallback.
+        $today = $sessionForToday ? $realToday : $fallbackDate; 
+        
+        // Pre-store this for later use to avoid double query
+        $preloadedSession = $sessionForToday;
 
         // ============================================================
         // WEEKEND CHECK: No work on Saturday & Sunday
@@ -417,30 +422,35 @@ class ReportController extends Controller
             }
         }
         
-        // 2. Time Validation (The Core Logic Fix)
+        // 2. Time Validation (Dynamic Window based on Schedule)
         if ($isRecordClear && $todaySession) {
             $now = Carbon::now();
             $sessionDate = Carbon::parse($todaySession->date->format('Y-m-d'));
             
-            // Construct the Strict Check-In Window for THIS session
+            // Get Schedule Times
+            $schedule = $todaySession->schedule;
+            
+            // Start: Official 18:00 Opening
+            // Use static 18:00 start to match AttendanceRecordController rule (overriding dynamic shift-3h logic)
             $windowOpen = $sessionDate->copy()->setTime(18, 0, 0);
-            $windowClose = $sessionDate->copy()->addDay()->setTime(1, 30, 0);
             
-            
-            // Debug Log
-            // \Illuminate\Support\Facades\Log::info("Strict Check-in Window", [
-            //    'now' => $now->toDateTimeString(),
-            //    'open' => $windowOpen->toDateTimeString(),
-            //    'close' => $windowClose->toDateTimeString(),
-            // ]);
-            
+            // End: Shift End + Grace (e.g. 4 hours after shift end)
+            // Handle Overnight
+            $shiftEnd = Carbon::parse($sessionDate->format('Y-m-d') . ' ' . $schedule->time_out);
+            if ($schedule->is_overnight || $shiftEnd->lt($shiftStart)) {
+                $shiftEnd->addDay();
+            }
+            // Strict Check-In Limit: Allow check-in until shift ends (or +4 hours if you want lenient)
+            // For now, let's say you can check IN until the shift ends. 
+            $checkInClose = $shiftEnd->copy(); 
+
             if ($now->lt($windowOpen)) {
                 $canConfirm = false;
                 $checkInMessage = "Check-in opens at " . $windowOpen->format('H:i');
                 $checkInReason = "too_early";
-            } elseif ($now->gt($windowClose)) {
+            } elseif ($now->gt($checkInClose)) {
                 $canConfirm = false;
-                $checkInMessage = "Check-in closed at " . $windowClose->format('H:i');
+                $checkInMessage = "Check-in closed at " . $checkInClose->format('H:i');
                 $checkInReason = "too_late";
             } else {
                 // We are inside the window!
@@ -610,65 +620,105 @@ class ReportController extends Controller
 
     public function dailyReport($date)
     {
-        // Efficient Stats Calculation
-        $baseQuery = AttendanceRecord::where('attendance_date', $date);
+        // 1. Summary Stats (Keeping robust logic)
+        $baseRecordsQuery = AttendanceRecord::where('attendance_date', $date);
         
+        $totalEmployees = User::where('role', 'employee')->where('status', 'active')->count();
+        $recordsCount = (clone $baseRecordsQuery)->count();
+
+        $present = (clone $baseRecordsQuery)->whereIn('status', ['present', 'left_early'])->count();
+        $late = (clone $baseRecordsQuery)->where('status', 'late')->count();
+        $excused = (clone $baseRecordsQuery)->where('status', 'excused')->count();
+        $explicitAbsent = (clone $baseRecordsQuery)->where('status', 'absent')->count();
+        $explicitPending = (clone $baseRecordsQuery)->where('status', 'pending')->count();
+        
+        $unaccounted = max(0, $totalEmployees - $recordsCount);
+        
+        $isPast = Carbon::parse($date)->lt(Carbon::today());
+        
+        $finalAbsent = $explicitAbsent + ($isPast ? $unaccounted : 0);
+        $finalPending = $explicitPending + (!$isPast ? $unaccounted : 0);
+
         $summary = [
-            'total' => (clone $baseQuery)->count(),
-            'present' => (clone $baseQuery)->where('status', 'present')->count(),
-            'late' => (clone $baseQuery)->where('status', 'late')->count(),
-            'absent' => (clone $baseQuery)->where('status', 'absent')->count(),
-            'pending' => (clone $baseQuery)->where('status', 'pending')->count(),
+            'total' => $totalEmployees, // Updated to show Total Expectation
+            'total_employees' => $totalEmployees,
+            'present' => $present,
+            'late' => $late,
+            'excused' => $excused,
+            'absent' => $finalAbsent,
+            'pending' => $finalPending,
         ];
 
-        // Paginate and Transform
-        $perPage = request()->input('per_page', 20); // Use helper request() since we didn't inject Request $request in method signature
+        // 2. Fetch Employees List (Hydrated with Records)
+        $perPage = request()->input('per_page', 20);
         
-        $paginator = (clone $baseQuery)
-            ->with(['user' => function ($query) {
-                $query->withTrashed();
-            }, 'session.schedule'])
-            ->orderBy('created_at', 'desc') // Order by check-in time effectively
+        $paginator = User::where('role', 'employee')
+            ->where('status', 'active') // Show only active employees
+            ->with(['attendanceRecords' => function ($query) use ($date) {
+                $query->where('attendance_date', $date)
+                      ->with('session.schedule');
+            }])
+            ->orderBy('first_name')
             ->paginate($perPage);
 
-        // Transform the paginated collection
-        // Note: We modifying the 'data' part of the paginator response manually in the frontend or we can return the paginator with mapped items.
-        // It's cleaner to return the paginator and let it handle the data array structure.
-        
-        $paginator->getCollection()->transform(function ($record) {
-            // Calculate hours worked
-            $hours = null;
-            if ($record->time_in && $record->time_out) {
-                $totalMinutes = $record->time_in->diffInMinutes($record->time_out);
-                // Subtract break time if applicable
-                if ($record->break_start && $record->break_end) {
-                    $breakMinutes = $record->break_start->diffInMinutes($record->break_end);
-                    $totalMinutes -= $breakMinutes;
-                }
-                $hrs = floor($totalMinutes / 60);
-                $mins = $totalMinutes % 60;
-                $hours = sprintf('%d:%02d', $hrs, $mins);
-            }
+        // Transform logic
+        $paginator->getCollection()->transform(function ($user) use ($date, $isPast) {
+            $record = $user->attendanceRecords->first(); // Get record for this date
             
-             return [
-                'id' => $record->id,
-                'employee_id' => $record->user->employee_id ?? 'N/A',
-                'name' => $record->user->full_name ?? 'Unknown',
-                'schedule' => $record->session?->schedule?->name ?? 'N/A',
-                'time_in' => $record->time_in?->format('H:i'),
-                'break_time' => $record->break_start?->format('H:i'),
-                'time_out' => $record->time_out?->format('H:i'),
-                'hours' => $hours,
-                'status' => $record->status,
-                'minutes_late' => $record->minutes_late,
-                'attendance_date' => $record->attendance_date->toDateString(),
-            ];
+            if ($record) {
+                // Calculate hours worked (Reuse valid logic)
+                $hours = null;
+                if ($record->time_in && $record->time_out) {
+                    $totalMinutes = $record->time_in->diffInMinutes($record->time_out);
+                    // Subtract break time
+                    if ($record->break_start && $record->break_end) {
+                        $breakMinutes = $record->break_start->diffInMinutes($record->break_end);
+                        $totalMinutes -= $breakMinutes;
+                    }
+                    $hrs = floor($totalMinutes / 60);
+                    $mins = $totalMinutes % 60;
+                    $hours = sprintf('%d:%02d', $hrs, $mins);
+                }
+                
+                return [
+                    'id' => $record->id,
+                    'is_virtual' => false,
+                    'employee_id' => $user->employee_id ?? 'N/A',
+                    'name' => $user->full_name,
+                    'schedule' => $record->session?->schedule?->name ?? 'N/A',
+                    'time_in' => $record->time_in?->format('H:i'),
+                    'break_time' => $record->break_start?->format('H:i'),
+                    'time_out' => $record->time_out?->format('H:i'),
+                    'hours' => $hours,
+                    'status' => $record->status,
+                    'minutes_late' => $record->minutes_late,
+                    'attendance_date' => $record->attendance_date->toDateString(),
+                ];
+            } else {
+                // Virtual Record for Pending/Absent
+                $virtualStatus = $isPast ? 'absent' : 'pending';
+                
+                return [
+                    'id' => 'virtual_' . $user->id,
+                    'is_virtual' => true,
+                    'employee_id' => $user->employee_id ?? 'N/A',
+                    'name' => $user->full_name,
+                    'schedule' => '-',
+                    'time_in' => '-', // Or null? Frontend handles strings better usually
+                    'break_time' => '-',
+                    'time_out' => '-',
+                    'hours' => '-',
+                    'status' => $virtualStatus,
+                    'minutes_late' => 0,
+                    'attendance_date' => $date,
+                ];
+            }
         });
 
         return response()->json([
             'date' => $date,
             'summary' => $summary,
-            'records' => $paginator, // Returns Paginator object with transformed valus
+            'records' => $paginator, 
         ]);
     }
 
@@ -677,9 +727,12 @@ class ReportController extends Controller
         $startDate = Carbon::create($year, $month, 1)->startOfMonth();
         $endDate = $startDate->copy()->endOfMonth();
 
-        $employees = User::where('role', 'employee')
-                         ->where('status', 'active')
+        $employees = User::withTrashed()
+                         ->where('role', 'employee')
                          ->get();
+
+        // Calculate total expected sessions (Working Days)
+        $workingDays = AttendanceSession::whereBetween('date', [$startDate, $endDate])->where('status', '!=', 'cancelled')->count();
 
         $summary = [];
 
@@ -688,22 +741,40 @@ class ReportController extends Controller
                 ->whereBetween('attendance_date', [$startDate, $endDate])
                 ->get();
 
-            $present = $records->where('status', 'present')->count();
+            // Status Counts
+            $present = $records->whereIn('status', ['present', 'left_early'])->count();
             $late = $records->where('status', 'late')->count();
-            $absent = $records->where('status', 'absent')->count();
-            $total = $present + $late + $absent;
+            $excused = $records->where('status', 'excused')->count();
+            $explicitAbsent = $records->where('status', 'absent')->count();
+            
+            // Calculate missing records (Implicit Absent)
+            // If an employee has no record for a working session, they are absent.
+            $totalRecorded = $records->count();
+            $missing = max(0, $workingDays - $totalRecorded);
+            
+            $totalAbsent = $explicitAbsent + $missing;
+
+            // Attendance Rate Calculation
+            // Rate = (Present + Late) / Working Days * 100
+            // We include 'left_early' in $present. 
+            // We exclude 'excused' from the numerator (they didn't attend), but keep in denominator (expected).
+            
+            $attendedCount = $present + $late;
+            
+            $attendanceRate = $workingDays > 0 
+                ? round(($attendedCount / $workingDays) * 100, 1) 
+                : ($totalRecorded > 0 ? 100 : 0); // Fallback if 0 working days defined but records exist
 
             $summary[] = [
                 'employee_id' => $employee->employee_id,
                 'name' => $employee->full_name,
                 'present' => $present,
                 'late' => $late,
-                'absent' => $absent,
-                'attendance_rate' => $total > 0 ? round((($present + $late) / $total) * 100, 1) : 0,
+                'excused' => $excused,
+                'absent' => $totalAbsent,
+                'attendance_rate' => $attendanceRate,
             ];
         }
-
-        $workingDays = AttendanceSession::whereBetween('date', [$startDate, $endDate])->count();
 
         return response()->json([
             'year' => $year,
@@ -716,7 +787,7 @@ class ReportController extends Controller
 
     public function employeeReport($employeeId, Request $request)
     {
-        $employee = User::where('employee_id', $employeeId)->firstOrFail();
+        $employee = User::withTrashed()->where('employee_id', $employeeId)->firstOrFail();
 
         $baseQuery = AttendanceRecord::where('user_id', $employee->id);
 

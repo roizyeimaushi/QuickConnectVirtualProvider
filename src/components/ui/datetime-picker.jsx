@@ -12,22 +12,29 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 export function DateTimePicker({ value, onChange, placeholder = "Pick a date" }) {
     const [date, setDate] = React.useState(value ? new Date(value) : undefined);
-    // Parse initial time
-    const initialDate = value ? new Date(value) : null;
-    const [selectedHour, setSelectedHour] = React.useState(initialDate ? initialDate.getHours() : 0);
-    const [selectedMinute, setSelectedMinute] = React.useState(initialDate ? initialDate.getMinutes() : 0);
+    const [time, setTime] = React.useState(
+        value ? format(new Date(value), "HH:mm") : "00:00"
+    );
 
     // Sync internal state with external value prop
     React.useEffect(() => {
         if (value) {
             const d = new Date(value);
             setDate(d);
-            setSelectedHour(d.getHours());
-            setSelectedMinute(d.getMinutes());
+            setTime(format(d, "HH:mm"));
+        } else {
+            setDate(undefined);
+            setTime("00:00");
         }
     }, [value]);
 
@@ -37,40 +44,45 @@ export function DateTimePicker({ value, onChange, placeholder = "Pick a date" })
             onChange(null);
             return;
         }
+
         setDate(selectedDate);
-        updateDateTime(selectedDate, selectedHour, selectedMinute);
+        updateDateTime(selectedDate, time);
     };
 
     const handleTimeChange = (type, val) => {
-        let newHour = selectedHour;
-        let newMinute = selectedMinute;
+        const [currentH, currentM] = time.split(':').map(Number);
+        let newH = currentH;
+        let newM = currentM;
 
-        if (type === "hour") {
-            setSelectedHour(val);
-            newHour = val;
-        } else {
-            setSelectedMinute(val);
-            newMinute = val;
+        if (type === 'hour') {
+            newH = parseInt(val);
+        } else if (type === 'minute') {
+            newM = parseInt(val);
         }
 
+        const newTimeStr = `${newH.toString().padStart(2, '0')}:${newM.toString().padStart(2, '0')}`;
+        setTime(newTimeStr);
         if (date) {
-            updateDateTime(date, newHour, newMinute);
+            updateDateTime(date, newTimeStr);
         }
     };
 
-    const updateDateTime = (selectedDate, hour, minute) => {
-        if (!selectedDate) return;
+    // 24-hour format: 0-23
+    const hours24 = Array.from({ length: 24 }, (_, i) => i);
+    const minutes = Array.from({ length: 60 }, (_, i) => i);
 
+    const updateDateTime = (selectedDate, selectedTime) => {
+        if (!selectedDate || !selectedTime) return;
+
+        const [hours, minutes] = selectedTime.split(":").map(Number);
         const newDateTime = new Date(selectedDate);
-        newDateTime.setHours(hour);
-        newDateTime.setMinutes(minute);
+        newDateTime.setHours(hours);
+        newDateTime.setMinutes(minutes);
 
         // Pass ISO string back to parent
+        // Format: YYYY-MM-DDTHH:mm
         onChange(format(newDateTime, "yyyy-MM-dd'T'HH:mm"));
     };
-
-    const hours = Array.from({ length: 24 }, (_, i) => i);
-    const minutes = Array.from({ length: 60 }, (_, i) => i);
 
     return (
         <Popover>
@@ -86,14 +98,13 @@ export function DateTimePicker({ value, onChange, placeholder = "Pick a date" })
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {date ? (
                             <span>
-                                {format(date, "yyyy-MM-dd")}
-                                <span className="text-muted-foreground mx-1">at</span>
-                                {selectedHour.toString().padStart(2, '0')}:{selectedMinute.toString().padStart(2, '0')}
+                                {format(date, "yyyy-MM-dd")} <span className="text-muted-foreground">at</span> {format(date, "HH:mm")}
                             </span>
                         ) : (
                             <span>{placeholder}</span>
                         )}
                     </span>
+                    {/* Consistent Chevron Down Style */}
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="24"
@@ -110,51 +121,63 @@ export function DateTimePicker({ value, onChange, placeholder = "Pick a date" })
                     </svg>
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 flex flex-col md:flex-row" align="start">
-                <div className="border-b md:border-b-0 md:border-r border-border">
+            <PopoverContent
+                className="w-auto p-0 max-h-[80vh] overflow-auto"
+                align="start"
+                sideOffset={4}
+            >
+                <div className="flex flex-col md:flex-row">
                     <Calendar
                         mode="single"
                         selected={date}
                         onSelect={handleDateSelect}
                         initialFocus
+                        className="border-b md:border-b-0 md:border-r border-border"
                     />
-                </div>
-                <div className="flex divide-x border-border h-[200px] md:h-[300px] w-full">
-                    {/* Hours Column */}
-                    <ScrollArea className="w-20 md:w-24">
-                        <div className="flex flex-col p-2 gap-1">
-                            <div className="text-xs font-medium text-center text-muted-foreground mb-2">Hours</div>
-                            {hours.map((hour) => (
-                                <Button
-                                    key={hour}
-                                    variant={selectedHour === hour ? "default" : "ghost"}
-                                    size="sm"
-                                    className="w-full"
-                                    onClick={() => handleTimeChange("hour", hour)}
-                                >
-                                    {hour.toString().padStart(2, '0')}
-                                </Button>
-                            ))}
+                    <div className="p-3 flex flex-col gap-2 min-w-[120px]">
+                        <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm font-medium">Time (24h)</span>
                         </div>
-                    </ScrollArea>
-
-                    {/* Minutes Column */}
-                    <ScrollArea className="w-20 md:w-24">
-                        <div className="flex flex-col p-2 gap-1">
-                            <div className="text-xs font-medium text-center text-muted-foreground mb-2">Minutes</div>
-                            {minutes.map((minute) => (
-                                <Button
-                                    key={minute}
-                                    variant={selectedMinute === minute ? "default" : "ghost"}
-                                    size="sm"
-                                    className="w-full"
-                                    onClick={() => handleTimeChange("minute", minute)}
+                        <div className="flex flex-row gap-2 items-end">
+                            <div className="flex flex-col gap-1">
+                                <span className="text-[10px] text-muted-foreground uppercase text-center">Hour</span>
+                                <Select
+                                    value={time.split(':')[0]}
+                                    onValueChange={(val) => handleTimeChange('hour', val)}
                                 >
-                                    {minute.toString().padStart(2, '0')}
-                                </Button>
-                            ))}
+                                    <SelectTrigger className="w-[60px] h-9">
+                                        <SelectValue placeholder="Hr" />
+                                    </SelectTrigger>
+                                    <SelectContent position="popper" className="max-h-[200px]">
+                                        {hours24.map((h) => (
+                                            <SelectItem key={h} value={h.toString()}>
+                                                {h.toString().padStart(2, '0')}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <span className="text-[10px] text-muted-foreground uppercase text-center">Min</span>
+                                <Select
+                                    value={parseInt(time.split(':')[1]).toString()}
+                                    onValueChange={(val) => handleTimeChange('minute', val)}
+                                >
+                                    <SelectTrigger className="w-[60px] h-9">
+                                        <SelectValue placeholder="Min" />
+                                    </SelectTrigger>
+                                    <SelectContent position="popper" className="max-h-[200px]">
+                                        {minutes.map((m) => (
+                                            <SelectItem key={m} value={m.toString()}>
+                                                {m.toString().padStart(2, '0')}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
-                    </ScrollArea>
+                    </div>
                 </div>
             </PopoverContent>
         </Popover>

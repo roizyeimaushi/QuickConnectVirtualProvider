@@ -282,8 +282,8 @@ export function getInitials(firstName, lastName) {
         return `${first}${last}`;
     }
 
-    // Fallback for system/unknown users
-    return 'SY';
+    // Fallback for unknown users
+    return '?';
 }
 
 /**

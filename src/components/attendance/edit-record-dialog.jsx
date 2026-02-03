@@ -84,14 +84,14 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[500px]">
-                <DialogHeader className="items-center sm:text-center">
+            <DialogContent className="max-w-md w-full">
+                <DialogHeader>
                     <DialogTitle>Edit Attendance Record</DialogTitle>
-                    <DialogDescription className="text-center">
+                    <DialogDescription>
                         Modify attendance details. All changes are logged.
                     </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4 py-4">
+                <form onSubmit={handleSubmit} className="space-y-3 py-2">
                     {/* ... form fields ... */}
                     <div className="grid gap-2">
                         <Label htmlFor="status">Status</Label>
@@ -112,7 +112,7 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                         </Select>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-3">
                         <div className="grid gap-2">
                             <Label htmlFor="time_in">Time In</Label>
                             <DateTimePicker
@@ -131,7 +131,7 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-3">
                         <div className="grid gap-2">
                             <Label htmlFor="break_start">Break Start</Label>
                             <DateTimePicker
@@ -166,7 +166,14 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                             Cancel
                         </Button>
                         <Button type="submit" disabled={loading}>
-                            {loading ? "Saving..." : "Save Changes"}
+                            {loading ? (
+                                <>
+                                    <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                    Saving...
+                                </>
+                            ) : (
+                                "Save Changes"
+                            )}
                         </Button>
                     </DialogFooter>
                 </form>

@@ -91,8 +91,8 @@ export default function BreakMonitorPage() {
 
     useEffect(() => {
         fetchActiveBreaks();
-        // Set up polling for live updates
-        const interval = setInterval(() => fetchActiveBreaks(true), 5000); // Poll every 5s
+        // Fallback polling every 30 seconds (WebSocket handles real-time updates)
+        const interval = setInterval(() => fetchActiveBreaks(true), 30000);
         return () => clearInterval(interval);
     }, []);
 

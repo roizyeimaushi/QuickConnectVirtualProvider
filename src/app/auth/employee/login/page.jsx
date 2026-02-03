@@ -30,6 +30,16 @@ export default function EmployeeLoginPage() {
     const router = useRouter();
     const { toast } = useToast();
 
+    // Load saved credentials from localStorage on mount
+    useEffect(() => {
+        const savedEmail = localStorage.getItem("employee_remembered_email");
+        const savedRemember = localStorage.getItem("employee_remember_me") === "true";
+        if (savedEmail && savedRemember) {
+            setEmail(savedEmail);
+            setRemember(true);
+        }
+    }, []);
+
     useEffect(() => {
         if (isAuthenticated) {
             if (isAdmin) {
@@ -46,13 +56,22 @@ export default function EmployeeLoginPage() {
         setLoading(true);
 
         try {
-            const result = await login({ email, password, remember });
+            const result = await login({ email, password, remember, login_type: 'employee' });
 
             // Check if user is employee
             if (result.role !== 'employee') {
                 setError("Access denied. This login is for employees only.");
                 setShowErrorModal(true);
                 return;
+            }
+
+            // Save to localStorage if Remember me is checked
+            if (remember) {
+                localStorage.setItem("employee_remembered_email", email);
+                localStorage.setItem("employee_remember_me", "true");
+            } else {
+                localStorage.removeItem("employee_remembered_email");
+                localStorage.removeItem("employee_remember_me");
             }
 
             toast({
@@ -128,7 +147,7 @@ export default function EmployeeLoginPage() {
                     <div className="absolute inset-0 z-10 flex items-center justify-center p-4 sm:p-6 lg:p-8">
                         <div className="text-center px-4 sm:px-8 lg:px-12">
                             <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-3xl font-bold leading-tight text-white drop-shadow-lg mb-2 sm:mb-4 lg:mb-6">
-                                Welcome to QuickConn Virtual
+                                Welcome to <span className="text-[#22c55e]">QuickConn Virtual</span>
                             </h2>
                             <p className="text-white/90 text-xs sm:text-sm md:text-base lg:text-lg leading-relaxed max-w-sm sm:max-w-md mx-auto drop-shadow-md">
                                 Track your attendance, view schedules, and manage your work records in one convenient portal.

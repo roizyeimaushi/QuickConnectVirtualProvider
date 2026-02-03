@@ -141,7 +141,8 @@ export function NotificationsPopover() {
                 setUnreadCount(regularUnread + systemUnread);
             }
         } catch (error) {
-            if (error?.status !== 401) {
+            // Suppress network errors completely in this component to avoid spam
+            if (error?.status !== 401 && !error?.message?.includes('Network error')) {
                 console.error("Failed to fetch notifications:", error.message || error);
             }
         }
@@ -333,7 +334,18 @@ export function NotificationsPopover() {
     };
 
     // Combine system notifications with regular notifications
-    const allNotifications = [...SYSTEM_NOTIFICATIONS, ...notifications];
+    // User requested Admin notifications to show latest alerts ABOVE system messages
+    const sortedRealNotifications = [...notifications].sort((a, b) => {
+        return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+    });
+
+    let allNotifications;
+    if (isAdmin) {
+        allNotifications = [...sortedRealNotifications, ...SYSTEM_NOTIFICATIONS];
+    } else {
+        // Default behavior for employees (System messages first)
+        allNotifications = [...SYSTEM_NOTIFICATIONS, ...sortedRealNotifications];
+    }
 
     return (
         <Popover open={open} onOpenChange={setOpen}>

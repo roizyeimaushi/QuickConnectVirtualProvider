@@ -9,7 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/components/providers/auth-provider";
-import { attendanceApi, reportsApi } from "@/lib/api";
+import { attendanceApi, reportsApi, breakApi } from "@/lib/api";
 import { formatDate, formatTime24, formatTime12, getCurrentDate, getCurrentTime, isSameDay } from "@/lib/utils";
 import {
     CheckCircle2,
@@ -101,8 +101,8 @@ function TodayStatusCard({ user, session, record, breakStatus, loading, constrai
     // Strict Logic for Button Enabling
     const canCheckIn = !hasCheckedIn && constraints?.allowed !== false;
     // Break allowed if not checked out and not currently on break
-    // REMOVED hasCheckedIn check -> "Always Available" requests allows breaking (and implicitly timing in)
-    const canStartBreak = !hasCheckedOut && !isBreakActive;
+    // Respect backend can_start status if available
+    const canStartBreak = !hasCheckedOut && !isBreakActive && (breakStatus?.can_start !== false);
     const canEndBreak = isBreakActive;
 
     // Time out allowed even if on break (Backend auto-ends break)
@@ -125,22 +125,34 @@ function TodayStatusCard({ user, session, record, breakStatus, loading, constrai
         statusColor = "text-amber-600 bg-amber-100";
         headerColor = "bg-amber-600";
         StatusIcon = Coffee;
-    } else if (hasCheckedOut) {
-        statusText = "PRESENT"; // Completed
-        statusColor = "text-purple-600 bg-purple-100";
-        headerColor = "bg-purple-600";
-        StatusIcon = LogOut;
-    } else if (hasCheckedIn) {
-        if (isLate) {
-            statusText = "LATE";
-            statusColor = "text-amber-600 bg-amber-100";
-            headerColor = "bg-amber-600";
-            StatusIcon = AlertCircle;
-        } else {
+    } else if (record?.status && record.status !== 'pending') {
+        // Respect the DB status set by system or admin
+        const s = record.status;
+        if (s === 'present') {
             statusText = "PRESENT";
             statusColor = "text-emerald-600 bg-emerald-100";
             headerColor = "bg-emerald-600";
             StatusIcon = CheckCircle2;
+        } else if (s === 'late') {
+            statusText = "LATE";
+            statusColor = "text-amber-600 bg-amber-100";
+            headerColor = "bg-amber-600";
+            StatusIcon = AlertCircle;
+        } else if (s === 'absent') {
+            statusText = "ABSENT";
+            statusColor = "text-red-600 bg-red-100";
+            headerColor = "bg-red-600";
+            StatusIcon = AlertCircle;
+        } else if (s === 'excused') {
+            statusText = "EXCUSED";
+            statusColor = "text-blue-600 bg-blue-100";
+            headerColor = "bg-blue-600";
+            StatusIcon = CheckCircle2;
+        } else if (s === 'left_early') {
+            statusText = "LEFT EARLY";
+            statusColor = "text-orange-600 bg-orange-100";
+            headerColor = "bg-orange-600";
+            StatusIcon = AlertCircle;
         }
     } else {
         // Not checked in yet
@@ -152,9 +164,7 @@ function TodayStatusCard({ user, session, record, breakStatus, loading, constrai
             headerColor = "bg-sky-600";
             StatusIcon = ThumbsUp;
         } else {
-            statusText = "NOT TIMED IN"; // Or "ABSENT" based on strict request, but "Not Timed In" is accurate for pending
-            // User requested "ABSENT" specifically in list, but usually "Not Timed In" is better until day end.
-            // I'll stick to a neutral "NOT TIMED IN" for now unless confirmed Absent.
+            statusText = "NOT TIMED IN";
             statusColor = "text-gray-500 bg-gray-100";
             headerColor = "bg-gray-500";
             StatusIcon = Clock;
@@ -260,7 +270,7 @@ function TodayStatusCard({ user, session, record, breakStatus, loading, constrai
                             enabled={!isWeekend && canCheckIn}
                             subtext={
                                 isWeekend ? "No work today" :
-                                    hasCheckedIn ? "Already timed in" : "Mark your attendance"
+                                    hasCheckedIn ? `Timed in at ${formatTime24(record?.time_in)}` : "Mark your attendance"
                             }
                             tooltip={isWeekend ? "No work scheduled for today" : undefined}
                         />
@@ -278,8 +288,10 @@ function TodayStatusCard({ user, session, record, breakStatus, loading, constrai
                             subtext={
                                 isWeekend ? "No work today" :
                                     isBreakActive ? "Click to End" :
-                                        breakUsed ? "Break Completed" :
-                                            "1h 30m Duration"
+                                        breakStatus?.can_start ? "Break Available" :
+                                            breakStatus?.within_window === false ? "Window Closed" :
+                                                breakUsed ? "Break Completed" :
+                                                    "Check Availability"
                             }
                             tooltip={isWeekend ? "No work scheduled for today" : undefined}
                         />
@@ -430,34 +442,57 @@ export default function EmployeeDashboard() {
 
             setTodayRecord(record);
 
-            // Use break_status from the API (new 12PM-1PM policy)
-            if (response.break_status) {
-                const bs = response.break_status;
-                setActiveBreak({
-                    active: bs.is_on_break,
-                    start_time: record?.break_start,
-                    can_start: bs.can_start_break,
-                    can_end: bs.can_end_break,
-                    message: bs.break_message,
-                    already_used: bs.break_already_used,
-                    within_window: bs.is_within_break_window,
-                    remaining_seconds: bs.break_remaining_seconds,
-                    break_window: bs.break_window,
-                    has_break_today: bs.has_break_today,
-                    current_break: bs.current_break,
-                    coffee_used: bs.coffee_used,
-                    meal_used: bs.meal_used,
-                });
-            } else if (record) {
-                // Fallback to legacy break check
-                try {
-                    const breakRes = await attendanceApi.getActiveBreak(record.id);
-                    if (breakRes) setActiveBreak(breakRes);
-                } catch (e) {
-                    // No active break
+            // Fetch detailed break status directly from Break API for accuracy
+            try {
+                const breakStatusData = await breakApi.getStatus();
+                if (breakStatusData) {
+                    setActiveBreak({
+                        active: breakStatusData.is_on_break,
+                        start_time: record?.break_start,
+                        can_start: breakStatusData.can_start_break,
+                        can_end: breakStatusData.can_end_break,
+                        message: breakStatusData.break_message,
+                        already_used: breakStatusData.break_already_used,
+                        within_window: breakStatusData.is_within_break_window,
+                        remaining_seconds: breakStatusData.break_remaining_seconds,
+                        break_window: breakStatusData.break_window,
+                        has_break_today: breakStatusData.has_break_today,
+                        current_break: breakStatusData.current_break,
+                        coffee_used: breakStatusData.coffee_used,
+                        meal_used: breakStatusData.meal_used,
+                    });
                 }
-            } else {
-                setActiveBreak(null);
+            } catch (breakError) {
+                // If break API fails, fallback to dashboard response data
+                // Use break_status from the API (new 12PM-1PM policy)
+                if (response.break_status) {
+                    const bs = response.break_status;
+                    setActiveBreak({
+                        active: bs.is_on_break,
+                        start_time: record?.break_start,
+                        can_start: bs.can_start_break,
+                        can_end: bs.can_end_break,
+                        message: bs.break_message,
+                        already_used: bs.break_already_used,
+                        within_window: bs.is_within_break_window,
+                        remaining_seconds: bs.break_remaining_seconds,
+                        break_window: bs.break_window,
+                        has_break_today: bs.has_break_today,
+                        current_break: bs.current_break,
+                        coffee_used: bs.coffee_used,
+                        meal_used: bs.meal_used,
+                    });
+                } else if (record) {
+                    // Fallback to legacy break check
+                    try {
+                        const breakRes = await attendanceApi.getActiveBreak(record.id);
+                        if (breakRes) setActiveBreak(breakRes);
+                    } catch (e) {
+                        // No active break
+                    }
+                } else {
+                    setActiveBreak(null);
+                }
             }
 
         } catch (error) {
@@ -534,19 +569,21 @@ export default function EmployeeDashboard() {
                             <CardTitle className="text-base font-medium">Quick Links</CardTitle>
                         </CardHeader>
                         <CardContent className="grid grid-cols-2 gap-4">
-                            <Link href="/attendance/confirm" className="block p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                                    <span className="font-semibold">Time In</span>
-                                </div>
-                                <p className="text-xs text-muted-foreground">Mark your attendance</p>
-                            </Link>
+
                             <Link href="/dashboard/employee/profile" className="block p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                                 <div className="flex items-center gap-2 mb-2">
                                     <Fingerprint className="h-5 w-5 text-purple-500" />
                                     <span className="font-semibold">My Profile</span>
                                 </div>
                                 <p className="text-xs text-muted-foreground">View your information</p>
+                            </Link>
+
+                            <Link href="/attendance/history" className="block p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <History className="h-5 w-5 text-blue-500" />
+                                    <span className="font-semibold">History</span>
+                                </div>
+                                <p className="text-xs text-muted-foreground">View past records</p>
                             </Link>
                         </CardContent>
                     </Card>

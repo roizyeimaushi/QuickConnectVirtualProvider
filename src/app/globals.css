@@ -217,6 +217,32 @@ body::-webkit-scrollbar,
   background: transparent !important;
 }
 
+/* Show scrollbar in Select dropdowns */
+[data-radix-select-viewport] {
+  scrollbar-width: thin !important;
+  scrollbar-color: var(--muted) transparent !important;
+  -ms-overflow-style: auto !important;
+}
+
+[data-radix-select-viewport]::-webkit-scrollbar {
+  display: block !important;
+  width: 6px !important;
+  height: 6px !important;
+}
+
+[data-radix-select-viewport]::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+[data-radix-select-viewport]::-webkit-scrollbar-thumb {
+  background-color: var(--muted) !important;
+  border-radius: 3px !important;
+}
+
+[data-radix-select-viewport]::-webkit-scrollbar-thumb:hover {
+  background-color: var(--muted-foreground) !important;
+}
+
 /* Custom scrollbar utilities */
 @layer utilities {
 
@@ -479,11 +505,12 @@ body::-webkit-scrollbar,
 }
 
 /* Mobile responsive calendar */
-@media (max-width: 400px) {
+@media (max-width: 767px) {
   .react-calendar-custom {
-    width: 280px !important;
-    max-width: calc(100vw - 24px) !important;
-    padding: 6px !important;
+    width: 100% !important;
+    min-width: 280px !important;
+    max-width: 320px !important;
+    padding: 8px !important;
   }
 
   .react-calendar-custom .react-calendar__navigation button {
@@ -492,7 +519,16 @@ body::-webkit-scrollbar,
   }
 
   .react-calendar-custom .react-calendar__month-view__days__day {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
+  }
+}
+
+/* DateTime Picker Popover - Mobile Responsive */
+@media (max-width: 767px) {
+
+  /* Ensure the popover doesn't overflow screen */
+  [data-radix-popper-content-wrapper] {
+    max-width: calc(100vw - 16px) !important;
   }
 }
 

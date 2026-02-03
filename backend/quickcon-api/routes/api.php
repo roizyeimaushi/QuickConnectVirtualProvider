@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Broadcast;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\ScheduleController;
@@ -33,6 +34,9 @@ Route::get('/health', function () {
     }
 });
 
+// Broadcasting Auth Route (for WebSocket channel authorization)
+Broadcast::routes(['middleware' => ['auth:sanctum']]);
+
 // Authentication Routes
 Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
@@ -57,11 +61,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
     
-    // Routes accessible by all authenticated users (MUST come before admin routes to avoid route conflicts)
-    Route::get('/attendance-sessions', [AttendanceSessionController::class, 'index']);
+    // Routes accessible by all authenticated users (Employees need these for check-in)
     Route::get('/attendance-sessions/active', [AttendanceSessionController::class, 'getActive']);
     Route::get('/attendance-sessions/today', [AttendanceSessionController::class, 'getToday']);
-    Route::get('/attendance-sessions/{attendanceSession}', [AttendanceSessionController::class, 'show']);
 
     // Employee self-service routes (MUST come before admin attendance-records routes)
     Route::get('/attendance-records/my-records', [AttendanceRecordController::class, 'myRecords']);
@@ -106,6 +108,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('/schedules/{schedule}/toggle-status', [ScheduleController::class, 'toggleStatus']);
 
         // Attendance Sessions (Admin management)
+        Route::get('/attendance-sessions', [AttendanceSessionController::class, 'index']); // Moved to Admin
+        Route::get('/attendance-sessions/{attendanceSession}', [AttendanceSessionController::class, 'show']); // Moved to Admin
         Route::post('/attendance-sessions', [AttendanceSessionController::class, 'store']);
         Route::put('/attendance-sessions/{attendanceSession}', [AttendanceSessionController::class, 'update']);
         Route::delete('/attendance-sessions/{attendanceSession}', [AttendanceSessionController::class, 'destroy']);
@@ -120,6 +124,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/attendance-records/by-employee/{employeeId}', [AttendanceRecordController::class, 'byEmployee']);
         Route::put('/attendance-records/{attendanceRecord}', [AttendanceRecordController::class, 'update']);
         Route::delete('/attendance-records/{attendanceRecord}', [AttendanceRecordController::class, 'destroy']);
+
+        // Break Management (Admin)
+        Route::put('/breaks/{employeeBreak}', [BreakController::class, 'update']);
+        Route::delete('/breaks/{employeeBreak}', [BreakController::class, 'destroy']);
 
         // Reports (Admin)
         Route::prefix('reports')->group(function () {

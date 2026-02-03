@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AttendanceSession;
 use App\Models\AuditLog;
+use App\Events\SessionUpdated;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -64,9 +65,10 @@ class AttendanceSessionController extends Controller
         ]);
 
         if (!empty($validated['employee_ids'])) {
+            $employeeIds = array_unique($validated['employee_ids']); // Prevent duplicates
             $records = [];
             $sessionDate = $session->date->toDateString(); // Get session date for attendance_date
-            foreach ($validated['employee_ids'] as $userId) {
+            foreach ($employeeIds as $userId) {
                 $records[] = [
                     'session_id' => $session->id,
                     'user_id' => $userId,
@@ -94,16 +96,60 @@ class AttendanceSessionController extends Controller
             $session->toArray()
         );
 
+        // Broadcast real-time session update
+        event(new SessionUpdated($session, 'created'));
+
         return response()->json($session, 201);
     }
 
     public function show(AttendanceSession $attendanceSession)
     {
-        return response()->json(
-            $attendanceSession->load(['schedule', 'creator', 'records.user' => function ($query) {
-                $query->withTrashed();
-            }])
-        );
+        $attendanceSession->load(['schedule', 'creator', 'records.user' => function ($query) {
+            $query->withTrashed();
+        }]);
+
+        // Fetch all active employees to ensure everyone is listed
+        $allEmployees = \App\Models\User::where('role', 'employee')
+            ->where('status', 'active')
+            ->orderBy('first_name')
+            ->get();
+
+        $mergedRecords = $allEmployees->map(function ($employee) use ($attendanceSession) {
+            // Check if this employee already has a record for this session
+            $existingRecord = $attendanceSession->records->firstWhere('user_id', $employee->id);
+
+            if ($existingRecord) {
+                return $existingRecord;
+            }
+
+            // Determine status based on session state
+            // If session is locked or completed, missing records are 'absent'
+            // If active, they are 'pending'
+            $status = in_array($attendanceSession->status, ['locked', 'completed']) ? 'absent' : 'pending';
+
+            // Create Virtual Record
+            return [
+                'id' => 'virtual_' . $employee->id,
+                'session_id' => $attendanceSession->id,
+                'user_id' => $employee->id,
+                'attendance_date' => $attendanceSession->date->toDateString(),
+                'status' => $status,
+                'time_in' => null,
+                'time_out' => null,
+                'break_start' => null,
+                'break_end' => null,
+                'minutes_late' => 0,
+                'hours_worked' => 0,
+                'user' => $employee, // Embed full user object for frontend display
+                'device_type' => null,
+                'location_city' => null,
+            ];
+        });
+
+        // Override the records collection with our complete list
+        $attendanceSession->setRelation('records', $mergedRecords);
+
+        return response()->json($attendanceSession);
     }
 
     public function update(Request $request, AttendanceSession $attendanceSession)
@@ -125,6 +171,9 @@ class AttendanceSessionController extends Controller
             $oldValues,
             $attendanceSession->fresh()->toArray()
         );
+
+        // Broadcast real-time session update
+        event(new SessionUpdated($attendanceSession, 'updated'));
 
         return response()->json($attendanceSession->load(['schedule', 'creator']));
     }
@@ -180,6 +229,9 @@ class AttendanceSessionController extends Controller
             ['status' => 'locked']
         );
 
+        // Broadcast real-time session update
+        event(new SessionUpdated($attendanceSession, 'locked'));
+
         return response()->json($attendanceSession->load(['schedule', 'creator']));
     }
 
@@ -206,6 +258,9 @@ class AttendanceSessionController extends Controller
             ['status' => 'active']
         );
 
+        // Broadcast real-time session update
+        event(new SessionUpdated($attendanceSession, 'unlocked'));
+
         return response()->json($attendanceSession->load(['schedule', 'creator']));
     }
 
@@ -221,9 +276,11 @@ class AttendanceSessionController extends Controller
 
     public function getToday()
     {
-        // Use consistent 14:00 boundary logic for night shifts
+        // Customizable Shift Boundary (Default 14:00)
+        $boundary = (int) (\App\Models\Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
+        
         $now = Carbon::now();
-        $today = $now->hour < 14 
+        $today = $now->hour < $boundary 
             ? Carbon::yesterday()->toDateString() 
             : Carbon::today()->toDateString();
             

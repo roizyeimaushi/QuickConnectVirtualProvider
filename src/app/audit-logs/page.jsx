@@ -557,16 +557,15 @@ export default function AuditLogsPage() {
 
                                         {/* Desktop Table View */}
                                         <div className="hidden md:block overflow-x-auto">
-                                            <Table>
+                                            <Table className="min-w-[900px]">
                                                 <TableHeader>
                                                     <TableRow>
-                                                        <TableHead>Action</TableHead>
-                                                        <TableHead>Description</TableHead>
-                                                        <TableHead className="text-center">Status</TableHead>
-                                                        <TableHead className="text-center">User</TableHead>
-                                                        <TableHead className="text-center">IP / Device</TableHead>
-                                                        <TableHead className="text-center">Timestamp</TableHead>
-                                                        <TableHead className="w-[70px] text-center">Details</TableHead>
+                                                        <TableHead className="w-[140px]">Action</TableHead>
+                                                        <TableHead className="min-w-[200px]">Description</TableHead>
+                                                        <TableHead className="w-[90px] text-center">Status</TableHead>
+                                                        <TableHead className="w-[140px] text-center">User</TableHead>
+                                                        <TableHead className="w-[120px] text-center">IP / Device</TableHead>
+                                                        <TableHead className="w-[150px] text-center">Timestamp</TableHead>
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
@@ -579,7 +578,7 @@ export default function AuditLogsPage() {
                                                         const ActionIcon = config.icon;
 
                                                         return (
-                                                            <TableRow key={log.id}>
+                                                            <TableRow key={log.id} className="group hover:bg-muted/50 cursor-pointer" onClick={() => handleViewDetails(log)}>
                                                                 <TableCell>
                                                                     <div className="flex flex-col gap-1">
                                                                         <Badge className={config.color}>
@@ -591,23 +590,23 @@ export default function AuditLogsPage() {
                                                                         )}
                                                                     </div>
                                                                 </TableCell>
-                                                                <TableCell className="max-w-md">
-                                                                    <p className="truncate">{log.description}</p>
+                                                                <TableCell>
+                                                                    <p className="truncate max-w-[300px]" title={log.description}>{log.description}</p>
                                                                 </TableCell>
                                                                 <TableCell className="text-center">
                                                                     <StatusBadge status={log.status} />
                                                                 </TableCell>
                                                                 <TableCell className="text-center">
                                                                     <div className="flex items-center justify-center gap-2">
-                                                                        <Avatar className="h-8 w-8">
+                                                                        <Avatar className="h-7 w-7">
                                                                             <AvatarImage src={log.userAvatar} alt={log.user} />
                                                                             <AvatarFallback className="text-xs bg-primary/10 text-primary">
                                                                                 {getInitials(log.userFirstName, log.userLastName)}
                                                                             </AvatarFallback>
                                                                         </Avatar>
                                                                         <div className="flex flex-col items-start">
-                                                                            <span className="text-sm font-medium">{log.user}</span>
-                                                                            <span className="text-xs text-muted-foreground capitalize">{log.userRole}</span>
+                                                                            <span className="text-xs font-medium truncate max-w-[80px]">{log.user}</span>
+                                                                            <span className="text-[10px] text-muted-foreground capitalize">{log.userRole}</span>
                                                                         </div>
                                                                     </div>
                                                                 </TableCell>
@@ -615,14 +614,11 @@ export default function AuditLogsPage() {
                                                                     <TooltipProvider>
                                                                         <Tooltip>
                                                                             <TooltipTrigger asChild>
-                                                                                <div className="flex flex-col items-center gap-1">
-                                                                                    <div className="flex items-center gap-1 font-mono text-sm">
-                                                                                        <Globe className="h-3 w-3 text-muted-foreground" />
-                                                                                        {log.ip_address}
-                                                                                    </div>
-                                                                                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                                                                <div className="flex flex-col items-center gap-0.5">
+                                                                                    <span className="font-mono text-xs">{log.ip_address}</span>
+                                                                                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
                                                                                         <DeviceIcon type={log.device_type} />
-                                                                                        {log.browser ? `${log.browser} ${log.browser_version?.split('.')[0] || ''}` : <span className="italic">Legacy log</span>}
+                                                                                        <span className="truncate max-w-[60px]">{log.browser || "N/A"}</span>
                                                                                     </div>
                                                                                 </div>
                                                                             </TooltipTrigger>
@@ -642,17 +638,10 @@ export default function AuditLogsPage() {
                                                                         </Tooltip>
                                                                     </TooltipProvider>
                                                                 </TableCell>
-                                                                <TableCell className="text-sm text-muted-foreground text-center">
-                                                                    {formatDateTime(log.created_at)}
-                                                                </TableCell>
                                                                 <TableCell className="text-center">
-                                                                    <Button
-                                                                        variant="ghost"
-                                                                        size="icon"
-                                                                        onClick={() => handleViewDetails(log)}
-                                                                    >
-                                                                        <Eye className="h-4 w-4" />
-                                                                    </Button>
+                                                                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                                                        {formatDateTime(log.created_at)}
+                                                                    </span>
                                                                 </TableCell>
                                                             </TableRow>
                                                         );
@@ -805,30 +794,7 @@ export default function AuditLogsPage() {
                                     </div>
                                 )}
 
-                                {/* Old/New Values (for updates) */}
-                                {(selectedLog.old_values || selectedLog.new_values) && (
-                                    <div className="space-y-2">
-                                        <p className="text-sm font-medium text-muted-foreground">Changed Values</p>
-                                        <div className="grid gap-3 sm:grid-cols-2">
-                                            {selectedLog.old_values && (
-                                                <div className="p-3 bg-red-50 dark:bg-red-950/20 rounded-lg">
-                                                    <p className="text-xs font-medium text-red-600 mb-2">Old Values</p>
-                                                    <pre className="text-xs overflow-x-auto">
-                                                        {JSON.stringify(selectedLog.old_values, null, 2)}
-                                                    </pre>
-                                                </div>
-                                            )}
-                                            {selectedLog.new_values && (
-                                                <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
-                                                    <p className="text-xs font-medium text-green-600 mb-2">New Values</p>
-                                                    <pre className="text-xs overflow-x-auto">
-                                                        {JSON.stringify(selectedLog.new_values, null, 2)}
-                                                    </pre>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
+
                             </div>
                         )}
                     </DialogContent>

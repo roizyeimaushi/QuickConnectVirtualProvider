@@ -1,5 +1,22 @@
 import { API_BASE_URL } from './constants';
 import Cookies from 'js-cookie';
+import { mutate } from 'swr';
+
+/**
+ * Helper to invalidate SWR cache after mutations
+ */
+const invalidateCache = (patterns) => {
+    if (typeof window === 'undefined') return;
+
+    // Invalidate all matching patterns
+    patterns.forEach(pattern => {
+        mutate(
+            key => typeof key === 'string' && key.includes(pattern),
+            undefined,
+            { revalidate: true }
+        );
+    });
+};
 
 /**
  * API Client for QuickConn Virtual
@@ -67,9 +84,19 @@ class ApiClient {
 
         const headers = this.getHeaders();
 
-        // If body is FormData, let browser set Content-Type
-        if (options.body instanceof FormData) {
+        // If body is FormData, let browser set Content-Type (for multipart/form-data boundary)
+        const isFormData = options.body instanceof FormData;
+        if (isFormData) {
             delete headers['Content-Type'];
+        }
+
+        // Debug logging for development (helps diagnose mobile auth issues)
+        if (process.env.NODE_ENV === 'development' && isFormData) {
+            console.log('[API Debug] FormData request:', {
+                url,
+                hasToken: !!this.getToken(),
+                tokenPreview: this.getToken()?.substring(0, 20) + '...',
+            });
         }
 
         const config = {
@@ -80,6 +107,7 @@ class ApiClient {
                 ...options.headers,
             },
         };
+
 
         try {
             const response = await fetch(url, config);
@@ -265,10 +293,26 @@ export const employeesApi = {
     getAll: (params = {}) => api.get('/employees', params),
     getById: (id) => api.get(`/employees/${id}`),
     getNextId: () => api.get('/employees/next-id'),
-    create: (data) => api.post('/employees', data),
-    update: (id, data) => api.put(`/employees/${id}`, data),
-    delete: (id) => api.delete(`/employees/${id}`),
-    toggleStatus: (id) => api.patch(`/employees/${id}/toggle-status`),
+    create: async (data) => {
+        const result = await api.post('/employees', data);
+        invalidateCache(['/employees', '/dashboard']);
+        return result;
+    },
+    update: async (id, data) => {
+        const result = await api.put(`/employees/${id}`, data);
+        invalidateCache(['/employees', '/dashboard']);
+        return result;
+    },
+    delete: async (id) => {
+        const result = await api.delete(`/employees/${id}`);
+        invalidateCache(['/employees', '/dashboard']);
+        return result;
+    },
+    toggleStatus: async (id) => {
+        const result = await api.patch(`/employees/${id}/toggle-status`);
+        invalidateCache(['/employees', '/dashboard']);
+        return result;
+    },
     getByEmployeeId: (employeeId) => api.get(`/employees/by-employee-id/${employeeId}`),
 };
 
@@ -279,10 +323,26 @@ export const employeesApi = {
 export const schedulesApi = {
     getAll: (params = {}) => api.get('/schedules', params),
     getById: (id) => api.get(`/schedules/${id}`),
-    create: (data) => api.post('/schedules', data),
-    update: (id, data) => api.put(`/schedules/${id}`, data),
-    delete: (id) => api.delete(`/schedules/${id}`),
-    toggleStatus: (id) => api.patch(`/schedules/${id}/toggle-status`),
+    create: async (data) => {
+        const result = await api.post('/schedules', data);
+        invalidateCache(['/schedules']);
+        return result;
+    },
+    update: async (id, data) => {
+        const result = await api.put(`/schedules/${id}`, data);
+        invalidateCache(['/schedules']);
+        return result;
+    },
+    delete: async (id) => {
+        const result = await api.delete(`/schedules/${id}`);
+        invalidateCache(['/schedules']);
+        return result;
+    },
+    toggleStatus: async (id) => {
+        const result = await api.patch(`/schedules/${id}/toggle-status`);
+        invalidateCache(['/schedules']);
+        return result;
+    },
 };
 
 // ==========================================
@@ -292,11 +352,31 @@ export const schedulesApi = {
 export const sessionsApi = {
     getAll: (params = {}) => api.get('/attendance-sessions', params),
     getById: (id) => api.get(`/attendance-sessions/${id}`),
-    create: (data) => api.post('/attendance-sessions', data),
-    update: (id, data) => api.put(`/attendance-sessions/${id}`, data),
-    delete: (id) => api.delete(`/attendance-sessions/${id}`),
-    lock: (id) => api.patch(`/attendance-sessions/${id}/lock`),
-    unlock: (id) => api.patch(`/attendance-sessions/${id}/unlock`),
+    create: async (data) => {
+        const result = await api.post('/attendance-sessions', data);
+        invalidateCache(['/sessions', '/attendance-sessions', '/dashboard']);
+        return result;
+    },
+    update: async (id, data) => {
+        const result = await api.put(`/attendance-sessions/${id}`, data);
+        invalidateCache(['/sessions', '/attendance-sessions', '/dashboard']);
+        return result;
+    },
+    delete: async (id) => {
+        const result = await api.delete(`/attendance-sessions/${id}`);
+        invalidateCache(['/sessions', '/attendance-sessions', '/dashboard']);
+        return result;
+    },
+    lock: async (id) => {
+        const result = await api.patch(`/attendance-sessions/${id}/lock`);
+        invalidateCache(['/sessions', '/attendance-sessions', '/dashboard']);
+        return result;
+    },
+    unlock: async (id) => {
+        const result = await api.patch(`/attendance-sessions/${id}/unlock`);
+        invalidateCache(['/sessions', '/attendance-sessions', '/dashboard']);
+        return result;
+    },
     getActive: () => api.get('/attendance-sessions/active'),
     getToday: () => api.get('/attendance-sessions/today'),
 };
@@ -308,21 +388,45 @@ export const sessionsApi = {
 export const attendanceApi = {
     getAll: (params = {}) => api.get('/attendance-records', params),
     getById: (id) => api.get(`/attendance-records/${id}`),
-    confirm: (sessionId, data = {}) => api.post(`/attendance-records/confirm/${sessionId}`, data),
+    confirm: async (sessionId, data = {}) => {
+        const result = await api.post(`/attendance-records/confirm/${sessionId}`, data);
+        invalidateCache(['/attendance', '/sessions', '/reports', '/dashboard']);
+        return result;
+    },
     getMyRecords: (params = {}) => api.get('/attendance-records/my-records', params),
     getBySession: (sessionId, params = {}) => api.get(`/attendance-records/by-session/${sessionId}`, params),
     getByEmployee: (employeeId, params = {}) => api.get(`/attendance-records/by-employee/${employeeId}`, params),
     canConfirm: (sessionId) => api.get(`/attendance-records/can-confirm/${sessionId}`),
-    checkOut: (recordId, data = {}) => api.post(`/attendance-records/${recordId}/check-out`, data),
-    startBreak: (recordId, data = {}) => api.post(`/attendance-records/${recordId}/break/start`, data),
-    endBreak: (recordId, data = {}) => api.post(`/attendance-records/${recordId}/break/end`, data),
+    checkOut: async (recordId, data = {}) => {
+        const result = await api.post(`/attendance-records/${recordId}/check-out`, data);
+        invalidateCache(['/attendance', '/sessions', '/reports', '/dashboard']);
+        return result;
+    },
+    startBreak: async (recordId, data = {}) => {
+        const result = await api.post(`/attendance-records/${recordId}/break/start`, data);
+        invalidateCache(['/attendance', '/break', '/dashboard']);
+        return result;
+    },
+    endBreak: async (recordId, data = {}) => {
+        const result = await api.post(`/attendance-records/${recordId}/break/end`, data);
+        invalidateCache(['/attendance', '/break', '/dashboard']);
+        return result;
+    },
     getActiveBreak: (recordId) => api.get(`/attendance-records/${recordId}/break/active`),
-    update: (id, data) => api.put(`/attendance-records/${id}`, data),
+    update: async (id, data) => {
+        const result = await api.put(`/attendance-records/${id}`, data);
+        invalidateCache(['/attendance', '/reports', '/dashboard']);
+        return result;
+    },
     // New: Get today's status with break awareness
     getTodayStatus: () => api.get('/attendance-records/today-status'),
     // New: Get display status (considers break as orange)
     getDisplayStatus: (recordId) => api.get(`/attendance-records/${recordId}/display-status`),
-    delete: (id) => api.delete(`/attendance-records/${id}`),
+    delete: async (id) => {
+        const result = await api.delete(`/attendance-records/${id}`);
+        invalidateCache(['/attendance', '/reports', '/dashboard']);
+        return result;
+    },
 };
 
 // ==========================================
@@ -389,13 +493,32 @@ export const breakApi = {
     // Get break status (including window info, can_start, can_end, etc.)
     getStatus: () => api.get('/break/status'),
     // Start break (only allowed 12PM-1PM)
-    startBreak: (data) => api.post('/break/start', data),
+    startBreak: async (data) => {
+        const result = await api.post('/break/start', data);
+        invalidateCache(['/break', '/attendance', '/dashboard']);
+        return result;
+    },
     // End break manually
-    endBreak: () => api.post('/break/end'),
+    endBreak: async () => {
+        const result = await api.post('/break/end');
+        invalidateCache(['/break', '/attendance', '/dashboard']);
+        return result;
+    },
     // Get break history
     getHistory: (params = {}) => api.get('/break/history', params),
     // Get break rules (public)
     getRules: () => api.get('/break-rules'),
+    // Admin Management
+    update: async (id, data) => {
+        const result = await api.put(`/breaks/${id}`, data);
+        invalidateCache(['/break']);
+        return result;
+    },
+    delete: async (id) => {
+        const result = await api.delete(`/breaks/${id}`);
+        invalidateCache(['/break']);
+        return result;
+    },
 };
 
 // ==========================================
@@ -404,8 +527,17 @@ export const breakApi = {
 
 export const notificationsApi = {
     getAll: () => api.get('/notifications'),
-    markAsRead: (id) => api.patch(`/notifications/${id}/read`),
-    markAllAsRead: () => api.post('/notifications/read-all'),
+    markAsRead: async (id) => {
+        const result = await api.patch(`/notifications/${id}/read`);
+        invalidateCache(['/notifications']);
+        return result;
+    },
+    markAllAsRead: async () => {
+        const result = await api.post('/notifications/read-all');
+        invalidateCache(['/notifications']);
+        return result;
+    },
 };
 
 export default api;
+

@@ -301,6 +301,7 @@ export default function AttendanceHistoryPage() {
                                         <SelectItem value="absent">Absent</SelectItem>
                                         <SelectItem value="pending">Pending</SelectItem>
                                         <SelectItem value="excused">Excused</SelectItem>
+                                        <SelectItem value="left_early">Left Early</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <Popover>

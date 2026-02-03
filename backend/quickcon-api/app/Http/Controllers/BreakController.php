@@ -19,8 +19,10 @@ class BreakController extends Controller
     private function getToday(): string
     {
         $now = Carbon::now();
-        // If before 14:00 (2 PM), assume we are in the previous day's shift cycle (for Night Shift logic)
-        if ($now->hour < 14) {
+        // Customizable Shift Boundary (Default 14:00)
+        $boundary = (int) (\App\Models\Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
+        
+        if ($now->hour < $boundary) {
             return Carbon::yesterday()->toDateString();
         }
         return Carbon::today()->toDateString();
@@ -45,22 +47,20 @@ class BreakController extends Controller
     public function getStatus(Request $request)
     {
         $user = $request->user();
-        $today = $this->getToday();
-        $now = Carbon::now();
+        $today = Carbon::today()->toDateString();
         $currentTime = $this->getCurrentTime();
 
-        // Get active attendance record (Today OR Active Overnight)
+        // 1. Check Real Today First (Priority for Day Shifts)
         $attendance = AttendanceRecord::with(['session.schedule'])
             ->where('user_id', $user->id)
-            ->where('attendance_date', $today)
+            ->where('attendance_date', Carbon::today()->toDateString())
             ->first();
 
-        // NIGHT SHIFT SUPPORT
+        // 2. If no record for today, check Yesterday (Night Shift support)
         if (!$attendance) {
              $attendance = AttendanceRecord::with(['session.schedule'])
                  ->where('user_id', $user->id)
                  ->where('attendance_date', Carbon::yesterday()->toDateString())
-                 ->whereNull('time_out')
                  ->first();
         }
 
@@ -138,7 +138,7 @@ class BreakController extends Controller
         $mealUsed = in_array('Meal', $usedTypes);
 
         if ($attendance && $attendance->time_out) {
-            $breakMessage = 'Cannot take break after checking out.';
+            $breakMessage = 'Cannot take break after Time Out.';
             $breakReason = 'already_checked_out';
             $canStartBreak = false;
         } elseif ($todayBreak && $todayBreak->isActive()) {
@@ -221,8 +221,8 @@ class BreakController extends Controller
     public function startBreak(Request $request)
     {
         $user = $request->user();
-        $today = $this->getToday();
         $now = Carbon::now();
+        $today = Carbon::today()->toDateString();
         $currentTime = $this->getCurrentTime();
 
         // Validate break type
@@ -230,22 +230,22 @@ class BreakController extends Controller
             'type' => 'required|in:Coffee,Meal',
         ]);
         $type = $request->input('type');
-        $segmentLimit = ($type === 'Coffee') ? 30 : 60;
+        $segmentLimit = ($type === 'Coffee') ? 15 : 60;
 
         // ============================================================
         // STEP 1: Verify Attendance (Need session for Schedule)
         // ============================================================
+        // 1. Check Real Today
         $attendance = AttendanceRecord::with(['session.schedule'])
             ->where('user_id', $user->id)
-            ->where('attendance_date', $today)
+            ->where('attendance_date', Carbon::today()->toDateString())
             ->first();
 
-        // NIGHT SHIFT SUPPORT
+        // 2. Check Yesterday
         if (!$attendance) {
              $attendance = AttendanceRecord::with(['session.schedule'])
                  ->where('user_id', $user->id)
                  ->where('attendance_date', Carbon::yesterday()->toDateString())
-                 ->whereNull('time_out')
                  ->first();
         }
 
@@ -271,7 +271,7 @@ class BreakController extends Controller
 
         if ($attendance->time_out) {
             return response()->json([
-                'message' => 'Cannot take break after checking out.',
+                'message' => 'Cannot take break after Time Out.',
                 'error_code' => 'ALREADY_CHECKED_OUT'
             ], 400);
         }
@@ -320,21 +320,35 @@ class BreakController extends Controller
         }
 
         // ============================================================
-        // STEP 3: Start break
+        // STEP 3: Start break (Wrapped in Transaction for Race Safety)
         // ============================================================
-        $break = EmployeeBreak::create([
-            'attendance_id' => $attendance->id,
-            'user_id' => $user->id,
-            'break_date' => $attendance->attendance_date,
-            'break_start' => $now,
-            'break_type' => $type,
-            'duration_limit' => $segmentLimit,
-        ]);
+        $break = \Illuminate\Support\Facades\DB::transaction(function () use ($attendance, $user, $now, $type, $segmentLimit) {
+            // Double-check active break inside transaction with lock
+            $stillActive = EmployeeBreak::where('attendance_id', $attendance->id)
+                ->whereNull('break_end')
+                ->lockForUpdate()
+                ->exists();
+                
+            if ($stillActive) {
+                throw new \Exception('ALREADY_ON_BREAK');
+            }
+            
+            $break = EmployeeBreak::create([
+                'attendance_id' => $attendance->id,
+                'user_id' => $user->id,
+                'break_date' => $attendance->attendance_date,
+                'break_start' => $now,
+                'break_type' => $type,
+                'duration_limit' => $segmentLimit,
+            ]);
 
-        $attendance->update([
-            'break_start' => $now, 
-            'break_end' => null,
-        ]);
+            $attendance->update([
+                'break_start' => $now, 
+                'break_end' => null,
+            ]);
+            
+            return $break;
+        });
 
         AuditLog::log(
             'break_start',
@@ -503,5 +517,74 @@ class BreakController extends Controller
             'end_time_formatted' => $breakRule->formatted_end_time,
             'max_minutes' => $breakRule->max_minutes,
         ]);
+    }
+    /**
+     * Update a break record (Admin only).
+     */
+    public function update(Request $request, EmployeeBreak $employeeBreak)
+    {
+        $user = $request->user();
+        if ($user->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'break_start' => 'required|date',
+            'break_end' => 'nullable|date|after:break_start',
+            'break_type' => 'required|string',
+        ]);
+
+        $start = Carbon::parse($request->input('break_start'));
+        $end = $request->input('break_end') ? Carbon::parse($request->input('break_end')) : null;
+        
+        $employeeBreak->break_start = $start;
+        $employeeBreak->break_end = $end;
+        $employeeBreak->break_type = $request->input('break_type');
+        
+        if ($end) {
+            $employeeBreak->duration_minutes = $start->diffInMinutes($end);
+        } else {
+            $employeeBreak->duration_minutes = 0;
+        }
+
+        $employeeBreak->save();
+
+        AuditLog::log(
+            'break_update',
+            "Admin {$user->first_name} updated break for {$employeeBreak->user->full_name}",
+            AuditLog::STATUS_SUCCESS,
+            $user->id,
+            'EmployeeBreak',
+            $employeeBreak->id
+        );
+
+        return response()->json([
+            'message' => 'Break record updated successfully',
+            'break' => $employeeBreak
+        ]);
+    }
+
+    /**
+     * Delete a break record (Admin only).
+     */
+    public function destroy(Request $request, EmployeeBreak $employeeBreak)
+    {
+        $user = $request->user();
+        if ($user->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $employeeBreak->delete();
+
+        AuditLog::log(
+            'break_delete',
+            "Admin {$user->first_name} deleted break for {$employeeBreak->user->full_name}",
+            AuditLog::STATUS_SUCCESS,
+            $user->id,
+            'EmployeeBreak',
+            $employeeBreak->id
+        );
+
+        return response()->json(['message' => 'Break record deleted successfully']);
     }
 }

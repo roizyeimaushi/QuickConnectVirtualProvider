@@ -34,8 +34,9 @@ php artisan view:cache
 echo "Running database migrations..."
 php artisan migrate --force || echo "❌ Migration failed! Check DB credentials."
 
-# Seed settings
-php artisan db:seed --class=SettingsSeeder --force 2>/dev/null || echo "❌ Seeding failed!"
+# Seed settings and ensure admin user exists
+php artisan db:seed --class=SettingsSeeder --force 2>/dev/null || echo "❌ Settings seeding failed!"
+php artisan db:seed --class=EnsureAdminUserSeeder --force 2>/dev/null || echo "⚠️ Admin seeder skipped (may already exist)"
 
 # Fix permissions
 chown -R www-data:www-data /var/www/api/storage

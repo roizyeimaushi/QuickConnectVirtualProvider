@@ -10,8 +10,9 @@ WORKDIR /app/frontend
 COPY package.json ./
 RUN rm -f package-lock.json && npm install --legacy-peer-deps
 COPY . .
-# Set API URL to internal localhost (same container)
-ENV NEXT_PUBLIC_API_URL=http://localhost:8000
+# Monolith: Use same-origin /api (empty = relative). Render injects at build.
+ARG NEXT_PUBLIC_API_URL=
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 RUN npm run build
 
 # ============================================

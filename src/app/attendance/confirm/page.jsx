@@ -611,7 +611,11 @@ export default function AttendanceConfirmPage() {
             }
         } catch (error) {
             if (error.status === 401 || error.message === 'Unauthorized') return;
-            console.error("Failed to fetch session:", error.message || error);
+
+            // Only log errors if not polling, and suppress network errors
+            if (!isPolling && !error?.message?.includes('Network error')) {
+                console.error("Failed to fetch session:", error.message || error);
+            }
             if (!isPolling) {
                 toast({
                     title: "Error",

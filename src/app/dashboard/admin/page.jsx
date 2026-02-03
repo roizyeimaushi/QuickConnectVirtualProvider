@@ -361,8 +361,9 @@ export default function AdminDashboard() {
         // Only fetch if user is authenticated AND is an admin
         if (!authLoading && user && isAdmin) {
             fetchDashboardData();
-            // Polling every 5 seconds for real-time updates
-            const interval = setInterval(fetchDashboardData, 5000);
+            // Fallback polling every 60 seconds (WebSocket handles real-time updates)
+            // This serves as a safety net in case WebSocket connection drops
+            const interval = setInterval(fetchDashboardData, 60000);
             return () => clearInterval(interval);
         } else if (!authLoading && (!user || !isAdmin)) {
             // Not authenticated or not admin, set default state
