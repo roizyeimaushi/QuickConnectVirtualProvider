@@ -15,6 +15,7 @@ return [
     'allowed_origins' => array_values(array_filter(array_merge(
         [
             'https://quickconnectvirtual.vercel.app',
+            'https://virtualquickconnect.vercel.app',
             'http://localhost:3000',
         ],
         explode(',', env('CORS_ALLOWED_ORIGINS', ''))
