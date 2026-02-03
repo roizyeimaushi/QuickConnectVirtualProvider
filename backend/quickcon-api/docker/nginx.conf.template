@@ -1,15 +1,9 @@
 server {
     listen ${PORT};
-    server_name localhost;
+    server_name _;
+
     root /var/www/public;
     index index.php index.html;
-
-    # Health Check Bypass (Returns 200 OK immediately)
-    location = /api/health {
-        access_log off;
-        add_header Content-Type text/plain;
-        return 200 'ok';
-    }
 
     location / {
         try_files $uri $uri/ /index.php?$query_string;
@@ -18,11 +12,13 @@ server {
     location ~ \.php$ {
         fastcgi_pass 127.0.0.1:9000;
         fastcgi_index index.php;
-        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
         include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
     }
 
-    location ~ /\.ht {
-        deny all;
+    # Fix #2: Reliable Health Check (Nginx level)
+    location /api/health {
+        return 200 'ok';
+        add_header Content-Type text/plain;
     }
 }
