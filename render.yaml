@@ -1,18 +1,26 @@
+# ==========================================================
+# RENDER BLUEPRINT - LARAVEL BACKEND + POSTGRES
+# ==========================================================
 services:
-  # ============================================
-  # SINGLE SERVICE - Monolith (Docker Image)
-  # ============================================
+  # --------------------------------------------------------
+  # LARAVEL BACKEND (Docker)
+  # --------------------------------------------------------
   - type: web
-    name: quickconnect-virtual
+    name: quickconnect-api
     runtime: docker
-    dockerfilePath: Dockerfile.monolith
-    dockerContext: .
     region: singapore
     plan: free
+    
+    # Point to the Backend Dockerfile we fixed
+    dockerfilePath: backend/quickcon-api/Dockerfile
+    dockerContext: backend/quickcon-api
+    
     healthCheckPath: /api/health
+
+    # Environment Variables
     envVars:
       - key: APP_NAME
-        value: QuickConn Attendance
+        value: QuickConnect
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
@@ -20,36 +28,54 @@ services:
       - key: APP_KEY
         generateValue: true
       - key: APP_URL
-        value: https://quickconnect-virtual.onrender.com
+        sync: false  # Render will auto-fill this URL after deploy
+
+      # Database Configuration (Auto-linked to service below)
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase:
+          name: quickconnect-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: quickconnect-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: quickconnect-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: quickconnect-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: quickconnect-db
+          property: password
+
+      # Frontend Connection (Update these in Render Dashboard later if domain changes)
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://quickconnect-frontend.vercel.app,http://localhost:3000
+      - key: SANCTUM_STATEFUL_DOMAINS
+        value: quickconnect-frontend.vercel.app,localhost:3000
+      
+      # Logging & Session
       - key: LOG_CHANNEL
         value: stderr
-      - key: DB_CONNECTION
-        value: mysql
-      - key: DB_HOST
-        sync: false
-      - key: DB_PORT
-        value: "4000"
-      - key: DB_DATABASE
-        sync: false
-      - key: DB_USERNAME
-        sync: false
-      - key: DB_PASSWORD
-        sync: false
-      - key: MYSQL_ATTR_SSL_CA
-        value: /etc/ssl/certs/ca-certificates.crt
       - key: SESSION_DRIVER
-        value: cookie
+        value: database
       - key: SESSION_SECURE_COOKIE
         value: "true"
-      - key: SESSION_SAME_SITE
-        value: lax
-      - key: FILESYSTEM_DISK
-        value: local
-      - key: NEXT_PUBLIC_API_URL
-        value: ""
-      - key: SANCTUM_STATEFUL_DOMAINS
-        value: quickconnect-virtual.onrender.com
-      - key: CORS_ALLOWED_ORIGINS
-        value: https://quickconnect-virtual.onrender.com
-      - key: ALLOW_EXTERNAL_ACCESS
-        value: "true"
+
+# --------------------------------------------------------
+# POSTGRESQL DATABASE (Free Tier)
+# --------------------------------------------------------
+databases:
+  - name: quickconnect-db
+    region: singapore
+    plan: free
+    databaseName: quickconnect
+    user: quickconnect_user
+
+version: "1"
