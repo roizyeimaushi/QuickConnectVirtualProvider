@@ -14,6 +14,10 @@ COPY . .
 # Monolith: Use same-origin /api (empty = relative). Render injects at build.
 ARG NEXT_PUBLIC_API_URL=
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
+# Fix swc mismatch by forcing next install
+RUN npm install next@15.5.11
+
 RUN npm run build
 
 # ============================================
