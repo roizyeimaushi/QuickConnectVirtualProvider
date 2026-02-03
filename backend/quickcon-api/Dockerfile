@@ -14,10 +14,11 @@ RUN apk add --no-cache \
     zlib-dev \
     libxml2-dev \
     libzip-dev \
+    postgresql-dev \
     npm \
     nodejs \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd pdo pdo_mysql mbstring bcmath intl opcache zip exif pcntl
+    && docker-php-ext-install gd pdo pdo_mysql pdo_pgsql mbstring bcmath intl opcache zip exif pcntl
 
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
