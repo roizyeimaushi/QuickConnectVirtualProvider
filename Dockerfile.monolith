@@ -8,7 +8,8 @@ FROM node:20-alpine AS frontend-builder
 # Build Next.js Frontend
 WORKDIR /app/frontend
 COPY package*.json ./
-RUN npm ci
+# Robust install: try strict ci first, but fallback to install if lockfile is messy
+RUN npm ci || npm install
 COPY . .
 # Monolith: Use same-origin /api (empty = relative). Render injects at build.
 ARG NEXT_PUBLIC_API_URL=
