@@ -10,8 +10,12 @@ RUN apk add --no-cache \
     libpng-dev \
     libzip-dev \
     oniguruma-dev \
+    freetype-dev \
+    libjpeg-turbo-dev \
     npm \
-    nodejs
+    nodejs \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd
 
 WORKDIR /var/www
 
