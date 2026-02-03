@@ -3,11 +3,12 @@ set -e
 
 # Default to port 8000 if PORT is not set
 PORT="${PORT:-8000}"
+export PORT
 
 echo "Starting QuickConn Virtual API on port $PORT..."
 
-# Replace listen 8000 with listen $PORT in nginx.conf
-sed -i "s/listen 8000;/listen $PORT;/g" /etc/nginx/http.d/default.conf
+# Substitute env vars in nginx template and write to actual config
+envsubst '$PORT' < /etc/nginx/templates/default.conf.template > /etc/nginx/http.d/default.conf
 
 # Start Supervisor
 exec /usr/bin/supervisord -c /etc/supervisord.conf

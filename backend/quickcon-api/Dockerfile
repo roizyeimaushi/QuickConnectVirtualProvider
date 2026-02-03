@@ -9,8 +9,10 @@ RUN apk add --no-cache \
     oniguruma-dev \
     libxml2-dev \
     libzip-dev \
+    libzip-dev \
     zip \
     unzip \
+    gettext \
     nginx \
     supervisor
 
@@ -39,8 +41,8 @@ RUN chown -R www-data:www-data /var/www \
     && chmod -R 755 /var/www/storage \
     && chmod -R 755 /var/www/bootstrap/cache
 
-# Copy nginx config
-COPY docker/nginx.conf /etc/nginx/http.d/default.conf
+# Copy nginx config template
+COPY docker/nginx.conf.template /etc/nginx/templates/default.conf.template
 
 # Copy supervisor config
 # Copy supervisor config
