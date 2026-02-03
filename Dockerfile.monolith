@@ -1,99 +1,105 @@
 # ============================================
-# MONOLITH Dockerfile - Next.js + Laravel in ONE Container
-# Deploy to Render as a single service
+# MONOLITH Dockerfile - Next.js + Laravel
+# OPTIMIZED FOR RENDER (Fixes SWC & LightningCSS)
 # ============================================
 
+# ----------------------------------------------------
+# Stage 1: Frontend Builder (Node 20 Alpine)
+# ----------------------------------------------------
 FROM node:20-alpine AS frontend-builder
-
-# Build Next.js Frontend
 WORKDIR /app/frontend
+
+# Install libc compatibility for Alpine (fixes some binary issues)
+RUN apk add --no-cache libc6-compat
+
+# Copy dependency files first
 COPY package*.json ./
-# Robust install: try strict ci first, but fallback to install if lockfile is messy
+
+# 1. Force install exact Linux binaries for LightningCSS and SWC
+# This fixes the "cannot find module lightningcss-linux-x64-gnu" error
+RUN npm install lightningcss-linux-x64-gnu --save-optional --no-save
+
+# 2. Install dependencies (Robust fallback)
 RUN npm ci || npm install
+
+# 3. Ensure Next.js and SWC are perfectly synced
+RUN npm install next@15.5.11 @next/swc-linux-x64-gnu@15.5.7 --no-save
+
+# Copy source code
 COPY . .
-# Monolith: Use same-origin /api (empty = relative). Render injects at build.
-ARG NEXT_PUBLIC_API_URL=
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
-# Fix swc mismatch by forcing next install
-RUN npm install next@15.5.11
-
+# 4. Build the Frontend
+# Pass API URL as build arg to bake it in if needed, or rely on runtime
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 RUN npm run build
 
-# ============================================
-# PHP + Nginx Base Image
-# ============================================
+# ----------------------------------------------------
+# Stage 2: Final Production Image (PHP + Nginx + Node)
+# ----------------------------------------------------
 FROM php:8.2-fpm-alpine
 
-# Install system dependencies
+# Install system dependencies (Nginx, Supervisor, Node)
 RUN apk add --no-cache \
-    git \
+    nginx \
+    supervisor \
+    nodejs \
+    npm \
     curl \
+    git \
     libpng-dev \
     libzip-dev \
     zip \
     unzip \
-    oniguruma-dev \
-    nginx \
-    supervisor \
-    nodejs \
-    npm
+    oniguruma-dev
 
-# Install PHP extensions
+# Install PHP Extensions
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 
-# Install Composer
+# Link Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# ============================================
-# LARAVEL BACKEND SETUP
-# ============================================
+# -----------------------
+# LARAVEL SETUP
+# -----------------------
 WORKDIR /var/www/api
 
-# Copy Laravel application
+# Copy ONLY composer files first
 COPY backend/quickcon-api/composer.json backend/quickcon-api/composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-scripts --no-interaction
 
+# Copy the rest of Laravel
 COPY backend/quickcon-api/ .
 RUN composer dump-autoload --optimize
 
-# Create storage directories
-RUN mkdir -p storage/logs \
-    storage/framework/cache \
-    storage/framework/sessions \
-    storage/framework/views \
-    bootstrap/cache
-
-# Set permissions
+# Permissions
 RUN chown -R www-data:www-data /var/www/api \
     && chmod -R 775 storage bootstrap/cache
 
-# ============================================
-# NEXTJS FRONTEND SETUP
-# ============================================
+# -----------------------
+# NEXT.JS SETUP (Copy from Stage 1)
+# -----------------------
 WORKDIR /var/www/frontend
 
-# Copy built frontend from builder stage
+# Copy the built .next folder and public assets
 COPY --from=frontend-builder /app/frontend/.next ./.next
 COPY --from=frontend-builder /app/frontend/public ./public
-COPY --from=frontend-builder /app/frontend/package*.json ./
+COPY --from=frontend-builder /app/frontend/package.json ./
 COPY --from=frontend-builder /app/frontend/node_modules ./node_modules
 
-# ============================================
-# NGINX + SUPERVISOR CONFIG
-# ============================================
+# -----------------------
+# SERVER CONFIG
+# -----------------------
+# Copy config files
 COPY docker/monolith/nginx.conf /etc/nginx/http.d/default.conf
 COPY docker/monolith/supervisord.conf /etc/supervisord.conf
 COPY docker/monolith/start.sh /start.sh
 RUN chmod +x /start.sh
 
-# Expose single port (Render uses $PORT)
 EXPOSE 10000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=5s \
     CMD curl -f http://localhost:10000/api/health || exit 1
-
-WORKDIR /var/www
 
 CMD ["/start.sh"]
