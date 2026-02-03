@@ -48,10 +48,10 @@ COPY docker/nginx.conf.template /etc/nginx/templates/default.conf.template
 # Copy supervisor config
 COPY docker/supervisord.conf /etc/supervisord.conf
 
-# Copy entrypoint
-COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
-
 EXPOSE 8000
 
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD sh -c "\
+    envsubst '\$PORT' \
+    < /etc/nginx/templates/default.conf.template \
+    > /etc/nginx/http.d/default.conf \
+    && supervisord -c /etc/supervisord.conf"
