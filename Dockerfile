@@ -10,7 +10,8 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 # Install dependencies
-RUN npm ci
+# Try ci first, fallback to install
+RUN npm ci || npm install
 
 # Copy all source code
 COPY . .
