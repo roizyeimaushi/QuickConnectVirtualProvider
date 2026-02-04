@@ -9,12 +9,14 @@ import {
     Timer,
     Bell,
     Shield,
-    Database
+    Database,
+    Briefcase
 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 
 const settingsItems = [
     { title: "General", href: "/settings/general", icon: Settings, description: "Basic company details and defaults" },
+    { title: "Positions", href: "/settings/positions", icon: Briefcase, description: "Manage employee job positions" },
     { title: "Attendance", href: "/settings/attendance", icon: Clock, description: "Attendance rules and policies" },
     { title: "Break", href: "/settings/break", icon: Timer, description: "Break time configurations" },
     { title: "Notifications", href: "/settings/notifications", icon: Bell, description: "Alerts and delivery methods" },

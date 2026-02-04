@@ -19,7 +19,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { employeesApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { isValidEmail } from "@/lib/utils";
-import { POSITIONS } from "@/lib/constants";
+import { API_BASE_URL, POSITIONS as DEFAULT_POSITIONS } from "@/lib/constants";
 import {
     ArrowLeft,
     Loader2,
@@ -38,6 +38,7 @@ export default function CreateEmployeePage() {
     const [errors, setErrors] = useState({});
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [positions, setPositions] = useState(DEFAULT_POSITIONS);
 
     const [formData, setFormData] = useState({
         employee_id: "",
@@ -49,21 +50,41 @@ export default function CreateEmployeePage() {
         position: "",
     });
 
-    // Fetch the next employee ID from backend on mount
+    // Fetch the next employee ID and positions from backend on mount
     useEffect(() => {
-        const fetchNextId = async () => {
+        const fetchInitialData = async () => {
             try {
-                const response = await employeesApi.getNextId();
-                setFormData(prev => ({ ...prev, employee_id: response.next_employee_id }));
+                const token = localStorage.getItem("token");
+
+                // Fetch next employee ID
+                const idResponse = await employeesApi.getNextId();
+                setFormData(prev => ({ ...prev, employee_id: idResponse.next_employee_id }));
+
+                // Fetch positions from settings
+                const settingsResponse = await fetch(`${API_BASE_URL}/settings`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (settingsResponse.ok) {
+                    const settings = await settingsResponse.json();
+                    if (settings.positions) {
+                        try {
+                            const parsed = JSON.parse(settings.positions);
+                            if (Array.isArray(parsed) && parsed.length > 0) {
+                                setPositions(parsed);
+                            }
+                        } catch {
+                            // If not valid JSON, use default positions
+                        }
+                    }
+                }
             } catch (error) {
-                console.error("Failed to fetch next employee ID:", error);
-                // Fallback to a temporary ID if fetch fails
+                console.error("Failed to fetch initial data:", error);
                 setFormData(prev => ({ ...prev, employee_id: "QCV-001" }));
             } finally {
                 setLoadingId(false);
             }
         };
-        fetchNextId();
+        fetchInitialData();
     }, []);
 
     const validateForm = () => {
@@ -269,7 +290,7 @@ export default function CreateEmployeePage() {
                                         <SelectValue placeholder="Select position" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {POSITIONS.map((position) => (
+                                        {positions.map((position) => (
                                             <SelectItem key={position} value={position}>
                                                 {position}
                                             </SelectItem>

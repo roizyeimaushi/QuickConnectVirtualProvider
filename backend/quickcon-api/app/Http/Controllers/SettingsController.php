@@ -50,7 +50,7 @@ class SettingsController extends Controller
             'break_duration', 'break_start_window', 'break_end_window', 'auto_resume', 'break_penalty',
             'late_alerts', 'absent_alerts', 'break_alerts', 'notify_email', 'notify_sms', 'notify_inapp',
             '2fa_enabled', 'session_timeout', 'max_login_attempts', 'pass_min_length', 'pass_special_chars',
-            'retention_policy',
+            'retention_policy', 'positions',
         ];
     }
 

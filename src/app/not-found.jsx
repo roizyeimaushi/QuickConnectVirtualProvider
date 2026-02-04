@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Home, ArrowLeft, Search } from "lucide-react";
+import { Home, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -28,13 +28,10 @@ export default function NotFound() {
                 </div>
 
                 {/* 404 Display */}
-                <div className="relative mb-8">
-                    <h1 className="text-[150px] font-bold leading-none text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600 select-none">
+                <div className="mb-8">
+                    <h1 className="text-[180px] font-black leading-none text-emerald-600">
                         404
                     </h1>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <Search className="w-16 h-16 text-emerald-200 animate-pulse" />
-                    </div>
                 </div>
 
                 {/* Error Message */}

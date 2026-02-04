@@ -22,7 +22,7 @@ import {
 import { employeesApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { isValidEmail } from "@/lib/utils";
-import { POSITIONS } from "@/lib/constants";
+import { API_BASE_URL, POSITIONS as DEFAULT_POSITIONS } from "@/lib/constants";
 import {
     ArrowLeft,
     Loader2,
@@ -40,6 +40,7 @@ export default function EditEmployeePage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [errors, setErrors] = useState({});
+    const [positions, setPositions] = useState(DEFAULT_POSITIONS);
 
     const [formData, setFormData] = useState({
         employee_id: "",
@@ -54,8 +55,11 @@ export default function EditEmployeePage() {
     const [showPassword, setShowPassword] = useState(false);
 
     useEffect(() => {
-        const fetchEmployee = async () => {
+        const fetchData = async () => {
             try {
+                const token = localStorage.getItem("token");
+
+                // Fetch employee data
                 const response = await employeesApi.getById(params.id);
                 const employee = response.data || response;
 
@@ -67,6 +71,24 @@ export default function EditEmployeePage() {
                     position: employee.position || "",
                     status: employee.status || "active",
                 });
+
+                // Fetch positions from settings
+                const settingsResponse = await fetch(`${API_BASE_URL}/settings`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (settingsResponse.ok) {
+                    const settings = await settingsResponse.json();
+                    if (settings.positions) {
+                        try {
+                            const parsed = JSON.parse(settings.positions);
+                            if (Array.isArray(parsed) && parsed.length > 0) {
+                                setPositions(parsed);
+                            }
+                        } catch {
+                            // If not valid JSON, use default positions
+                        }
+                    }
+                }
             } catch (error) {
                 toast({
                     title: "Error",
@@ -80,7 +102,7 @@ export default function EditEmployeePage() {
         };
 
         if (params.id) {
-            fetchEmployee();
+            fetchData();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [params.id]);
@@ -281,7 +303,7 @@ export default function EditEmployeePage() {
                                         <SelectValue placeholder="Select position" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {POSITIONS.map((position) => (
+                                        {positions.map((position) => (
                                             <SelectItem key={position} value={position}>
                                                 {position}
                                             </SelectItem>
