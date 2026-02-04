@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/auth-provider";
+import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 
 export default function AttendancePage() {
     const router = useRouter();
@@ -27,9 +28,5 @@ export default function AttendancePage() {
         }
     }, [isAdmin, isEmployee, isAuthenticated, loading, router]);
 
-    return (
-        <div className="min-h-screen flex items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-    );
+    return <FullscreenLoader />;
 }

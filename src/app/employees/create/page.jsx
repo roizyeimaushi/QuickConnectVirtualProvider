@@ -28,6 +28,7 @@ import {
     Eye,
     EyeOff,
 } from "lucide-react";
+import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 
 export default function CreateEmployeePage() {
     const router = useRouter();
@@ -147,13 +148,7 @@ export default function CreateEmployeePage() {
     };
 
     if (loadingId) {
-        return (
-            <DashboardLayout title="Create Employee">
-                <div className="flex items-center justify-center h-[60vh]">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                </div>
-            </DashboardLayout>
-        );
+        return <FullscreenLoader />;
     }
 
     return (

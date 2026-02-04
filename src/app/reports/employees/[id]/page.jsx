@@ -33,6 +33,7 @@ import {
     ChevronLeft,
     ChevronRight,
 } from "lucide-react";
+import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 
 export default function EmployeeReportDetailPage() {
     const params = useParams();
@@ -103,13 +104,7 @@ export default function EmployeeReportDetailPage() {
 
     // Full-page loader for initial load only
     if (initialLoad) {
-        return (
-            <DashboardLayout title="Employee Report">
-                <div className="flex items-center justify-center h-[60vh]">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                </div>
-            </DashboardLayout>
-        );
+        return <FullscreenLoader />;
     }
 
     if (!data) {

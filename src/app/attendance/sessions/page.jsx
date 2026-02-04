@@ -49,6 +49,7 @@ import {
     Timer,
     Trash2,
 } from "lucide-react";
+import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 
 function SessionsTableSkeleton() {
     return (
@@ -271,13 +272,7 @@ export default function AttendanceSessionsPage() {
     const activeSession = sessions.find((s) => s.status === "active");
 
     if (loading) {
-        return (
-            <DashboardLayout title="Attendance Sessions">
-                <div className="flex items-center justify-center h-[60vh]">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                </div>
-            </DashboardLayout>
-        );
+        return <FullscreenLoader />;
     }
 
 

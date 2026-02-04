@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 import { useAuth } from "@/components/providers/auth-provider";
 import { reportsApi } from "@/lib/api";
 import { formatDate, formatTime24, getCurrentDate } from "@/lib/utils";
@@ -385,13 +386,7 @@ export default function AdminDashboard() {
     }, [authLoading, user, isAdmin]);
 
     if (loading) {
-        return (
-            <DashboardLayout title="Admin Dashboard">
-                <div className="flex items-center justify-center h-[60vh]">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                </div>
-            </DashboardLayout>
-        );
+        return <FullscreenLoader />;
     }
 
     return (

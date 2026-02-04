@@ -39,6 +39,7 @@ import {
     ChartTooltip,
     ChartTooltipContent,
 } from "@/components/ui/chart";
+import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 
 
 const statusConfig = {
@@ -162,13 +163,7 @@ export default function DailyReportsPage() {
 
     // Full-page loader for initial load only
     if (initialLoad) {
-        return (
-            <DashboardLayout title="Daily Attendance Report">
-                <div className="flex items-center justify-center h-[60vh]">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                </div>
-            </DashboardLayout>
-        );
+        return <FullscreenLoader />;
     }
 
     return (

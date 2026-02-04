@@ -31,6 +31,7 @@ import {
     Clock,
     CheckCircle2,
 } from "lucide-react";
+import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 
 const months = [
     "January", "February", "March", "April", "May", "June",
@@ -74,13 +75,7 @@ export default function MonthlyReportsPage() {
         : 0;
 
     if (loading) {
-        return (
-            <DashboardLayout title="Monthly Summary Report">
-                <div className="flex items-center justify-center h-[60vh]">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                </div>
-            </DashboardLayout>
-        );
+        return <FullscreenLoader />;
     }
 
     return (

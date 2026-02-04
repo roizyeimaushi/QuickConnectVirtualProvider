@@ -22,6 +22,7 @@ import {
     Shield,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 
 function LiveClockCard() {
     const [time, setTime] = useState(getCurrentTime());
@@ -318,13 +319,7 @@ export default function CheckOutPage() {
     };
 
     if (loading) {
-        return (
-            <DashboardLayout title="Time Out">
-                <div className="flex items-center justify-center h-[60vh]">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                </div>
-            </DashboardLayout>
-        );
+        return <FullscreenLoader />;
     }
 
     // Special State: Already Timed Out (Show Success Card similar to Confirm Page)

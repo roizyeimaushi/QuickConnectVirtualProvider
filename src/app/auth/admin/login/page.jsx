@@ -15,6 +15,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Loader2, AlertCircle, User, KeyRound } from "lucide-react";
+import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 
 export default function AdminLoginPage() {
     const [email, setEmail] = useState("");
@@ -96,11 +97,7 @@ export default function AdminLoginPage() {
     };
 
     if (authLoading) {
-        return (
-            <div className="min-h-screen w-full flex items-center justify-center bg-background">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-            </div>
-        );
+        return <FullscreenLoader />;
     }
 
     return (

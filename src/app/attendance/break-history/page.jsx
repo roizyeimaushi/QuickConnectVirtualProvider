@@ -40,6 +40,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 
 function HistorySkeleton() {
     return (
@@ -212,13 +213,7 @@ export default function BreakHistoryPage() {
 
 
     if (loading) {
-        return (
-            <DashboardLayout title="Break History">
-                <div className="flex items-center justify-center h-[60vh]">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                </div>
-            </DashboardLayout>
-        );
+        return <FullscreenLoader />;
     }
 
     return (

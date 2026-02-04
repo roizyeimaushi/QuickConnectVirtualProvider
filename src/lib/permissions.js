@@ -110,6 +110,7 @@ export function getNavigationItems(user) {
                     icon: "Users",
                     items: [
                         { title: "Employee List", url: "/employees" },
+                        { title: "Add Position", url: "/employees/positions" },
                         { title: "Add Employee", url: "/employees/create" },
                         { title: "Deactivated Employees", url: "/employees/deactivated" },
                     ],

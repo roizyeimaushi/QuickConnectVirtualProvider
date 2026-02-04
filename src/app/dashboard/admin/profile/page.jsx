@@ -24,6 +24,7 @@ import {
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
+import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 
 export default function AdminProfilePage() {
     const { user, refetchUser, loading: authLoading } = useAuth();
@@ -61,13 +62,7 @@ export default function AdminProfilePage() {
     }, [refetchUser]);
 
     if (authLoading || initialLoading) {
-        return (
-            <DashboardLayout title="Profile">
-                <div className="flex items-center justify-center h-[60vh]">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                </div>
-            </DashboardLayout>
-        );
+        return <FullscreenLoader />;
     }
 
     const handleFileChange = (e) => {

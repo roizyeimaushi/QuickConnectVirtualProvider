@@ -20,6 +20,7 @@ import {
     AlertCircle,
     Save,
 } from "lucide-react";
+import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 import {
     Select,
     SelectContent,
@@ -164,13 +165,7 @@ export default function EditSchedulePage() {
 
     // Full-page loading spinner
     if (loadingSchedule) {
-        return (
-            <DashboardLayout title="Edit Schedule">
-                <div className="flex items-center justify-center h-[60vh]">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                </div>
-            </DashboardLayout>
-        );
+        return <FullscreenLoader />;
     }
 
     return (

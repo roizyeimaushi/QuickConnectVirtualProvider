@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { breakApi, reportsApi } from "@/lib/api";
 import { formatTime24, formatTime12 } from "@/lib/utils";
 import { Timer, Coffee, Play, StopCircle, AlertCircle, Clock, Ban, Loader2, PauseCircle, Calendar, ThumbsUp } from "lucide-react";
+import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 import { useToast } from "@/hooks/use-toast";
 
 export default function BreakPage() {
@@ -204,13 +205,7 @@ export default function BreakPage() {
     const breakMessage = breakStatus?.break_message;
 
     if (loading) {
-        return (
-            <DashboardLayout title="Break Time">
-                <div className="flex items-center justify-center h-[60vh]">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                </div>
-            </DashboardLayout>
-        );
+        return <FullscreenLoader />;
     }
 
     return (

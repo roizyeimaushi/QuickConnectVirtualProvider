@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Loader2, AlertCircle, Mail, Lock } from "lucide-react";
+import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 
 export default function EmployeeLoginPage() {
     const [email, setEmail] = useState("");
@@ -99,11 +100,7 @@ export default function EmployeeLoginPage() {
     };
 
     if (authLoading) {
-        return (
-            <div className="min-h-screen w-full flex items-center justify-center bg-background">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-            </div>
-        );
+        return <FullscreenLoader />;
     }
 
     return (

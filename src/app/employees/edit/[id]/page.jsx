@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 import {
     Select,
     SelectContent,
@@ -175,13 +176,7 @@ export default function EditEmployeePage() {
     };
 
     if (loading) {
-        return (
-            <DashboardLayout title="Edit Employee">
-                <div className="flex items-center justify-center h-[60vh]">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                </div>
-            </DashboardLayout>
-        );
+        return <FullscreenLoader />;
     }
 
     return (

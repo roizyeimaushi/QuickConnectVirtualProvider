@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 import {
     Table,
     TableBody,
@@ -228,15 +229,9 @@ export default function EmployeesPage() {
     // Loading state is now handled by Skeletons in the main return check
 
 
-    // Full-page spinner for initial load only
+    // Full-page logo loader for initial load only
     if (isFirstLoad) {
-        return (
-            <DashboardLayout title="Employees">
-                <div className="flex items-center justify-center h-[60vh]">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                </div>
-            </DashboardLayout>
-        );
+        return <FullscreenLoader />;
     }
 
     return (
