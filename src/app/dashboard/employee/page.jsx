@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 
 import { useAuth } from "@/components/providers/auth-provider";
 import { attendanceApi, reportsApi, breakApi } from "@/lib/api";
-import { formatDate, formatTime24, formatTime12, getCurrentDate, getCurrentTime, isSameDay } from "@/lib/utils";
+import { formatDate, formatTime24, getCurrentDate, getCurrentTime, isSameDay } from "@/lib/utils";
 import {
     CheckCircle2,
     Clock,

@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { schedulesApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import { isValidTimeFormat, formatTime12 } from "@/lib/utils";
+import { isValidTimeFormat } from "@/lib/utils";
 import {
     ArrowLeft,
     Loader2,

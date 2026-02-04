@@ -46,44 +46,7 @@ export function formatTime24(time) {
     return time;
 }
 
-/**
- * Format a time string to 12-hour format with AM/PM
- * @param {string|Date} time - Time string in HH:mm format, ISO string, or Date object
- * @returns {string} Formatted time string with AM/PM
- */
-export function formatTime12(time) {
-    if (!time) return '--:--';
 
-    let hours, minutes;
-    let date;
-
-    if (time instanceof Date) {
-        date = time;
-    } else if (typeof time === 'string' && (time.includes('T') || time.includes('-'))) {
-        try {
-            date = new Date(time);
-        } catch (e) {
-            // fall through
-        }
-    }
-
-    if (date && !isNaN(date.getTime())) {
-        hours = date.getHours();
-        minutes = date.getMinutes();
-    } else if (typeof time === 'string' && time.includes(':')) {
-        const parts = time.split(':').map(Number);
-        hours = parts[0];
-        minutes = parts[1];
-    } else {
-        return time;
-    }
-
-    if (isNaN(hours) || isNaN(minutes)) return time;
-
-    const period = hours >= 12 ? 'PM' : 'AM';
-    const displayHours = hours % 12 || 12;
-    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
-}
 
 /**
  * Format a date string for display
