@@ -33,6 +33,7 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+
 function TodayStatusCard({ user, session, record, breakStatus, loading, constraints, isWeekend }) {
     const [currentTime, setCurrentTime] = useState(formatTime24(new Date()));
     const [timeLeft, setTimeLeft] = useState(null);
@@ -83,71 +84,247 @@ function TodayStatusCard({ user, session, record, breakStatus, loading, constrai
     }, [secondsLeft, breakStatus?.active]);
 
     if (loading) {
-        return <Skeleton className="h-64 w-full" />;
-    }
-
-    if (isWeekend) {
         return (
-            <Card className="border-dashed bg-muted/40">
-                <CardContent className="flex flex-col items-center justify-center p-8 text-center">
-                    <Calendar className="h-10 w-10 text-muted-foreground opacity-50 mb-3" />
-                    <h3 className="text-lg font-medium">It's the Weekend</h3>
-                    <p className="text-sm text-muted-foreground">No shift scheduled for today.</p>
-                </CardContent>
+            <Card className="col-span-full">
+                <CardContent className="p-8"><Skeleton className="h-32 w-full" /></CardContent>
             </Card>
         );
     }
 
-    // ... Implement the rest of the card UI ...
-    // For brevity/repair, standard status view:
+    // Determine Logic States
+    const hasCheckedIn = record && record.time_in;
+    const hasCheckedOut = record && record.time_out;
+    const isBreakActive = breakStatus?.active;
+    const breakUsed = breakStatus?.already_used;
+    const isLate = record && record.minutes_late > 0;
+
+    // Strict Logic for Button Enabling
+    const canCheckIn = !hasCheckedIn && constraints?.allowed !== false;
+    // Break allowed if not checked out and not currently on break
+    // Respect backend can_start status if available
+    const canStartBreak = !hasCheckedOut && !isBreakActive && (breakStatus?.can_start !== false);
+    const canEndBreak = isBreakActive;
+
+    // Time out allowed even if on break (Backend auto-ends break)
+    const canCheckOut = hasCheckedIn && !hasCheckedOut;
+
+    // Status Text Map
+    let statusText = "ABSENT"; // Default
+    let statusColor = "text-red-600 bg-red-100";
+    let headerColor = "bg-primary"; // Default header color
+    let StatusIcon = AlertCircle;
+
+    // Weekend - No work scheduled
+    if (isWeekend) {
+        statusText = "NO WORK TODAY";
+        statusColor = "text-sky-600 bg-sky-100";
+        headerColor = "bg-sky-600";
+        StatusIcon = ThumbsUp;
+    } else if (isBreakActive) {
+        statusText = "ON BREAK";
+        statusColor = "text-amber-600 bg-amber-100";
+        headerColor = "bg-amber-600";
+        StatusIcon = Coffee;
+    } else if (record?.status && record.status !== 'pending') {
+        // Respect the DB status set by system or admin
+        const s = record.status;
+        if (s === 'present') {
+            statusText = "PRESENT";
+            statusColor = "text-emerald-600 bg-emerald-100";
+            headerColor = "bg-emerald-600";
+            StatusIcon = CheckCircle2;
+        } else if (s === 'late') {
+            statusText = "LATE";
+            statusColor = "text-amber-600 bg-amber-100";
+            headerColor = "bg-amber-600";
+            StatusIcon = AlertCircle;
+        } else if (s === 'absent') {
+            statusText = "ABSENT";
+            statusColor = "text-red-600 bg-red-100";
+            headerColor = "bg-red-600";
+            StatusIcon = AlertCircle;
+        } else if (s === 'excused') {
+            statusText = "EXCUSED";
+            statusColor = "text-blue-600 bg-blue-100";
+            headerColor = "bg-blue-600";
+            StatusIcon = CheckCircle2;
+        } else if (s === 'left_early') {
+            statusText = "LEFT EARLY";
+            statusColor = "text-orange-600 bg-orange-100";
+            headerColor = "bg-orange-600";
+            StatusIcon = AlertCircle;
+        }
+    } else {
+        // Not checked in yet
+        if (constraints?.reason === 'too_late') {
+            statusText = "ABSENT";
+        } else if (constraints?.reason === 'weekend') {
+            statusText = "NO WORK TODAY";
+            statusColor = "text-sky-600 bg-sky-100";
+            headerColor = "bg-sky-600";
+            StatusIcon = ThumbsUp;
+        } else {
+            statusText = "NOT TIMED IN";
+            statusColor = "text-gray-500 bg-gray-100";
+            headerColor = "bg-gray-500";
+            StatusIcon = Clock;
+        }
+    }
+
+    // Reusable Action Button Component
+    const ActionButton = ({ title, subtext, icon: Icon, href, enabled, variant, activeState, tooltip }) => {
+        const baseStyles = "relative flex flex-col items-center justify-center p-6 h-40 w-full rounded-xl border-2 transition-all duration-300 group";
+        const variants = {
+            emerald: "border-emerald-100 bg-emerald-50 hover:bg-emerald-100 hover:border-emerald-300 text-emerald-800",
+            amber: "border-amber-100 bg-amber-50 hover:bg-amber-100 hover:border-amber-300 text-amber-800",
+            purple: "border-purple-100 bg-purple-50 hover:bg-purple-100 hover:border-purple-300 text-purple-800",
+            disabled: "border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed grayscale"
+        };
+
+        const activeStyles = enabled ? "hover:scale-[1.03] active:scale-[0.97] shadow-md hover:shadow-lg" : "cursor-not-allowed opacity-60";
+        const colorClass = enabled ? variants[variant] : variants.disabled;
+
+        const Content = () => (
+            <>
+                <div className={`
+                    h-14 w-14 rounded-full flex items-center justify-center mb-3 transition-transform duration-300 
+                    ${enabled ? "bg-white shadow-sm group-hover:scale-110" : "bg-gray-200"}
+                `}>
+                    <Icon className={`h-7 w-7 ${enabled ? "" : "text-gray-400"}`} />
+                </div>
+                <h3 className="font-bold text-lg">{title}</h3>
+                {subtext && <p className="text-xs opacity-80 mt-1 font-medium text-center max-w-[120px]">{subtext}</p>}
+
+                {activeState && (
+                    <div className="absolute top-3 right-3 h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                    </div>
+                )}
+            </>
+        );
+
+        if (enabled && href) {
+            return (
+                <Link href={href} className="w-full focus:outline-none">
+                    <div className={`${baseStyles} ${colorClass} ${activeStyles}`}>
+                        <Content />
+                    </div>
+                </Link>
+            );
+        }
+
+        return (
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <div className={`${baseStyles} ${colorClass} ${activeStyles}`}>
+                            <Content />
+                        </div>
+                    </TooltipTrigger>
+                    {tooltip && <TooltipContent><p>{tooltip}</p></TooltipContent>}
+                </Tooltip>
+            </TooltipProvider>
+        );
+    };
 
     return (
-        <Card>
-            <CardHeader className="pb-2">
+        <Card className="col-span-full overflow-hidden border-none shadow-lg mb-6">
+            <div className={`${headerColor} text-white p-6 transition-colors duration-500`}>
                 <div className="flex items-center justify-between">
                     <div>
-                        <CardTitle>Today's Status</CardTitle>
-                        <CardDescription>{formatDate(new Date(), "EEEE, MMMM d, yyyy")}</CardDescription>
+                        <h3 className="text-xl font-bold">Today's Status</h3>
+                        <div className="flex items-center gap-3 mt-2">
+                            <Badge className={`${statusColor} hover:${statusColor} border-none text-sm px-3 py-1 font-bold`}>
+                                <StatusIcon className="h-4 w-4 mr-2" />
+                                {statusText}
+                            </Badge>
+                            {/* Timer directly next to status if needed, or below */}
+                        </div>
+                        {isBreakActive && (
+                            <div className="mt-3 flex items-center gap-2 bg-white/20 p-2 rounded-lg w-fit backdrop-blur-sm animate-pulse">
+                                <Timer className="h-4 w-4" />
+                                <span className="font-mono font-bold text-lg">{timeLeft}</span>
+                                <span className="text-xs opacity-90">remaining</span>
+                            </div>
+                        )}
                     </div>
-                    <Badge variant="outline" className="font-mono text-base px-3 py-1">
-                        {currentTime}
-                    </Badge>
+                    <div className="text-right">
+                        <p className="text-sm opacity-80 font-medium">{formatDate(getCurrentDate(), "EEEE, MMMM do")}</p>
+                        <p className="text-3xl font-bold font-mono tracking-wider text-white drop-shadow-sm">
+                            {currentTime}
+                        </p>
+                    </div>
                 </div>
-            </CardHeader>
-            <CardContent>
-                {/* Content based on record status */}
-                {record?.time_out ? (
-                    <div className="flex items-center gap-3 p-4 bg-green-50/50 dark:bg-green-950/20 rounded-lg">
-                        <CheckCircle2 className="h-8 w-8 text-green-600" />
-                        <div>
-                            <p className="font-medium text-green-900 dark:text-green-300">Shift Completed</p>
-                            <p className="text-sm text-green-700 dark:text-green-400/80">
-                                Timed out at {record.time_out}
-                            </p>
-                        </div>
+            </div>
+
+            <CardContent className="p-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* TIME IN BUTTON */}
+                    <div className="col-span-1">
+                        <ActionButton
+                            title="Time In"
+                            icon={CheckCircle2}
+                            variant="emerald"
+                            href="/attendance/confirm"
+                            enabled={!isWeekend && canCheckIn}
+                            subtext={
+                                isWeekend ? "No work today" :
+                                    hasCheckedIn ? `Timed in at ${formatTime24(record?.time_in)}` : "Mark your attendance"
+                            }
+                            tooltip={isWeekend ? "No work scheduled for today" : undefined}
+                        />
                     </div>
-                ) : record?.time_in ? (
-                    <div className="flex items-center gap-3 p-4 bg-blue-50/50 dark:bg-blue-950/20 rounded-lg">
-                        <Timer className="h-8 w-8 text-blue-600" />
-                        <div>
-                            <p className="font-medium text-blue-900 dark:text-blue-300">Currently Working</p>
-                            <p className="text-sm text-blue-700 dark:text-blue-400/80">
-                                Timed in at {record.time_in} ({record.status})
-                            </p>
-                        </div>
+
+                    {/* BREAK BUTTON */}
+                    <div className="col-span-1">
+                        <ActionButton
+                            title={isBreakActive ? "Break In Progress" : "Break Time"}
+                            icon={Coffee}
+                            variant="amber"
+                            href="/attendance/break"
+                            enabled={!isWeekend && (canEndBreak || canStartBreak)}
+                            activeState={isBreakActive}
+                            subtext={
+                                isWeekend ? "No work today" :
+                                    isBreakActive ? "Click to End" :
+                                        breakStatus?.can_start ? "Break Available" :
+                                            breakStatus?.within_window === false ? "Window Closed" :
+                                                breakUsed ? "Break Completed" :
+                                                    "Check Availability"
+                            }
+                            tooltip={isWeekend ? "No work scheduled for today" : undefined}
+                        />
                     </div>
-                ) : (
-                    <div className="flex items-center gap-3 p-4 bg-amber-50/50 dark:bg-amber-950/20 rounded-lg">
-                        <AlertCircle className="h-8 w-8 text-amber-600" />
-                        <div>
-                            <p className="font-medium text-amber-900 dark:text-amber-300">Not Timed In</p>
-                            <p className="text-sm text-amber-700 dark:text-amber-400/80">
-                                Please check in to start your shift.
-                            </p>
-                        </div>
-                        <Button className="ml-auto" asChild>
-                            <Link href="/attendance/confirm">Time In</Link>
-                        </Button>
+
+                    {/* TIME OUT BUTTON */}
+                    <div className="col-span-1">
+                        <ActionButton
+                            title="Time Out"
+                            icon={LogOut}
+                            variant="purple"
+                            href="/attendance/check-out"
+                            enabled={!isWeekend && canCheckOut}
+                            tooltip={
+                                isWeekend ? "No work scheduled for today" :
+                                    !hasCheckedIn ? "Time in first" :
+                                        (hasCheckedOut ? "Shift Completed" :
+                                            (isBreakActive ? "Ends active break & shift" : null))
+                            }
+                            subtext={
+                                isWeekend ? "No work today" :
+                                    hasCheckedOut ? "Shift Completed" :
+                                        isBreakActive ? "End break & shift" :
+                                            "End your day"
+                            }
+                        />
+                    </div>
+                </div>
+
+                {record?.minutes_late > 0 && (
+                    <div className="mt-6 mx-auto max-w-md bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-3 text-amber-800 text-sm">
+                        <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0" />
+                        <p>You were marked late by <span className="font-bold">{record.minutes_late} minutes</span>.</p>
                     </div>
                 )}
             </CardContent>
@@ -155,27 +332,42 @@ function TodayStatusCard({ user, session, record, breakStatus, loading, constrai
     );
 }
 
+
 function AttendanceStatsCard({ stats, loading }) {
-    if (loading) return <Skeleton className="h-32 w-full" />;
+    if (loading) return <Skeleton className="h-48 w-full" />;
+
+    // Using monthly stats but could filter for weekly if data available
+    const attendanceRate = stats?.attendanceRate || 0;
 
     return (
         <Card>
             <CardHeader className="pb-2">
-                <CardTitle className="text-base font-medium">Monthly Overview</CardTitle>
+                <CardTitle className=" text-base font-medium flex items-center gap-2">
+                    <History className="h-4 w-4 text-muted-foreground" />
+                    Attendance Summary
+                </CardTitle>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-3 gap-4 text-center">
-                    <div>
-                        <p className="text-2xl font-bold">{stats?.presentDays || 0}</p>
-                        <p className="text-xs text-muted-foreground">Present</p>
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Attendance Rate</span>
+                        <span className="text-sm font-bold text-emerald-600">{attendanceRate}%</span>
                     </div>
-                    <div>
-                        <p className="text-2xl font-bold">{stats?.lateDays || 0}</p>
-                        <p className="text-xs text-muted-foreground">Late</p>
-                    </div>
-                    <div>
-                        <p className="text-2xl font-bold">{stats?.absentDays || 0}</p>
-                        <p className="text-xs text-muted-foreground">Absent</p>
+                    <Progress value={attendanceRate} className="h-2 [&>div]:bg-emerald-500" />
+
+                    <div className="grid grid-cols-3 gap-2 pt-4 text-center">
+                        <div>
+                            <p className="text-xl font-bold">{stats?.presentDays || 0}</p>
+                            <p className="text-xs text-muted-foreground">Present</p>
+                        </div>
+                        <div>
+                            <p className="text-xl font-bold">{stats?.lateDays || 0}</p>
+                            <p className="text-xs text-muted-foreground">Late</p>
+                        </div>
+                        <div>
+                            <p className="text-xl font-bold">{stats?.absentDays || 0}</p>
+                            <p className="text-xs text-muted-foreground">Absent</p>
+                        </div>
                     </div>
                 </div>
             </CardContent>
@@ -184,23 +376,25 @@ function AttendanceStatsCard({ stats, loading }) {
 }
 
 export default function EmployeeDashboardPage() {
-    const { user, authLoading } = useAuth();
-    const [loading, setLoading] = useState(true);
+    const { user, loading: authLoading } = useAuth();
     const [session, setSession] = useState(null);
+    const [stats, setStats] = useState(null);
     const [todayRecord, setTodayRecord] = useState(null);
     const [activeBreak, setActiveBreak] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [checkInConstraints, setCheckInConstraints] = useState({ allowed: true, message: null });
     const [isWeekend, setIsWeekend] = useState(false);
-    const [checkInConstraints, setCheckInConstraints] = useState({});
-    const [stats, setStats] = useState({});
 
+    // Fetch dashboard data function (extracted for reuse in polling)
     const fetchDashboardData = async (isPolling = false) => {
         try {
-            if (!isPolling) setLoading(true);
             const response = await reportsApi.getEmployeeDashboard();
 
+            // Check if it's a weekend (no work today)
             if (response.is_weekend || response.no_work_today) {
                 setIsWeekend(true);
                 setSession(null);
+                setTodayRecord(null);
             } else {
                 setIsWeekend(false);
                 if (response.active_session) {
@@ -223,6 +417,8 @@ export default function EmployeeDashboardPage() {
             const late = monthlyStats.late || 0;
             const absent = monthlyStats.absent || 0;
             const total = present + late + absent;
+
+
 
             setStats({
                 attendanceRate: total > 0 ? Math.round(((present + late) / total) * 100) : 0,
@@ -332,9 +528,14 @@ export default function EmployeeDashboardPage() {
         }
     }, [authLoading, user]);
 
+    if (loading) {
+        return null;
+    }
+
     return (
         <DashboardLayout title="Employee Dashboard">
             <div className="space-y-6 animate-fade-in content-start">
+                {/* Welcome Section */}
                 <div className="flex flex-col gap-1 mb-2">
                     <h1 className="text-2xl font-bold tracking-tight">
                         Welcome back, {user?.first_name}!
@@ -362,6 +563,7 @@ export default function EmployeeDashboardPage() {
                             <CardTitle className="text-base font-medium">Quick Links</CardTitle>
                         </CardHeader>
                         <CardContent className="grid grid-cols-2 gap-4">
+
                             <Link href="/dashboard/employee/profile" className="block p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                                 <div className="flex items-center gap-2 mb-2">
                                     <Fingerprint className="h-5 w-5 text-purple-500" />
@@ -369,6 +571,7 @@ export default function EmployeeDashboardPage() {
                                 </div>
                                 <p className="text-xs text-muted-foreground">View your information</p>
                             </Link>
+
                             <Link href="/attendance/history" className="block p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                                 <div className="flex items-center gap-2 mb-2">
                                     <History className="h-5 w-5 text-blue-500" />
@@ -383,3 +586,4 @@ export default function EmployeeDashboardPage() {
         </DashboardLayout>
     );
 }
+

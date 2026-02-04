@@ -28,79 +28,217 @@ import {
 } from "lucide-react";
 
 function StatCard({ title, value, description, icon: Icon, trend, loading }) {
-    if (loading) return <Skeleton className="h-32 w-full" />;
+    if (loading) {
+        return (
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-8 w-8 rounded" />
+                </CardHeader>
+                <CardContent>
+                    <Skeleton className="h-8 w-16 mb-2" />
+                    <Skeleton className="h-3 w-32" />
+                </CardContent>
+            </Card>
+        );
+    }
 
     return (
-        <Card>
+        <Card className="transition-all hover:shadow-lg hover:border-primary/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{title}</CardTitle>
-                <Icon className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                    {title}
+                </CardTitle>
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Icon className="h-5 w-5 text-primary" />
+                </div>
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold">{value}</div>
-                <p className="text-xs text-muted-foreground">{description}</p>
-                {trend && (
-                    <div className="mt-1 flex items-center text-xs text-green-500">
-                        <TrendingUp className="mr-1 h-3 w-3" />
-                        {trend}
-                    </div>
-                )}
+                <div className="text-3xl font-bold">{value}</div>
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                    {trend && (
+                        <span className={trend > 0 ? "text-emerald-600" : "text-red-600"}>
+                            <TrendingUp className={`h-3 w-3 inline ${trend < 0 ? 'rotate-180' : ''}`} />
+                            {Math.abs(trend)}%
+                        </span>
+                    )}
+                    {description}
+                </p>
             </CardContent>
         </Card>
     );
 }
 
 function AttendanceOverviewCard({ data, loading }) {
-    if (loading) return <Skeleton className="h-[300px] w-full" />;
+    if (loading) {
+        return (
+            <Card className="col-span-full lg:col-span-2">
+                <CardHeader>
+                    <Skeleton className="h-6 w-48" />
+                    <Skeleton className="h-4 w-64" />
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="space-y-2">
+                            <Skeleton className="h-4 w-32" />
+                            <Skeleton className="h-3 w-full" />
+                        </div>
+                    ))}
+                </CardContent>
+            </Card>
+        );
+    }
+
+    const presentRate = data?.presentRate || 0;
+    const lateRate = data?.lateRate || 0;
+    const absentRate = data?.absentRate || 0;
+    const pendingRate = data?.pendingRate || 0;
 
     return (
         <Card className="col-span-full lg:col-span-2">
             <CardHeader>
-                <CardTitle>Attendance Overview</CardTitle>
-                <CardDescription>Today's attendance metrics</CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                    <CalendarCheck className="h-5 w-5 text-primary" />
+                    Today's Attendance Overview
+                </CardTitle>
+                <CardDescription>
+                    Real-time attendance statistics for {formatDate(getCurrentDate())}
+                </CardDescription>
             </CardHeader>
-            <CardContent>
-                <div className="space-y-4">
-                    <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                            <span className="font-medium">Present</span>
-                            <span className="text-muted-foreground">{data?.activeToday}/{data?.totalEmployees} ({data?.presentRate}%)</span>
+            <CardContent className="space-y-6">
+                <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                            <span className="text-sm font-medium">Present</span>
                         </div>
-                        <Progress value={data?.presentRate} className="h-2 bg-muted [&>div]:bg-green-500" />
+                        <span className="text-sm font-bold text-emerald-600">{presentRate}%</span>
                     </div>
-                    <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                            <span className="font-medium">Late</span>
-                            <span className="text-muted-foreground">{data?.lateToday}/{data?.totalEmployees} ({data?.lateRate}%)</span>
+                    <Progress value={presentRate} className="h-2 [&>div]:bg-emerald-500" />
+                </div>
+
+                <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Timer className="h-4 w-4 text-amber-600" />
+                            <span className="text-sm font-medium">Late</span>
                         </div>
-                        <Progress value={data?.lateRate} className="h-2 bg-muted [&>div]:bg-yellow-500" />
+                        <span className="text-sm font-bold text-amber-600">{lateRate}%</span>
                     </div>
-                    <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                            <span className="font-medium">Absent / Not In</span>
-                            <span className="text-muted-foreground">{data?.absentToday}/{data?.totalEmployees} ({data?.absentRate}%)</span>
+                    <Progress value={lateRate} className="h-2 [&>div]:bg-amber-500" />
+                </div>
+
+                <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-blue-600" />
+                            <span className="text-sm font-medium">Pending</span>
                         </div>
-                        <Progress value={data?.absentRate} className="h-2 bg-muted [&>div]:bg-red-500" />
+                        <span className="text-sm font-bold text-blue-600">{pendingRate}%</span>
                     </div>
+                    <Progress value={pendingRate} className="h-2 [&>div]:bg-blue-500" />
+                </div>
+
+                <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <XCircle className="h-4 w-4 text-red-600" />
+                            <span className="text-sm font-medium">Absent</span>
+                        </div>
+                        <span className="text-sm font-bold text-red-600">{absentRate}%</span>
+                    </div>
+                    <Progress value={absentRate} className="h-2 [&>div]:bg-red-500" />
                 </div>
             </CardContent>
         </Card>
     );
 }
 
+function QuickActionsCard() {
+    const actions = [
+        {
+            title: "Add Employee",
+            description: "Register a new employee",
+            icon: UserPlus,
+            href: "/employees/create",
+            color: "text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30",
+        },
+        {
+            title: "Create Session",
+            description: "Open attendance session",
+            icon: Calendar,
+            href: "/attendance/sessions/create",
+            color: "text-blue-600 bg-blue-100 dark:bg-blue-900/30",
+        },
+        {
+            title: "View Reports",
+            description: "Generate attendance reports",
+            icon: FileSpreadsheet,
+            href: "/reports/daily",
+            color: "text-purple-600 bg-purple-100 dark:bg-purple-900/30",
+        },
+    ];
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Quick Actions</CardTitle>
+                <CardDescription>Common administrative tasks</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3">
+                {actions.map((action) => (
+                    <Link key={action.title} href={action.href}>
+                        <div className="flex items-center gap-4 p-3 rounded-lg border transition-all hover:bg-muted/50 hover:border-primary/20 group">
+                            <div className={`p-2 rounded-lg ${action.color}`}>
+                                <action.icon className="h-4 w-4" />
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-sm font-medium">{action.title}</p>
+                                <p className="text-xs text-muted-foreground">{action.description}</p>
+                            </div>
+                            <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                        </div>
+                    </Link>
+                ))}
+            </CardContent>
+        </Card>
+    );
+}
+
 function ActiveSessionCard({ session, loading }) {
-    if (loading) return <Skeleton className="h-[200px] w-full" />;
+    if (loading) {
+        return (
+            <Card>
+                <CardHeader>
+                    <Skeleton className="h-6 w-48" />
+                    <Skeleton className="h-4 w-32" />
+                </CardHeader>
+                <CardContent>
+                    <Skeleton className="h-20 w-full" />
+                </CardContent>
+            </Card>
+        );
+    }
 
     if (!session) {
         return (
             <Card>
                 <CardHeader>
-                    <CardTitle>Active Session</CardTitle>
+                    <CardTitle className="flex items-center gap-2">
+                        <Clock className="h-5 w-5 text-muted-foreground" />
+                        Active Session
+                    </CardTitle>
+                    <CardDescription>Current attendance session status</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="flex flex-col items-center justify-center py-6 text-center text-muted-foreground">
-                        <Clock className="h-10 w-10 mb-3 opacity-20" />
-                        <p>No active session right now.</p>
+                    <div className="flex flex-col items-center justify-center py-6 text-center">
+                        <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
+                            <AlertTriangle className="h-6 w-6 text-muted-foreground" />
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-4">No active session</p>
+                        <Button asChild size="sm">
+                            <Link href="/attendance/sessions/create">Create Session</Link>
+                        </Button>
                     </div>
                 </CardContent>
             </Card>
@@ -109,60 +247,42 @@ function ActiveSessionCard({ session, loading }) {
 
     return (
         <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-base font-medium">Current Session</CardTitle>
-                <Badge variant="outline" className="font-normal">Active</Badge>
+            <CardHeader>
+                <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                        <Clock className="h-5 w-5 text-primary" />
+                        Active Session
+                    </CardTitle>
+                    <CardDescription>Currently accepting attendance</CardDescription>
             </CardHeader>
-            <CardContent className="pt-4">
-                <div className="mb-4">
-                    <h3 className="text-lg font-bold">{session.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                        {session.start_time} - {session.end_time}
-                    </p>
-                </div>
-                <div className="space-y-2">
+            <CardContent className="space-y-4">
+                <div className="p-4 rounded-lg bg-muted/50 space-y-2">
+                    <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Schedule</span>
+                        <span className="font-medium">{session.schedule?.name || "Default"}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Shift Time</span>
+                        <span className="font-mono font-medium">
+                            {formatTime24(session.schedule?.time_in)} - {formatTime24(session.schedule?.time_out)}
+                        </span>
+                    </div>
                     <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Confirmed</span>
-                        <span className="font-medium">{session.confirmedCount || 0} employees</span>
+                        <span className="font-medium text-emerald-600">{session.confirmedCount || 0} employees</span>
                     </div>
                 </div>
-            </CardContent>
-        </Card>
-    );
-}
-
-function QuickActionsCard() {
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-2">
-                <Button variant="outline" className="justify-start" asChild>
-                    <Link href="/employees/create">
-                        <UserPlus className="mr-2 h-4 w-4" />
-                        Add New Employee
-                    </Link>
-                </Button>
-                <Button variant="outline" className="justify-start" asChild>
-                    <Link href="/reports/daily">
-                        <FileSpreadsheet className="mr-2 h-4 w-4" />
-                        View Daily Report
-                    </Link>
-                </Button>
-                <Button variant="outline" className="justify-start" asChild>
-                    <Link href="/schedules">
-                        <Calendar className="mr-2 h-4 w-4" />
-                        Manage Schedules
-                    </Link>
+                <Button asChild variant="outline" className="w-full">
+                    <Link href="/attendance/sessions">Manage Sessions</Link>
                 </Button>
             </CardContent>
         </Card>
+        </Card >
     );
 }
 
-export default function AdminDashboardPage() {
-    const { user, isAdmin, loading: authLoading } = useAuth();
+export default function AdminDashboard() {
+    const { user, loading: authLoading, isAdmin } = useAuth();
     const router = useRouter();
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -170,7 +290,7 @@ export default function AdminDashboardPage() {
     useEffect(() => {
         if (!authLoading) {
             if (!user) {
-                router.replace("/login");
+                router.replace("/auth/admin/login");
             } else if (!isAdmin) {
                 router.replace("/dashboard/employee");
             }
@@ -263,6 +383,10 @@ export default function AdminDashboardPage() {
             setLoading(false);
         }
     }, [authLoading, user, isAdmin]);
+
+    if (loading) {
+        return null;
+    }
 
     return (
         <DashboardLayout title="Admin Dashboard">
