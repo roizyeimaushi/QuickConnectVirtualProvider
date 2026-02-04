@@ -253,7 +253,8 @@ function ActiveSessionCard({ session, loading }) {
                         <Clock className="h-5 w-5 text-primary" />
                         Active Session
                     </CardTitle>
-                    <CardDescription>Currently accepting attendance</CardDescription>
+                </div>
+                <CardDescription>Currently accepting attendance</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="p-4 rounded-lg bg-muted/50 space-y-2">
@@ -277,7 +278,6 @@ function ActiveSessionCard({ session, loading }) {
                 </Button>
             </CardContent>
         </Card>
-        </Card >
     );
 }
 
