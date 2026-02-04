@@ -50,8 +50,14 @@ php artisan route:cache --no-interaction
 php artisan db:seed --class=SettingsSeeder --force --no-interaction 2>/dev/null || true
 php artisan db:seed --class=EnsureAdminUserSeeder --force --no-interaction 2>/dev/null || true
 
-# Create storage link (idempotent)
-php artisan storage:link 2>/dev/null || true
+# Ensure storage directories exist (fix for missing avatars)
+mkdir -p storage/app/public/avatars
+chown -R www-data:www-data storage/app/public
+chmod -R 775 storage/app/public
+
+# Recreate storage link cleanly
+rm -rf public/storage
+php artisan storage:link
 
 # Set port
 export PORT=${PORT:-10000}
