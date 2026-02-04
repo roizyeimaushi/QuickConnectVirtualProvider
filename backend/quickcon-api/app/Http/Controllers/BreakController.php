@@ -166,11 +166,11 @@ class BreakController extends Controller
             if ($remainingSeconds <= 0) {
                  $todayBreak->autoEndBreak();
                  $canEndBreak = false;
-                 $canStartBreak = false; 
+                 $canStartBreak = true; // Allow starting new break immediately
                  $breakMessage = 'Break time finished automatically.';
                  $breakReason = 'break_limit_reached';
                  $todayBreak = null;
-                 // Re-fetch used types after auto-end
+                 // Refetch types strictly for history display, not blocking
                   $usedTypes = EmployeeBreak::where('attendance_id', $attendance->id)
                      ->whereNotNull('break_end')
                      ->pluck('break_type')
@@ -178,13 +178,8 @@ class BreakController extends Controller
                   $coffeeUsed = in_array('Coffee', $usedTypes);
                   $mealUsed = in_array('Meal', $usedTypes);
             }
-        } elseif ($coffeeUsed && $mealUsed) {
-             // ALL USED
-             $canStartBreak = false;
-             $breakMessage = 'You have used all your break allowances for today.';
-             $breakReason = 'all_breaks_used';
         } else {
-             // AVAILABLE
+             // ALWAYS AVAILABLE (Unlimited Breaks)
              $canStartBreak = true;
              $breakMessage = "Select a break type to start.";
              $breakReason = 'available';
@@ -295,30 +290,25 @@ class BreakController extends Controller
         // STEP 2: Check Allowance
         // ============================================================
         
-        // CHECK 1: Has this specific type been used?
-        $alreadyUsedType = EmployeeBreak::where('attendance_id', $attendance->id)
-            ->where('break_type', $type)
-            ->whereNotNull('break_end')
-            ->exists();
-
-        if ($alreadyUsedType) {
-            return response()->json([
-                'message' => "You have already taken your $type Break today.",
-                'error_code' => 'TYPE_ALREADY_USED'
-            ], 400);
-        }
-
-        // CHECK 2: Global limit check against Settings
-        $maxMinutes = (int)(\App\Models\Setting::where('key', 'break_duration')->value('value') ?? 60);
+        // ============================================================
+        // STEP 2: Check Allowance (REMOVED LIMITS FOR UNLIMITED BREAKS)
+        // ============================================================
         
-        $totalUsedMinutes = EmployeeBreak::where('attendance_id', $attendance->id)
-            ->whereNotNull('break_end')
-            ->sum('duration_minutes');
-
-        if (($totalUsedMinutes + $segmentLimit) > $maxMinutes) {
-              return response()->json([
-                'message' => "Starting this break would exceed your daily limit of {$maxMinutes} minutes.",
-                'error_code' => 'BREAK_LIMIT_EXCEEDED'
+        // CHECK 1: Type usage - REMOVED strictly to allow multiple breaks
+        // $alreadyUsedType = ...
+        
+        // CHECK 2: Global limit - REMOVED strictly to allow 'payroll check' instead of 'UI block'
+        // $totalUsedMinutes = ...
+        
+        // Check if already active
+        $activeBreak = EmployeeBreak::where('attendance_id', $attendance->id)
+            ->whereNull('break_end')
+            ->first();
+            
+        if ($activeBreak) {
+             return response()->json([
+                'message' => 'You are already on break.',
+                'error_code' => 'ALREADY_ON_BREAK'
             ], 400);
         }
         

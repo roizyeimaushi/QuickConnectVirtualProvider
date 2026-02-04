@@ -1308,7 +1308,7 @@ class AttendanceRecordController extends Controller
             'break_start' => $record->break_start,
             'break_end' => $record->break_end,
             'has_checked_out' => !is_null($record->time_out),
-            'can_start_break' => $record->time_in && !$record->time_out && !$isOnBreak && !$record->break_end,
+            'can_start_break' => $record->time_in && !$record->time_out && !$isOnBreak,
             'can_end_break' => $isOnBreak,
             'can_check_out' => $record->time_in && !$record->time_out && !$isOnBreak,
             'attendance_date' => $today
