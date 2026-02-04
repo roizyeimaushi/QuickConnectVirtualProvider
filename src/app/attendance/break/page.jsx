@@ -205,7 +205,7 @@ export default function BreakPage() {
     const breakMessage = breakStatus?.break_message;
 
     if (loading) {
-        return <FullscreenLoader />;
+        return null;
     }
 
     return (

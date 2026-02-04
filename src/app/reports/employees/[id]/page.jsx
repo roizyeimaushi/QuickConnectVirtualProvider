@@ -104,7 +104,7 @@ export default function EmployeeReportDetailPage() {
 
     // Full-page loader for initial load only
     if (initialLoad) {
-        return <FullscreenLoader />;
+        return null;
     }
 
     if (!data) {

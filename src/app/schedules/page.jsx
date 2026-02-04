@@ -218,7 +218,7 @@ export default function SchedulesPage() {
     };
 
     if (loading) {
-        return <FullscreenLoader />;
+        return null;
     }
 
     return (

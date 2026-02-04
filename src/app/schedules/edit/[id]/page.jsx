@@ -165,7 +165,7 @@ export default function EditSchedulePage() {
 
     // Full-page loading spinner
     if (loadingSchedule) {
-        return <FullscreenLoader />;
+        return null;
     }
 
     return (

@@ -149,7 +149,7 @@ export default function PositionsSettingsPage() {
     };
 
     if (isLoading) {
-        return <FullscreenLoader />;
+        return null;
     }
 
     return (

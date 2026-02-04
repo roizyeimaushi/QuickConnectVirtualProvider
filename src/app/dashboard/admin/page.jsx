@@ -386,7 +386,7 @@ export default function AdminDashboard() {
     }, [authLoading, user, isAdmin]);
 
     if (loading) {
-        return <FullscreenLoader />;
+        return null;
     }
 
     return (

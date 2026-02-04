@@ -319,7 +319,7 @@ export default function CheckOutPage() {
     };
 
     if (loading) {
-        return <FullscreenLoader />;
+        return null;
     }
 
     // Special State: Already Timed Out (Show Success Card similar to Confirm Page)

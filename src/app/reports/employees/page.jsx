@@ -71,7 +71,7 @@ export default function EmployeeReportsPage() {
     });
 
     if (loading) {
-        return <FullscreenLoader />;
+        return null;
     }
 
     return (

@@ -138,7 +138,7 @@ export default function CreateSchedulePage() {
     };
 
     if (isPageLoading) {
-        return <FullscreenLoader />;
+        return null;
     }
 
     return (

@@ -198,7 +198,7 @@ export default function EditEmployeePage() {
     };
 
     if (loading) {
-        return <FullscreenLoader />;
+        return null;
     }
 
     return (

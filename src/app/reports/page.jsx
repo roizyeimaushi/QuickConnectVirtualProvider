@@ -13,5 +13,5 @@ export default function ReportsPage() {
         router.replace("/reports/daily");
     }, [router]);
 
-    return <FullscreenLoader />;
+    return null;
 }

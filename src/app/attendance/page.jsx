@@ -28,5 +28,5 @@ export default function AttendancePage() {
         }
     }, [isAdmin, isEmployee, isAuthenticated, loading, router]);
 
-    return <FullscreenLoader />;
+    return null;
 }

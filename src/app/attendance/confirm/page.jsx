@@ -701,7 +701,7 @@ export default function AttendanceConfirmPage() {
     };
 
     if (loading) {
-        return <FullscreenLoader />;
+        return null;
     }
 
     return (

@@ -272,7 +272,7 @@ export default function AttendanceSessionsPage() {
     const activeSession = sessions.find((s) => s.status === "active");
 
     if (loading) {
-        return <FullscreenLoader />;
+        return null;
     }
 
 

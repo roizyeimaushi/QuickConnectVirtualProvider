@@ -231,7 +231,7 @@ export default function EmployeesPage() {
 
     // Full-page logo loader for initial load only
     if (isFirstLoad) {
-        return <FullscreenLoader />;
+        return null;
     }
 
     return (

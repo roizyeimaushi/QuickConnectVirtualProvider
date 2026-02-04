@@ -2,7 +2,7 @@
 
 /**
  * Full-screen loading component with QuickConnect logo
- * Used for initial page loads across all pages
+ * Used ONLY for login pages and successful login redirect
  */
 export function FullscreenLoader() {
     return (
@@ -10,8 +10,20 @@ export function FullscreenLoader() {
             <img
                 src="/quickconnect-logo.png"
                 alt="QuickConnect"
-                className="h-32 w-auto object-contain"
+                className="h-20 w-auto object-contain"
             />
+        </div>
+    );
+}
+
+/**
+ * Page loading spinner - simple centered spinner
+ * Used for loading states on regular pages (not login)
+ */
+export function PageLoader() {
+    return (
+        <div className="flex items-center justify-center min-h-[400px]">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
         </div>
     );
 }

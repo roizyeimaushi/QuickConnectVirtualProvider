@@ -163,7 +163,7 @@ export default function DailyReportsPage() {
 
     // Full-page loader for initial load only
     if (initialLoad) {
-        return <FullscreenLoader />;
+        return null;
     }
 
     return (

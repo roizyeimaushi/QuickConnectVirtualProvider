@@ -75,7 +75,7 @@ export default function MonthlyReportsPage() {
         : 0;
 
     if (loading) {
-        return <FullscreenLoader />;
+        return null;
     }
 
     return (

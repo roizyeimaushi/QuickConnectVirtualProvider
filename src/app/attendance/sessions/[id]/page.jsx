@@ -265,7 +265,7 @@ export default function SessionDetailsPage() {
     };
 
     if (loading) {
-        return <FullscreenLoader />;
+        return null;
     }
 
     if (!session) {

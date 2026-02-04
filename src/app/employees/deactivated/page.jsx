@@ -199,7 +199,7 @@ export default function DeactivatedEmployeesPage() {
     };
 
     if (loading) {
-        return <FullscreenLoader />;
+        return null;
     }
 
     return (

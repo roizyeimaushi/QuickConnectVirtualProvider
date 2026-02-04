@@ -62,7 +62,7 @@ export default function EmployeeProfilePage() {
     }, [refetchUser]);
 
     if (authLoading || initialLoading) {
-        return <FullscreenLoader />;
+        return null;
     }
 
     const handleFileChange = (e) => {

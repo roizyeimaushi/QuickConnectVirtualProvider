@@ -258,7 +258,7 @@ export default function AttendanceHistoryPage() {
 
 
     if (loading) {
-        return <FullscreenLoader />;
+        return null;
     }
 
     return (

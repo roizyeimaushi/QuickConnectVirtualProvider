@@ -530,7 +530,7 @@ export default function EmployeeDashboard() {
     }, [authLoading, user]);
 
     if (loading) {
-        return <FullscreenLoader />;
+        return null;
     }
 
     return (

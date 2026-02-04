@@ -62,7 +62,7 @@ export default function AdminProfilePage() {
     }, [refetchUser]);
 
     if (authLoading || initialLoading) {
-        return <FullscreenLoader />;
+        return null;
     }
 
     const handleFileChange = (e) => {

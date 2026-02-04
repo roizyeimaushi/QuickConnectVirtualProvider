@@ -169,7 +169,7 @@ export default function CreateEmployeePage() {
     };
 
     if (loadingId) {
-        return <FullscreenLoader />;
+        return null;
     }
 
     return (
