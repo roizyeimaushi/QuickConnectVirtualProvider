@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # ============================================
 # Render Startup Script for Laravel
 # ============================================
@@ -7,10 +7,18 @@ set -e
 
 echo "=== QuickConn API Starting ==="
 
-# Generate APP_KEY if not set (using Render's generate)
+# Handle APP_KEY for Laravel
+# Laravel requires APP_KEY in format: base64:XXXXXX (44+ chars base64)
 if [ -z "$APP_KEY" ]; then
-    echo "Generating APP_KEY..."
+    echo "APP_KEY not set - generating..."
     php artisan key:generate --force
+elif [[ ! "$APP_KEY" =~ ^base64: ]]; then
+    # Render's generateValue creates raw string, not base64-prefixed
+    # We need to generate a proper Laravel key
+    echo "APP_KEY found but not in Laravel format - regenerating..."
+    php artisan key:generate --force
+else
+    echo "APP_KEY is properly formatted."
 fi
 
 # Create storage link if it doesn't exist

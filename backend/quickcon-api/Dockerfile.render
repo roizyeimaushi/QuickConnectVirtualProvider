@@ -8,16 +8,19 @@ FROM php:8.2-fpm-alpine
 RUN apk add --no-cache \
     git \
     curl \
+    bash \
     libpng-dev \
     libzip-dev \
     zip \
     unzip \
     oniguruma-dev \
     nginx \
-    supervisor
+    supervisor \
+    postgresql-dev \
+    icu-dev
 
-# Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
+# Install PHP extensions (including pdo_pgsql for PostgreSQL on Render)
+RUN docker-php-ext-install pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd zip intl
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
