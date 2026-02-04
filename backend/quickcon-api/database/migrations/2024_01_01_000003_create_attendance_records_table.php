@@ -16,7 +16,7 @@ return new class extends Migration
             $table->dateTime('break_start')->nullable();
             $table->dateTime('break_end')->nullable();
             $table->dateTime('time_out')->nullable();
-            $table->enum('status', ['present', 'late', 'absent']);
+            $table->enum('status', ['present', 'late', 'absent', 'excused', 'left_early', 'pending'])->default('absent');
             $table->unsignedInteger('minutes_late')->default(0);
             $table->decimal('hours_worked', 5, 2)->default(0.00);
             $table->text('notes')->nullable();

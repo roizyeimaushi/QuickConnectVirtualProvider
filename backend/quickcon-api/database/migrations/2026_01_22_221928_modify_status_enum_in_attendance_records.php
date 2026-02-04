@@ -12,8 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Using raw SQL because Schema builder support for modifying ENUMs is limited/tricky across drivers
-        DB::statement("ALTER TABLE attendance_records MODIFY COLUMN status ENUM('present', 'late', 'absent', 'excused', 'left_early', 'pending') NOT NULL DEFAULT 'absent'");
+        // Skipped: Incorporated into 2024_01_01_000003_create_attendance_records_table.php for Postgres compatibility
     }
 
     /**
@@ -21,6 +20,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("ALTER TABLE attendance_records MODIFY COLUMN status ENUM('present', 'late', 'absent') NOT NULL");
+        // Skipped
     }
 };
