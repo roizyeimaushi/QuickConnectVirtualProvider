@@ -213,6 +213,10 @@ export default function SessionDetailsPage() {
         }
     };
 
+    if (loading) {
+        return null; // Or a loading spinner if preferred, but keeping it minimal as requested
+    }
+
     if (!session) {
         return (
             <DashboardLayout title="Session Details">
