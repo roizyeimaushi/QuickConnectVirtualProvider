@@ -163,5 +163,5 @@ export const TIME_FORMAT = 'HH:mm';
 export const DATE_FORMAT = 'yyyy-MM-dd';
 export const DATETIME_FORMAT = 'yyyy-MM-dd HH:mm:ss';
 export const DISPLAY_DATE_FORMAT = 'MMM dd, yyyy';
-export const DISPLAY_TIME_FORMAT = 'hh:mm a';
-export const DISPLAY_DATETIME_FORMAT = 'MMM dd, yyyy hh:mm a';
+export const DISPLAY_TIME_FORMAT = 'HH:mm';
+export const DISPLAY_DATETIME_FORMAT = 'MMM dd, yyyy HH:mm';
