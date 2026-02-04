@@ -174,6 +174,7 @@ export default function BreakMonitorPage() {
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead className="text-center">Employee</TableHead>
+                                            <TableHead className="text-center">Shift Date</TableHead>
                                             <TableHead className="text-center">Break Start</TableHead>
                                             <TableHead className="text-center">Time Elapsed</TableHead>
                                             <TableHead className="text-center">Status</TableHead>
@@ -197,6 +198,9 @@ export default function BreakMonitorPage() {
                                                                 <p className="text-xs text-muted-foreground">{breakRecord.employee.position || 'Employee'}</p>
                                                             </div>
                                                         </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-center text-sm text-muted-foreground">
+                                                        {formatDate(breakRecord.session_date)}
                                                     </TableCell>
                                                     <TableCell className="text-center font-mono">
                                                         {formatTime24(breakRecord.break_start)}

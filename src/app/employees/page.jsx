@@ -215,51 +215,47 @@ export default function EmployeesPage() {
                 </div>
 
                 {/* Stats Cards */}
-                {loading ? (
-                    null
-                ) : (
-                    <div className="grid gap-4 md:grid-cols-3">
-                        <Card>
+                <div className="grid gap-4 md:grid-cols-3">
+                    <Card>
+                        <CardContent className="flex items-center gap-4 p-6">
+                            <div className="p-3 rounded-lg bg-primary/10">
+                                <Users className="h-6 w-6 text-primary" />
+                            </div>
+                            <div>
+                                <p className="text-2xl font-bold">{employees.length}</p>
+                                <p className="text-sm text-muted-foreground">Total Employees</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardContent className="flex items-center gap-4 p-6">
+                            <div className="p-3 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                                <UserCheck className="h-6 w-6 text-emerald-600" />
+                            </div>
+                            <div>
+                                <p className="text-2xl font-bold">
+                                    {employees.filter((e) => e.status === "active").length}
+                                </p>
+                                <p className="text-sm text-muted-foreground">Active</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Link href="/employees/deactivated">
+                        <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
                             <CardContent className="flex items-center gap-4 p-6">
-                                <div className="p-3 rounded-lg bg-primary/10">
-                                    <Users className="h-6 w-6 text-primary" />
-                                </div>
-                                <div>
-                                    <p className="text-2xl font-bold">{employees.length}</p>
-                                    <p className="text-sm text-muted-foreground">Total Employees</p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardContent className="flex items-center gap-4 p-6">
-                                <div className="p-3 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
-                                    <UserCheck className="h-6 w-6 text-emerald-600" />
+                                <div className="p-3 rounded-lg bg-amber-100 dark:bg-amber-900/30">
+                                    <UserX className="h-6 w-6 text-amber-600" />
                                 </div>
                                 <div>
                                     <p className="text-2xl font-bold">
-                                        {employees.filter((e) => e.status === "active").length}
+                                        {employees.filter((e) => e.status === "inactive").length}
                                     </p>
-                                    <p className="text-sm text-muted-foreground">Active</p>
+                                    <p className="text-sm text-muted-foreground">Inactive</p>
                                 </div>
                             </CardContent>
                         </Card>
-                        <Link href="/employees/deactivated">
-                            <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
-                                <CardContent className="flex items-center gap-4 p-6">
-                                    <div className="p-3 rounded-lg bg-amber-100 dark:bg-amber-900/30">
-                                        <UserX className="h-6 w-6 text-amber-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-2xl font-bold">
-                                            {employees.filter((e) => e.status === "inactive").length}
-                                        </p>
-                                        <p className="text-sm text-muted-foreground">Inactive</p>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </Link>
-                    </div>
-                )}
+                    </Link>
+                </div>
 
                 {/* Table Card */}
                 <Card>

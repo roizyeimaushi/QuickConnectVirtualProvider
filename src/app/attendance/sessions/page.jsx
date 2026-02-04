@@ -318,9 +318,7 @@ export default function AttendanceSessionsPage() {
                         <CardDescription>All past and current attendance sessions.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {loading ? (
-                            null
-                        ) : sessions.length === 0 ? (
+                        {loading ? null : sessions.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-12 text-center">
                                 <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
                                 <h3 className="text-lg font-semibold">No sessions yet</h3>

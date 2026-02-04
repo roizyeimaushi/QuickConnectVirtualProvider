@@ -288,13 +288,7 @@ export default function AuditLogsPage() {
         critical: logs.filter(l => ["high", "critical"].includes(l.severity)).length,
     };
 
-    if (authLoading || (loading && isFirstLoad)) {
-        return (
-            <DashboardLayout title="Audit Logs">
-                {null}
-            </DashboardLayout>
-        );
-    }
+
 
     return (
         <DashboardLayout title="Audit Logs">
@@ -425,9 +419,7 @@ export default function AuditLogsPage() {
                                 </div>
                             </CardHeader>
                             <CardContent>
-                                {loading ? (
-                                    <AuditLogSkeleton />
-                                ) : filteredLogs.length === 0 ? (
+                                {loading ? null : filteredLogs.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center py-12 text-center">
                                         <FileText className="h-12 w-12 text-muted-foreground mb-4" />
                                         <h3 className="text-lg font-semibold">No logs found</h3>

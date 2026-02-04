@@ -299,8 +299,8 @@ class AuthController extends Controller
             }
             
             $path = $request->file('avatar')->store('avatars', 'public');
-            // Save absolute URL so frontend can display it correctly
-            $user->avatar = url('/storage/' . $path);
+            // Use Storage::url() to support S3/Cloud drivers automatically
+            $user->avatar = Storage::disk('public')->url($path);
         }
 
         $user->save();

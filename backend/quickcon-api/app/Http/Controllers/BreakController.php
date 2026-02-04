@@ -272,7 +272,7 @@ class BreakController extends Controller
         }
         
         // Auto-create: REMOVED. User must explicitly Time In first.
-        if (!$attendance) {
+        if (!$attendance || !$attendance->time_in) {
              return response()->json([
                 'message' => 'You must Time In before starting a break.',
                 'error_code' => 'NOT_TIMED_IN'
@@ -341,7 +341,7 @@ class BreakController extends Controller
             $break = EmployeeBreak::create([
                 'attendance_id' => $attendance->id,
                 'user_id' => $user->id,
-                'break_date' => $attendance->attendance_date,
+                'break_date' => $attendance->attendance_date->format('Y-m-d'), // Strict: Link to SHIFT date, not calendar date
                 'break_start' => $now,
                 'break_type' => $type,
                 'duration_limit' => $segmentLimit,
@@ -371,6 +371,9 @@ class BreakController extends Controller
         ]);
     }
 
+    /**
+     * End break manually.
+     */
     /**
      * End break manually.
      */
@@ -415,11 +418,32 @@ class BreakController extends Controller
                  Log::warning("Legacy attendance update failed in endBreak: " . $e->getMessage());
             }
 
-            // 4. Audit Log
+            // 4. Validate Duration Rules
+            $message = 'Break ended successfully.';
+            $warning = null;
+            $duration = $break->duration_minutes;
+            
+            if ($break->break_type === 'Meal') {
+                // Meal: 30-60 mins
+                if ($duration < 30) {
+                    $warning = "You took a short Meal break ($duration mins). Minimum is 30 mins.";
+                } elseif ($duration > 60) {
+                    $warning = "You exceeded the max Meal break ($duration mins > 60 mins).";
+                }
+            } elseif ($break->break_type === 'Coffee') {
+                // Coffee: 15-30 mins
+                if ($duration < 15) {
+                    $warning = "You took a short Coffee break ($duration mins). Minimum is 15 mins.";
+                } elseif ($duration > 30) {
+                    $warning = "You exceeded the max Coffee break ($duration mins > 30 mins).";
+                }
+            }
+
+            // 5. Audit Log
             try {
                 AuditLog::log(
                     'break_end',
-                    "{$user->first_name} {$user->last_name} ended break",
+                    "{$user->first_name} {$user->last_name} ended break ({$duration}m)",
                     AuditLog::STATUS_SUCCESS,
                     $user->id,
                     'EmployeeBreak',
@@ -430,9 +454,11 @@ class BreakController extends Controller
             }
 
             return response()->json([
-                'message' => 'Break ended successfully.',
+                'message' => $warning ?: $message,
+                'status' => $warning ? 'warning' : 'success',
                 'break' => $break,
                 'duration_minutes' => $break->duration_minutes,
+                'warning' => $warning
             ]);
 
         } catch (\Throwable $e) {
@@ -503,8 +529,20 @@ class BreakController extends Controller
         if ($request->has('user_id') && $user->role === 'admin') {
             $query->where('user_id', $request->user_id);
         }
+        
+        $paginator = $query->paginate($perPage);
 
-        return response()->json($query->paginate($perPage));
+        // LAZY CLEANUP: Check displayed records for expiration
+        // This ensures that when an admin views the history, any "stuck" breaks are auto-closed
+        foreach ($paginator->items() as $breakRecord) {
+            if ($breakRecord->isActive()) {
+                 // The getRemainingSeconds() method in the model contains the logic 
+                 // to check time limits and call autoEndBreak() if expired.
+                 $breakRecord->getRemainingSeconds(); 
+            }
+        }
+
+        return response()->json($paginator);
     }
 
     /**

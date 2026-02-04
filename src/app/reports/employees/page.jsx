@@ -96,7 +96,29 @@ export default function EmployeeReportsPage() {
                 </div>
 
                 {/* Employee Cards */}
-                {filteredEmployees.length === 0 ? (
+                {loading ? (
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {[1, 2, 3, 4, 5, 6].map((i) => (
+                            <Card key={i} className="animate-pulse">
+                                <CardHeader className="pb-4">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-12 w-12 rounded-full bg-muted"></div>
+                                            <div className="space-y-2">
+                                                <div className="h-4 w-32 bg-muted rounded"></div>
+                                                <div className="h-3 w-16 bg-muted rounded"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="h-4 w-24 bg-muted rounded mb-4"></div>
+                                    <div className="h-10 w-full bg-muted rounded"></div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                ) : filteredEmployees.length === 0 ? (
                     <Card>
                         <CardContent className="py-12 text-center">
                             <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">

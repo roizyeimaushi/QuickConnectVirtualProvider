@@ -102,8 +102,18 @@ export default function EmployeeReportDetailPage() {
     const unknownConfig = { label: "Unknown", variant: "outline", icon: Clock, className: "bg-gray-100 text-gray-800 border-gray-200" };
 
     // Full-page loader for initial load only
-    // Full-page loader for initial load only
-
+    if (initialLoad) {
+        return (
+            <DashboardLayout title="Employee Report">
+                <div className="flex items-center justify-center min-h-[400px]">
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+                        <p className="text-muted-foreground animate-pulse">Loading report...</p>
+                    </div>
+                </div>
+            </DashboardLayout>
+        );
+    }
 
     if (!data) {
         return (

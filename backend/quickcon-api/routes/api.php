@@ -128,6 +128,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Attendance Records (Admin view)
         Route::get('/attendance-records', [AttendanceRecordController::class, 'index']);
+        Route::post('/attendance-records', [AttendanceRecordController::class, 'store']); // NEW: Manual Creation
         Route::get('/attendance-records/{attendanceRecord}', [AttendanceRecordController::class, 'show']);
         Route::get('/attendance-records/by-session/{sessionId}', [AttendanceRecordController::class, 'bySession']);
         Route::get('/attendance-records/by-employee/{employeeId}', [AttendanceRecordController::class, 'byEmployee']);

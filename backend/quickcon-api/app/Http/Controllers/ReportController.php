@@ -143,22 +143,68 @@ class ReportController extends Controller
     {
         $user = $request->user();
         $now = Carbon::now();
-        
-        // Use consistent date logic with AttendanceRecordController
-        // Priority: Check for session on REAL today. If none, fall back to "Yesterday" logic (for overnight shifts)
-        $realToday = Carbon::today()->toDateString();
-        $fallbackDate = $now->hour < 14 ? Carbon::yesterday()->toDateString() : $realToday;
 
-        $sessionForToday = AttendanceSession::with('schedule')
-            ->whereDate('date', $realToday)
+        // ============================================================
+        // DATE LOGIC FIX: Respect Shift Boundary Setting
+        // ============================================================
+        // If current hour < Boundary (e.g., 14:00), we are still effectively in "Yesterday's" shift cycle.
+        // We must prioritize "Yesterday" even if a session exists for "Today" (e.g., a Morning shift session).
+        
+        $boundary = (int) (\App\Models\Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
+        
+        // Logical "Today" based on shift rules
+        $today = $now->hour < $boundary ? Carbon::yesterday()->toDateString() : Carbon::today()->toDateString();
+        $realToday = Carbon::today()->toDateString();
+
+        // 1. Try to find session for the Logical Today (Shift Date)
+        $todaySession = AttendanceSession::with('schedule')
+            ->whereDate('date', $today)
             ->whereIn('status', ['active', 'locked'])
             ->first();
 
-        // If today has a session, force TODAY. Otherwise fallback.
-        $today = $sessionForToday ? $realToday : $fallbackDate; 
+        // 2. If NO session on Shift Date, and Shift Date != Real Date, check Real Date?
+        // Actually, no. If we are in the < 14:00 window, we strictly want the previous date context.
+        // Checking Real Date here causes the "Morning Shift Hijack" bug where night shifters see the next day's empty dashboard.
         
-        // Pre-store this for later use to avoid double query
-        $preloadedSession = $sessionForToday;
+        // However, if we are in the < 14:00 window, but the User is NOT working overnight, 
+        // maybe they are an early morning shifter (e.g. 6am starts)?
+        // If they start at 6am, $today is Yesterday. $todaySession (Yesterday) might be null.
+        // But they need to see Today's (Feb 5) 6am session!
+        
+        // Refined Logic:
+        // A. If the user has an ACTIVE RECORD (Time In, No Time Out), anchor to THAT record's date.
+        // B. If no active record, use the Session that matches the current time best.
+        
+        // Check for active record first (Truth Source)
+        $activeRecord = AttendanceRecord::with(['session.schedule'])
+            ->where('user_id', $user->id)
+            ->whereNull('time_out')
+            ->latest('time_in')
+            ->first();
+
+        if ($activeRecord) {
+            // If user is actively working, the Dashboard Date IS the Record Date
+            $today = $activeRecord->attendance_date->toDateString();
+            $todaySession = AttendanceSession::with('schedule')->find($activeRecord->session_id);
+        } elseif (!$todaySession && $today !== $realToday) {
+            // User is not working, and we defaulted to Yesterday.
+            // But if Yesterday has no session, check if Today (Real) has a relevant morning session?
+            
+            $potentialRealSession = AttendanceSession::with('schedule')
+                ->whereDate('date', $realToday)
+                ->whereIn('status', ['active', 'locked'])
+                ->first();
+                
+            if ($potentialRealSession) {
+                // We found a session for Calendar Today (e.g. 6AM start).
+                // Should we switch? Only if the schedule actually started?
+                // Or if we are past the "Yesterday" shift window?
+                
+                // Simple heuristic: If "Yesterday" has no session, allow "Today" to take over.
+                $today = $realToday;
+                $todaySession = $potentialRealSession;
+            }
+        }
 
         // ============================================================
         // WEEKEND CHECK: No work on Saturday & Sunday

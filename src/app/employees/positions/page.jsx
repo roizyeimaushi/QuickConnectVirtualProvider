@@ -169,14 +169,7 @@ export default function PositionsPage() {
         }
     };
 
-    // Full page loading guard
-    if (isLoading) {
-        return (
-            <DashboardLayout title="Manage Positions">
-                {null}
-            </DashboardLayout>
-        );
-    }
+
 
     return (
         <DashboardLayout title="Manage Positions">
@@ -255,7 +248,7 @@ export default function PositionsPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {positions.length === 0 ? (
+                        {isLoading ? null : positions.length === 0 ? (
                             <div className="text-center py-8 text-muted-foreground">
                                 <Briefcase className="h-12 w-12 mx-auto mb-3 opacity-30" />
                                 <p>No positions defined yet.</p>

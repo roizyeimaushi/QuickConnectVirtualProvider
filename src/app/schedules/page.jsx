@@ -255,9 +255,7 @@ export default function SchedulesPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {loading ? (
-                            null
-                        ) : schedules.length === 0 ? (
+                        {loading ? null : schedules.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-12 text-center">
                                 <Clock className="h-12 w-12 text-muted-foreground mb-4" />
                                 <h3 className="text-lg font-semibold">No schedules yet</h3>

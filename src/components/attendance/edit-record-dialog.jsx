@@ -74,11 +74,25 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                 break_end: formData.break_end || null,
             };
 
-            await attendanceApi.update(record.id, payload);
+            // Check if this is a "Virtual" record (placeholder for missing attendance)
+            // Virtual IDs format: "virtual_{USER_ID}"
+            const isVirtual = typeof record.id === 'string' && record.id.startsWith('virtual_');
+
+            if (isVirtual) {
+                // For virtual records, we must CREATE a new record
+                payload.user_id = record.user_id; // Extracted from session.records mapping
+                payload.session_id = record.session_id;
+                payload.attendance_date = record.attendance_date;
+
+                await attendanceApi.create(payload);
+            } else {
+                // Normal update
+                await attendanceApi.update(record.id, payload);
+            }
 
             toast({
                 title: "Success",
-                description: "Attendance record updated successfully",
+                description: `Attendance record ${isVirtual ? 'created' : 'updated'} successfully`,
                 variant: "success",
             });
 
@@ -86,11 +100,21 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
             onOpenChange(false);
         } catch (error) {
             console.error("Update failed:", error);
-            toast({
-                title: "Error",
-                description: "Failed to update record",
-                variant: "destructive",
-            });
+
+            // Handle duplicate error specifically
+            if (error.error_code === 'DUPLICATE_RECORD') {
+                toast({
+                    title: "Duplicate Record",
+                    description: "A record already exists for this user. Please refresh.",
+                    variant: "destructive",
+                });
+            } else {
+                toast({
+                    title: "Error",
+                    description: "Failed to save record",
+                    variant: "destructive",
+                });
+            }
         } finally {
             setLoading(false);
         }

@@ -16,6 +16,62 @@ use App\Models\Setting;
 class AttendanceRecordController extends Controller
 {
     /**
+     * Store a new attendance record manually (Admin only).
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'session_id' => 'required|exists:attendance_sessions,id',
+            'attendance_date' => 'required|date',
+            'status' => 'required|in:present,late,absent,excused,left_early',
+            'time_in' => 'nullable|date',
+            'time_out' => 'nullable|date',
+            'break_start' => 'nullable|date',
+            'break_end' => 'nullable|date',
+            'reason' => 'required|string|min:5',
+        ]);
+
+        // Check if record already exists
+        $exists = AttendanceRecord::where('user_id', $validated['user_id'])
+            ->where('attendance_date', $validated['attendance_date'])
+            ->exists();
+
+        if ($exists) {
+            return response()->json([
+                'message' => 'An attendance record already exists for this user on this date.',
+                'error_code' => 'DUPLICATE_RECORD'
+            ], 409);
+        }
+
+        $record = AttendanceRecord::create([
+            'user_id' => $validated['user_id'],
+            'session_id' => $validated['session_id'],
+            'attendance_date' => $validated['attendance_date'],
+            'status' => $validated['status'],
+            'time_in' => $validated['time_in'] ? Carbon::parse($validated['time_in']) : null,
+            'time_out' => $validated['time_out'] ? Carbon::parse($validated['time_out']) : null,
+            'break_start' => $validated['break_start'] ? Carbon::parse($validated['break_start']) : null,
+            'break_end' => $validated['break_end'] ? Carbon::parse($validated['break_end']) : null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        AuditLog::log(
+            'create_attendance',
+            "Admin {$request->user()->first_name} created manual record ({$record->status}) for user #{$record->user_id}. Reason: {$validated['reason']}",
+            AuditLog::STATUS_SUCCESS,
+            $request->user()->id,
+            'AttendanceRecord',
+            $record->id
+        );
+
+        return response()->json([
+            'message' => 'Attendance record created successfully',
+            'record' => $record->load(['session.schedule', 'user'])
+        ], 201);
+    }
+    /**
      * Get today's date string (SERVER-SIDE ONLY).
      * This is the single source of truth for date-scoped attendance.
      */
@@ -341,8 +397,9 @@ class AttendanceRecordController extends Controller
                     'session_id' => $sessionId,
                     'time_in' => $now,
                     'time_out' => null,
-                    'break_start' => null,
-                    'break_end' => null,
+                    // Preserve existing break data if present (e.g. if break started before check-in, though that should be blocked)
+                    'break_start' => $latestRecord->break_start, 
+                    'break_end' => $latestRecord->break_end,
                     'status' => $status,
                     'minutes_late' => (int) $minutesLate,
                     'hours_worked' => 0,
