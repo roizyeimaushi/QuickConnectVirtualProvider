@@ -28,7 +28,150 @@ import {
 } from "lucide-react";
 
 function StatCard({ title, value, description, icon: Icon, trend, loading }) {
-     else if (!isAdmin) {
+    if (loading) return <Skeleton className="h-32 w-full" />;
+
+    return (
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{title}</CardTitle>
+                <Icon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{value}</div>
+                <p className="text-xs text-muted-foreground">{description}</p>
+                {trend && (
+                    <div className="mt-1 flex items-center text-xs text-green-500">
+                        <TrendingUp className="mr-1 h-3 w-3" />
+                        {trend}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
+function AttendanceOverviewCard({ data, loading }) {
+    if (loading) return <Skeleton className="h-[300px] w-full" />;
+
+    return (
+        <Card className="col-span-full lg:col-span-2">
+            <CardHeader>
+                <CardTitle>Attendance Overview</CardTitle>
+                <CardDescription>Today's attendance metrics</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-4">
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                            <span className="font-medium">Present</span>
+                            <span className="text-muted-foreground">{data?.activeToday}/{data?.totalEmployees} ({data?.presentRate}%)</span>
+                        </div>
+                        <Progress value={data?.presentRate} className="h-2 bg-muted [&>div]:bg-green-500" />
+                    </div>
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                            <span className="font-medium">Late</span>
+                            <span className="text-muted-foreground">{data?.lateToday}/{data?.totalEmployees} ({data?.lateRate}%)</span>
+                        </div>
+                        <Progress value={data?.lateRate} className="h-2 bg-muted [&>div]:bg-yellow-500" />
+                    </div>
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                            <span className="font-medium">Absent / Not In</span>
+                            <span className="text-muted-foreground">{data?.absentToday}/{data?.totalEmployees} ({data?.absentRate}%)</span>
+                        </div>
+                        <Progress value={data?.absentRate} className="h-2 bg-muted [&>div]:bg-red-500" />
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+function ActiveSessionCard({ session, loading }) {
+    if (loading) return <Skeleton className="h-[200px] w-full" />;
+
+    if (!session) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Active Session</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex flex-col items-center justify-center py-6 text-center text-muted-foreground">
+                        <Clock className="h-10 w-10 mb-3 opacity-20" />
+                        <p>No active session right now.</p>
+                    </div>
+                </CardContent>
+            </Card>
+        );
+    }
+
+    return (
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-base font-medium">Current Session</CardTitle>
+                <Badge variant="outline" className="font-normal">Active</Badge>
+            </CardHeader>
+            <CardContent className="pt-4">
+                <div className="mb-4">
+                    <h3 className="text-lg font-bold">{session.name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                        {session.start_time} - {session.end_time}
+                    </p>
+                </div>
+                <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Confirmed</span>
+                        <span className="font-medium">{session.confirmedCount || 0} employees</span>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+function QuickActionsCard() {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-2">
+                <Button variant="outline" className="justify-start" asChild>
+                    <Link href="/employees/create">
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Add New Employee
+                    </Link>
+                </Button>
+                <Button variant="outline" className="justify-start" asChild>
+                    <Link href="/reports/daily">
+                        <FileSpreadsheet className="mr-2 h-4 w-4" />
+                        View Daily Report
+                    </Link>
+                </Button>
+                <Button variant="outline" className="justify-start" asChild>
+                    <Link href="/schedules">
+                        <Calendar className="mr-2 h-4 w-4" />
+                        Manage Schedules
+                    </Link>
+                </Button>
+            </CardContent>
+        </Card>
+    );
+}
+
+export default function AdminDashboardPage() {
+    const { user, isAdmin, loading: authLoading } = useAuth();
+    const router = useRouter();
+    const [stats, setStats] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (!authLoading) {
+            if (!user) {
+                router.replace("/login");
+            } else if (!isAdmin) {
                 router.replace("/dashboard/employee");
             }
         }

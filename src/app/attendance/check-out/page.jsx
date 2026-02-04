@@ -40,7 +40,7 @@ function LiveClockCard() {
 
     return (
         <Card className="overflow-hidden border-[#7C3AED]/30">
-            <div className="bg-linear-to-br from-[#7C3AED] via-[#7C3AED]/90 to-[#7C3AED]/80 text-white p-8">
+            <div className="bg-gradient-to-br from-[#7C3AED] via-[#7C3AED]/90 to-[#7C3AED]/80 text-white p-8">
                 <div className="text-center">
                     <p className="text-sm opacity-80 mb-2">Current Time</p>
                     <div className="flex items-center justify-center gap-2 mb-4">
@@ -62,6 +62,130 @@ function LiveClockCard() {
 }
 
 function SessionInfoCard({ session, loading, isWeekend }) {
+    if (loading) {
+        return <Skeleton className="h-32 w-full" />;
+    }
+
+    if (isWeekend || !session) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-base font-medium">Session Info</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex items-center justify-center py-6 text-muted-foreground">
+                        <p>{isWeekend ? "No shift scheduled for today" : "No active session found"}</p>
+                    </div>
+                </CardContent>
+            </Card>
+        );
+    }
+
+    return (
+        <Card>
+            <CardHeader className="pb-2">
+                <CardTitle className="text-base font-medium flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-purple-600" />
+                    Today's Session
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-2">
+                <div className="bg-muted/50 p-3 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-1">Shift Name</p>
+                    <p className="font-medium text-sm">{session.name}</p>
+                </div>
+                <div className="bg-muted/50 p-3 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-1">Schedule</p>
+                    <p className="font-medium text-sm">
+                        {session.start_time} - {session.end_time}
+                    </p>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+function CheckOutConfirmationCard({ recordId, canCheckOut, onCheckOut, checkingOut, loading, checkOutMessage, onGoToTimeIn, isWeekend }) {
+    if (loading) {
+        return <Skeleton className="h-48 w-full" />;
+    }
+
+    if (isWeekend) {
+        return (
+            <Card className="border-dashed">
+                <CardContent className="flex flex-col items-center justify-center py-10 text-center">
+                    <Calendar className="h-10 w-10 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium">It's the Weekend!</h3>
+                    <p className="text-sm text-muted-foreground mb-4">No work scheduled for today.</p>
+                    <Button variant="outline" onClick={onGoToTimeIn}>
+                        Go to Dashboard
+                    </Button>
+                </CardContent>
+            </Card>
+        );
+    }
+
+    return (
+        <Card className="border-[#7C3AED]/20 shadow-lg">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <LogOut className="h-5 w-5 text-[#7C3AED]" />
+                    Confirm Time Out
+                </CardTitle>
+                <CardDescription>
+                    Ready to end your shift?
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                {!canCheckOut && checkOutMessage && (
+                    <div className="bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 p-4 rounded-lg flex items-start gap-3">
+                        <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                        <div>
+                            <p className="font-medium">Cannot Time Out</p>
+                            <p className="text-sm opacity-90">{checkOutMessage}</p>
+                        </div>
+                    </div>
+                )}
+
+                {!recordId && !checkOutMessage && (
+                    <div className="bg-blue-50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300 p-4 rounded-lg flex items-start gap-3">
+                        <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                        <div>
+                            <p className="font-medium">No Active Check-in</p>
+                            <p className="text-sm opacity-90">You haven't checked in today yet.</p>
+                        </div>
+                    </div>
+                )}
+
+                <div className="flex flex-col gap-3">
+                    <Button
+                        size="lg"
+                        className="w-full text-lg h-14 bg-[#7C3AED] hover:bg-[#6D28D9] shadow-md shadow-purple-200 dark:shadow-none transition-all"
+                        onClick={onCheckOut}
+                        disabled={!canCheckOut || checkingOut}
+                    >
+                        {checkingOut ? (
+                            <>
+                                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                Processing...
+                            </>
+                        ) : (
+                            <>
+                                <LogOut className="mr-2 h-5 w-5" />
+                                Time Out Now
+                            </>
+                        )}
+                    </Button>
+                    {!canCheckOut && (
+                        <Button variant="outline" onClick={onGoToTimeIn} className="w-full">
+                            Check Time In Status
+                        </Button>
+                    )}
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
 
 export default function CheckOutPage() {
     const router = useRouter();

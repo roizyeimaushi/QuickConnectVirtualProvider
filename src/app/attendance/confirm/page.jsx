@@ -110,9 +110,205 @@ function LiveClockCard() {
     );
 }
 
+function LocationStatusCard({ locationState, deviceInfo }) {
+    return (
+        <Card className="bg-muted/30">
+            <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                    <Shield className="h-4 w-4" />
+                    Security Verification
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-2 text-sm">
+                <div>
+                    <p className="font-medium flex items-center gap-2 mb-1">
+                        <MapPin className="h-4 w-4 text-emerald-500" />
+                        Location
+                    </p>
+                    {locationState.loading ? (
+                        <span className="text-muted-foreground">Locating...</span>
+                    ) : locationState.error ? (
+                        <span className="text-destructive text-xs">{locationState.error}</span>
+                    ) : (
+                        <span className="text-muted-foreground">
+                            {locationState.address || "Unknown Location"}
+                            {locationState.city && ` (${locationState.city})`}
+                        </span>
+                    )}
+                </div>
+                <div>
+                    <p className="font-medium flex items-center gap-2 mb-1">
+                        {deviceInfo.device_type === "Mobile" ? (
+                            <Smartphone className="h-4 w-4 text-blue-500" />
+                        ) : (
+                            <Laptop className="h-4 w-4 text-blue-500" />
+                        )}
+                        Device
+                    </p>
+                    <p className="text-muted-foreground">
+                        {deviceInfo.browser} on {deviceInfo.os}
+                    </p>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
 function SessionInfoCard({ session, loading, isWeekend }) {
+    if (loading) {
+        return <Skeleton className="h-32 w-full" />;
+    }
+
+    if (isWeekend || !session) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-base font-medium">Session Info</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex items-center justify-center py-6 text-muted-foreground">
+                        <p>{isWeekend ? "No shift scheduled for today" : "No active session found"}</p>
+                    </div>
+                </CardContent>
+            </Card>
+        );
+    }
+
+    return (
+        <Card>
+            <CardHeader className="pb-2">
+                <CardTitle className="text-base font-medium flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-primary" />
+                    Today's Session
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-2">
+                <div className="bg-muted/50 p-3 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-1">Shift Name</p>
+                    <p className="font-medium text-sm">{session.name}</p>
+                </div>
+                <div className="bg-muted/50 p-3 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-1">Schedule</p>
+                    <p className="font-medium text-sm">
+                        {session.start_time} - {session.end_time}
+                    </p>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
 
 function AttendanceConfirmationCard({ session, canConfirm, onConfirm, confirming, loading, checkInMessage, checkInReason, todayRecord, isWeekend, locationState }) {
+    if (loading) {
+        return <Skeleton className="h-48 w-full" />;
+    }
+
+    if (isWeekend) {
+        return (
+            <Card className="border-dashed">
+                <CardContent className="flex flex-col items-center justify-center py-10 text-center">
+                    <Calendar className="h-10 w-10 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium">It's the Weekend!</h3>
+                    <p className="text-sm text-muted-foreground mb-4">No work scheduled for today.</p>
+                    <Button variant="outline" disabled>Time In</Button>
+                </CardContent>
+            </Card>
+        );
+    }
+
+    // Already Timed Out Case
+    if (todayRecord?.time_out) {
+        return (
+            <Card className="bg-muted/30 border-dashed">
+                <CardContent className="flex flex-col items-center justify-center py-10 text-center">
+                    <div className="p-4 rounded-full bg-green-100 dark:bg-green-900/20 mb-4">
+                        <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-500" />
+                    </div>
+                    <h3 className="text-lg font-medium">Shift Completed</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                        You have already timed out for today ({todayRecord.time_out}).
+                    </p>
+                </CardContent>
+            </Card>
+        );
+    }
+
+    // Already Timed In Case
+    if (todayRecord?.time_in) {
+        return (
+            <Card className="bg-green-50/50 dark:bg-green-950/10 border-green-200 dark:border-green-800">
+                <CardContent className="flex flex-col items-center justify-center py-10 text-center">
+                    <div className="p-4 rounded-full bg-green-100 dark:bg-green-900/20 mb-4">
+                        <Timer className="h-8 w-8 text-green-600 dark:text-green-500" />
+                    </div>
+                    <h3 className="text-lg font-medium text-green-800 dark:text-green-400">You are Timed In</h3>
+                    <p className="text-sm text-green-600 dark:text-green-500/80 mt-1">
+                        Status: {todayRecord.status === 'late' ? 'Late' : 'On Time'}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-4">
+                        Checked in at {todayRecord.time_in}
+                    </p>
+                </CardContent>
+            </Card>
+        );
+    }
+
+    return (
+        <Card className="shadow-lg border-primary/20">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <Fingerprint className="h-5 w-5 text-primary" />
+                    Confirm Attendance
+                </CardTitle>
+                <CardDescription>
+                    Ready to start your shift?
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                {!canConfirm && checkInMessage && (
+                    <div className="bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 p-4 rounded-lg flex items-start gap-3">
+                        <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                        <div>
+                            <p className="font-medium">Cannot Time In</p>
+                            <p className="text-sm opacity-90">{checkInMessage}</p>
+                        </div>
+                    </div>
+                )}
+
+                {locationState.error && (
+                    <div className="bg-destructive/10 text-destructive p-3 rounded-lg text-sm flex items-start gap-2">
+                        <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                        <span>{locationState.error}</span>
+                    </div>
+                )}
+
+                <div className="flex flex-col gap-3">
+                    <Button
+                        size="lg"
+                        className="w-full text-lg h-14"
+                        onClick={onConfirm}
+                        disabled={!canConfirm || confirming || locationState.loading}
+                    >
+                        {confirming ? (
+                            <>
+                                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                Processing...
+                            </>
+                        ) : (
+                            <>
+                                <Fingerprint className="mr-2 h-5 w-5" />
+                                Time In Now
+                            </>
+                        )}
+                    </Button>
+                    <p className="text-xs text-center text-muted-foreground">
+                        Your location will be recorded for security verification.
+                    </p>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
 
 export default function AttendanceConfirmPage() {
     const { user } = useAuth();
