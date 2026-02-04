@@ -196,15 +196,15 @@ export default function GeneralSettingsPage() {
                         <div className="space-y-2">
                             <Label htmlFor="timeFormat">Time Format</Label>
                             <Select
-                                value={formData.time_format}
-                                onValueChange={(val) => handleChange("time_format", val)}
+                                value="24h"
+                                onValueChange={(val) => handleChange("time_format", "24h")}
+                                disabled
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select format" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="12h">12-hour (AM/PM)</SelectItem>
-                                    <SelectItem value="24h">24-hour</SelectItem>
+                                    <SelectItem value="24h">24-hour (Strict)</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

@@ -140,7 +140,7 @@ export default function AttendanceSettingsPage() {
                                 <div className="space-y-2">
                                     <Label className="text-muted-foreground">Time Format</Label>
                                     <p className="font-mono font-medium">
-                                        {settings?.time_format === '12h' ? '12-hour (AM/PM)' : '24-hour'}
+                                        24-hour (Strict)
                                     </p>
                                 </div>
                                 <div className="space-y-2">

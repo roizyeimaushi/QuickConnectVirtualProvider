@@ -299,10 +299,10 @@ export default function AttendanceHistoryPage() {
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent
-                                        className="w-auto p-0 max-h-[var(--radix-popover-content-available-height)] overflow-y-auto overscroll-contain"
-                                        align="end"
+                                        className="w-auto p-0"
+                                        align="center"
                                         side="bottom"
-                                        avoidCollisions={false}
+                                        avoidCollisions={true}
                                     >
                                         <Calendar
                                             initialFocus
