@@ -175,7 +175,7 @@ function TodayStatusCard({ user, session, record, breakStatus, loading, constrai
             disabled: "border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed grayscale"
         };
 
-        const activeStyles = enabled ? "hover:scale-[1.03] active:scale-[0.97] shadow-md hover:shadow-lg" : "cursor-not-allowed opacity-60";
+        const activeStyles = enabled ? "hover:scale-105 active:scale-95 shadow-md hover:shadow-xl" : "cursor-not-allowed opacity-60";
         const colorClass = enabled ? variants[variant] : variants.disabled;
 
         const Content = () => (
@@ -528,7 +528,7 @@ export default function EmployeeDashboardPage() {
 
     return (
         <DashboardLayout title="Employee Dashboard">
-            <div className="space-y-6 animate-fade-in content-start">
+            <div className="space-y-6 content-start">
                 {/* Welcome Section */}
                 <div className="flex flex-col gap-1 mb-2">
                     <h1 className="text-2xl font-bold tracking-tight">
