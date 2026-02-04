@@ -372,7 +372,10 @@ export default function SessionDetailsPage() {
                                                                 <Pencil className="mr-2 h-4 w-4" /> Edit
                                                             </DropdownMenuItem>
                                                             <DropdownMenuSeparator />
-                                                            <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={() => handleDeleteRecord(record)}>
+                                                            <DropdownMenuItem className="text-red-600 focus:text-red-600"
+                                                                onClick={() => handleDeleteRecord(record)}
+                                                                disabled={typeof record.id === 'string' && record.id.startsWith('virtual_')}
+                                                            >
                                                                 <Trash2 className="mr-2 h-4 w-4" /> Delete
                                                             </DropdownMenuItem>
                                                         </DropdownMenuContent>
@@ -517,8 +520,10 @@ export default function SessionDetailsPage() {
                                                                 variant="ghost"
                                                                 size="icon"
                                                                 onClick={() => handleDeleteRecord(record)}
+                                                                disabled={typeof record.id === 'string' && record.id.startsWith('virtual_')}
+                                                                title={typeof record.id === 'string' && record.id.startsWith('virtual_') ? "Cannot delete virtual record" : "Delete record"}
                                                             >
-                                                                <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                                                                <Trash2 className={`h-4 w-4 ${typeof record.id === 'string' && record.id.startsWith('virtual_') ? 'text-gray-300' : 'text-muted-foreground hover:text-destructive'}`} />
                                                             </Button>
                                                         </div>
                                                     </TableCell>
