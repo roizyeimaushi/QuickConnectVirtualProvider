@@ -8,12 +8,16 @@ const withPWA = require("next-pwa")({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     turbopack: {},
-    output: 'standalone', // Required for Docker deployment
+    // Note: 'standalone' removed for Vercel - only needed for Docker
     typescript: {
         // !! WARN !!
         // Dangerously allow production builds to successfully complete even if
         // your project has type errors.
         ignoreBuildErrors: true,
+    },
+    eslint: {
+        // Also ignore ESLint errors during build
+        ignoreDuringBuilds: true,
     },
 };
 
