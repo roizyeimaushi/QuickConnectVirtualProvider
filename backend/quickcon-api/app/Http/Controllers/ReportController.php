@@ -859,6 +859,9 @@ class ReportController extends Controller
 
         if ($request->has('start_date') && $request->has('end_date')) {
             $baseQuery->whereBetween('attendance_date', [$request->start_date, $request->end_date]);
+        } else {
+            // Default: Hide strictly future records (preserve "Today" for upcoming shifts)
+            $baseQuery->where('attendance_date', '<=', Carbon::today()->toDateString());
         }
         
         // 1. Calculate Stats efficiently using aggregates
@@ -877,15 +880,26 @@ class ReportController extends Controller
         // Use per_page param or default to 20
         $perPage = $request->input('per_page', 20);
         
-        $records = (clone $baseQuery)
+        $paginator = (clone $baseQuery)
             ->with(['session.schedule'])
             ->orderBy('attendance_date', 'desc')
             ->paginate($perPage);
 
+        // Transform collection to hide ghost data
+        $paginator->getCollection()->transform(function ($record) {
+            // Hide break times for pending/absent records to prevent confusion
+            if (in_array($record->status, ['pending', 'absent', 'excused'])) {
+                $record->break_start = null;
+                $record->break_end = null;
+                $record->hours_worked = 0; // Ensure logic consistency
+            }
+            return $record;
+        });
+
         return response()->json([
             'employee' => $employee,
             'stats' => $stats,
-            'records' => $records, // Now returns a Paginator object
+            'records' => $paginator, // Now returns a Paginator object
         ]);
     }
 
