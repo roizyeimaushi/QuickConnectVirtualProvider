@@ -21,7 +21,7 @@ import {
     CheckCircle2,
     Shield,
 } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+
 
 function LiveClockCard() {
     const [time, setTime] = useState(getCurrentTime());
@@ -63,7 +63,7 @@ function LiveClockCard() {
 
 function SessionInfoCard({ session, loading, isWeekend }) {
     if (loading) {
-        return <Skeleton className="h-32 w-full" />;
+        return null;
     }
 
     if (isWeekend || !session) {
@@ -107,7 +107,7 @@ function SessionInfoCard({ session, loading, isWeekend }) {
 
 function CheckOutConfirmationCard({ recordId, canCheckOut, onCheckOut, checkingOut, loading, checkOutMessage, onGoToTimeIn, isWeekend }) {
     if (loading) {
-        return <Skeleton className="h-48 w-full" />;
+        return null;
     }
 
     if (isWeekend) {

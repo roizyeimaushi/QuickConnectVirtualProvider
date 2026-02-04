@@ -21,7 +21,10 @@ return [
         explode(',', env('CORS_ALLOWED_ORIGINS', ''))
     ))),
 
-    'allowed_origins_patterns' => ['*.vercel.app'],
+    'allowed_origins_patterns' => [
+        'https://quickconnectvirtual-*.vercel.app', // Preview deployments only
+        'https://virtualquickconnect-*.vercel.app',
+    ],
 
     'allowed_headers' => ['*'],
 

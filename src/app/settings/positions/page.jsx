@@ -34,7 +34,7 @@ export default function PositionsSettingsPage() {
     useEffect(() => {
         const fetchPositions = async () => {
             try {
-                const token = localStorage.getItem("token");
+                const token = localStorage.getItem("quickcon_token");
                 const response = await fetch(`${API_BASE_URL}/settings`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -135,7 +135,7 @@ export default function PositionsSettingsPage() {
 
         setIsSaving(true);
         try {
-            const token = localStorage.getItem("token");
+            const token = localStorage.getItem("quickcon_token");
             const response = await fetch(`${API_BASE_URL}/settings`, {
                 method: "PUT",
                 headers: {

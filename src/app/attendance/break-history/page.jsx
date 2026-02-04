@@ -5,7 +5,7 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+
 import {
     Table,
     TableBody,
@@ -41,24 +41,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-function HistorySkeleton() {
-    return (
-        <div className="space-y-4">
-            {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="flex items-center gap-4 p-4 border-b">
-                    <Skeleton className="h-10 w-10 rounded-full" />
-                    <div className="space-y-2 flex-1">
-                        <Skeleton className="h-4 w-32" />
-                        <Skeleton className="h-3 w-24" />
-                    </div>
-                    <Skeleton className="h-6 w-24" />
-                    <Skeleton className="h-6 w-24" />
-                    <Skeleton className="h-6 w-16" />
-                </div>
-            ))}
-        </div>
-    );
-}
+
 
 export default function BreakHistoryPage() {
     const { toast } = useToast();

@@ -35,7 +35,7 @@ export default function PositionsPage() {
     useEffect(() => {
         const fetchPositions = async () => {
             try {
-                const token = localStorage.getItem("token");
+                const token = localStorage.getItem("quickcon_token");
                 const response = await fetch(`${API_BASE_URL}/settings`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -136,7 +136,7 @@ export default function PositionsPage() {
 
         setIsSaving(true);
         try {
-            const token = localStorage.getItem("token");
+            const token = localStorage.getItem("quickcon_token");
             const response = await fetch(`${API_BASE_URL}/settings`, {
                 method: "POST",
                 headers: {
@@ -168,6 +168,15 @@ export default function PositionsPage() {
             setIsSaving(false);
         }
     };
+
+    // Full page loading guard
+    if (isLoading) {
+        return (
+            <DashboardLayout title="Manage Positions">
+                {null}
+            </DashboardLayout>
+        );
+    }
 
     return (
         <DashboardLayout title="Manage Positions">
@@ -246,9 +255,7 @@ export default function PositionsPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {isLoading ? (
-                            null
-                        ) : positions.length === 0 ? (
+                        {positions.length === 0 ? (
                             <div className="text-center py-8 text-muted-foreground">
                                 <Briefcase className="h-12 w-12 mx-auto mb-3 opacity-30" />
                                 <p>No positions defined yet.</p>
@@ -258,7 +265,7 @@ export default function PositionsPage() {
                             <div className="space-y-2">
                                 {positions.map((position, index) => (
                                     <div
-                                        key={index}
+                                        key={`position-${position}-${index}`}
                                         className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border hover:bg-muted/70 transition-colors group"
                                     >
                                         <div className="flex items-center gap-3">

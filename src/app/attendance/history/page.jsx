@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -58,22 +58,7 @@ import {
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 
-function HistoryTableSkeleton() {
-    return (
-        <div className="space-y-3">
-            {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="flex items-center gap-4 p-4 border-b">
-                    <Skeleton className="h-12 w-12 rounded-lg" />
-                    <div className="space-y-2 flex-1">
-                        <Skeleton className="h-4 w-32" />
-                        <Skeleton className="h-3 w-24" />
-                    </div>
-                    <Skeleton className="h-6 w-16" />
-                </div>
-            ))}
-        </div>
-    );
-}
+
 
 function StatsSummary({ totalRecords }) {
     return (

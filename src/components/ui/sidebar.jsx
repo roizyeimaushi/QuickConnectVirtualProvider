@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet"
-import { Skeleton } from "@/components/ui/skeleton"
+
 import {
   Tooltip,
   TooltipContent,
@@ -633,37 +633,7 @@ const SidebarMenuBadge = React.forwardRef(({ className, ...props }, ref) => (
 ))
 SidebarMenuBadge.displayName = "SidebarMenuBadge"
 
-const SidebarMenuSkeleton = React.forwardRef(
-  ({ className, showIcon = false, ...props }, ref) => {
-    const width = React.useMemo(() => {
-      return `${Math.floor(Math.random() * 40) + 50}%`
-    }, [])
 
-    return (
-      <div
-        ref={ref}
-        data-sidebar="menu-skeleton"
-        className={cn("rounded-md h-8 flex gap-2 px-2 items-center", className)}
-        {...props}
-      >
-        {showIcon && (
-          <Skeleton
-            className="size-4 rounded-md"
-            data-sidebar="menu-skeleton-icon"
-          />
-        )}
-        <Skeleton
-          className="h-4 flex-1 max-w-[--skeleton-width]"
-          data-sidebar="menu-skeleton-text"
-          style={{
-            "--skeleton-width": width,
-          }}
-        />
-      </div>
-    )
-  }
-)
-SidebarMenuSkeleton.displayName = "SidebarMenuSkeleton"
 
 const SidebarMenuSub = React.forwardRef(({ className, ...props }, ref) => (
   <ul
@@ -726,7 +696,7 @@ export {
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSkeleton,
+
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,

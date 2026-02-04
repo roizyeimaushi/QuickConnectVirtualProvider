@@ -82,6 +82,18 @@ class EmployeeBreak extends Model
      */
     public function endBreak(): void
     {
+        // Guard clause: ensure break has actually started
+        if (!$this->break_start) {
+            \Illuminate\Support\Facades\Log::warning("Attempted to end break without break_start", [
+                'break_id' => $this->id,
+                'user_id' => $this->user_id,
+            ]);
+            $this->break_end = now();
+            $this->duration_minutes = 0;
+            $this->save();
+            return;
+        }
+
         $this->break_end = now();
         $this->duration_minutes = Carbon::parse($this->break_start)->diffInMinutes($this->break_end);
         $this->save();

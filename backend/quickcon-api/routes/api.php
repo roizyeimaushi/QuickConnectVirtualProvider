@@ -47,7 +47,8 @@ Broadcast::routes(['middleware' => ['auth:sanctum']]);
 
 // Authentication Routes
 Route::prefix('auth')->group(function () {
-    Route::post('/login', [AuthController::class, 'login']);
+    // Rate limited: 5 attempts per minute to prevent brute force
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
     Route::get('/password-policy', [AuthController::class, 'getPasswordPolicy']);
     
     Route::middleware('auth:sanctum')->group(function () {

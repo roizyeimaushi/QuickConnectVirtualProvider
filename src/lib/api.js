@@ -277,10 +277,15 @@ export const authApi = {
     me: () => api.request('/auth/me', { method: 'GET', headers: { 'Cache-Control': 'no-store' } }),
     refreshToken: () => api.post('/auth/refresh'),
     heartbeat: () => api.post('/auth/heartbeat'),
-    updateProfile: (data) => api.request('/auth/update-profile', {
-        method: 'POST',
-        body: data
-    }),
+    updateProfile: async (data) => {
+        const result = await api.request('/auth/update-profile', {
+            method: 'POST',
+            body: data
+        });
+        // Invalidate cache so admin can see updated employee profile immediately
+        invalidateCache(['/employees', '/dashboard', '/auth/me']);
+        return result;
+    },
     changePassword: (data) => api.post('/auth/change-password', data),
     getPasswordPolicy: () => api.get('/auth/password-policy'),
 };

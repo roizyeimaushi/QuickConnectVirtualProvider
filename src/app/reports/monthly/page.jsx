@@ -5,7 +5,7 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+
 import { Progress } from "@/components/ui/progress";
 import {
     Select,
@@ -125,7 +125,7 @@ export default function MonthlyReportsPage() {
                         </CardHeader>
                         <CardContent>
                             {loading ? (
-                                <Skeleton className="h-8 w-12" />
+                                null
                             ) : (
                                 <div className="text-2xl font-bold">{report.working_days}</div>
                             )}
@@ -138,7 +138,7 @@ export default function MonthlyReportsPage() {
                         </CardHeader>
                         <CardContent>
                             {loading ? (
-                                <Skeleton className="h-8 w-12" />
+                                null
                             ) : (
                                 <div className="text-2xl font-bold text-green-600">{avgAttendance}%</div>
                             )}
@@ -151,7 +151,7 @@ export default function MonthlyReportsPage() {
                         </CardHeader>
                         <CardContent>
                             {loading ? (
-                                <Skeleton className="h-8 w-12" />
+                                null
                             ) : (
                                 <div className="text-2xl font-bold">{report.total_employees}</div>
                             )}
@@ -181,11 +181,7 @@ export default function MonthlyReportsPage() {
                     </CardHeader>
                     <CardContent>
                         {loading ? (
-                            <div className="space-y-4">
-                                {[1, 2, 3].map((i) => (
-                                    <Skeleton key={i} className="h-12 w-full" />
-                                ))}
-                            </div>
+                            null
                         ) : report.summary.length === 0 ? (
                             <div className="text-center py-8 text-muted-foreground">
                                 No attendance data found for this period

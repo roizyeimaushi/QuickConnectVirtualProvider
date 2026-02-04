@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
     Table,
     TableBody,
@@ -68,44 +67,7 @@ import {
     Lock,
 } from "lucide-react";
 
-function AuditLogSkeleton() {
-    return (
-        <div className="space-y-4">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                <div key={i} className="flex items-center gap-4 p-4 border-b">
-                    <Skeleton className="h-6 w-24 rounded-full" />
-                    <div className="space-y-2 flex-1">
-                        <Skeleton className="h-4 w-64" />
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Skeleton className="h-6 w-6 rounded-full" />
-                        <Skeleton className="h-4 w-24" />
-                    </div>
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-4 w-36" />
-                </div>
-            ))}
-        </div>
-    );
-}
 
-function AuditLogStatsSkeleton() {
-    return (
-        <div className="grid gap-4 md:grid-cols-4">
-            {[1, 2, 3, 4].map((i) => (
-                <Card key={i}>
-                    <CardContent className="flex items-center gap-4 p-6">
-                        <Skeleton className="h-12 w-12 rounded-lg" />
-                        <div className="space-y-2">
-                            <Skeleton className="h-8 w-12" />
-                            <Skeleton className="h-4 w-24" />
-                        </div>
-                    </CardContent>
-                </Card>
-            ))}
-        </div>
-    );
-}
 
 // Device icon component
 const DeviceIcon = ({ type }) => {
@@ -329,7 +291,7 @@ export default function AuditLogsPage() {
     if (authLoading || (loading && isFirstLoad)) {
         return (
             <DashboardLayout title="Audit Logs">
-                null
+                {null}
             </DashboardLayout>
         );
     }
@@ -346,9 +308,7 @@ export default function AuditLogsPage() {
                 </div>
 
                 {/* Stats */}
-                {loading ? (
-                    <AuditLogStatsSkeleton />
-                ) : (
+                {loading ? null : (
                     <div className="grid gap-4 md:grid-cols-4">
                         <Card>
                             <CardContent className="flex items-center gap-4 p-6">

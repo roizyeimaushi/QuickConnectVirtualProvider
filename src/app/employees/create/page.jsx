@@ -53,7 +53,7 @@ export default function CreateEmployeePage() {
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
-                const token = localStorage.getItem("token");
+                const token = localStorage.getItem("quickcon_token");
 
                 // Fetch next employee ID
                 const idResponse = await employeesApi.getNextId();

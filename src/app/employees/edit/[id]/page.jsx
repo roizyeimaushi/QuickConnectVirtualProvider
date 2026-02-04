@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Skeleton } from "@/components/ui/skeleton";
+
 import {
     Select,
     SelectContent,
@@ -56,7 +56,7 @@ export default function EditEmployeePage() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const token = localStorage.getItem("token");
+                const token = localStorage.getItem("quickcon_token");
 
                 // Fetch employee data
                 const response = await employeesApi.getById(params.id);

@@ -442,10 +442,14 @@ class BreakController extends Controller
                 'duration_minutes' => $break->duration_minutes,
             ]);
         } catch (\Exception $e) {
-            Log::error("Critical 500 in endBreak: " . $e->getMessage());
+            Log::error("Critical 500 in endBreak: " . $e->getMessage(), [
+                'exception' => $e,
+                'user_id' => $request->user()?->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
             return response()->json([
-                 'message' => 'System error ending break.',
-                 'error_detail' => $e->getMessage()
+                 'message' => 'System error ending break. Please try again.',
+                 'error_code' => 'SYSTEM_ERROR',
             ], 500);
         }
     }

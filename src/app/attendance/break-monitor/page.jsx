@@ -5,7 +5,7 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+
 import {
     Table,
     TableBody,
@@ -26,24 +26,7 @@ import {
     checkCircle2
 } from "lucide-react";
 
-function MonitorSkeleton() {
-    return (
-        <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center gap-4 p-4 border-b">
-                    <Skeleton className="h-10 w-10 rounded-full" />
-                    <div className="space-y-2 flex-1">
-                        <Skeleton className="h-4 w-32" />
-                        <Skeleton className="h-3 w-24" />
-                    </div>
-                    <Skeleton className="h-6 w-24" />
-                    <Skeleton className="h-6 w-16" />
-                    <Skeleton className="h-8 w-20" />
-                </div>
-            ))}
-        </div>
-    );
-}
+
 
 export default function BreakMonitorPage() {
     const { toast } = useToast();
@@ -176,7 +159,7 @@ export default function BreakMonitorPage() {
                     </CardHeader>
                     <CardContent>
                         {loading && activeBreaks.length === 0 ? (
-                            <MonitorSkeleton />
+                            null
                         ) : activeBreaks.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-12 text-center">
                                 <Clock className="h-12 w-12 text-muted-foreground mb-4" />

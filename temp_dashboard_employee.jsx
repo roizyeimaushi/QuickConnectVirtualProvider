@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-
+import { Skeleton } from "@/components/ui/skeleton";
+import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 import { useAuth } from "@/components/providers/auth-provider";
 import { attendanceApi, reportsApi, breakApi } from "@/lib/api";
 import { formatDate, formatTime24, formatTime12, getCurrentDate, getCurrentTime, isSameDay } from "@/lib/utils";
@@ -83,7 +84,13 @@ function TodayStatusCard({ user, session, record, breakStatus, loading, constrai
         }
     }, [secondsLeft, breakStatus?.active]);
 
-    if (loading) return null;
+    if (loading) {
+        return (
+            <Card className="col-span-full">
+                <CardContent className="p-8"><Skeleton className="h-32 w-full" /></CardContent>
+            </Card>
+        );
+    }
 
     // Determine Logic States
     const hasCheckedIn = record && record.time_in;
@@ -328,7 +335,7 @@ function TodayStatusCard({ user, session, record, breakStatus, loading, constrai
 
 
 function AttendanceStatsCard({ stats, loading }) {
-    if (loading) return null;
+    if (loading) return <Skeleton className="h-48 w-full" />;
 
     // Using monthly stats but could filter for weekly if data available
     const attendanceRate = stats?.attendanceRate || 0;
@@ -369,7 +376,7 @@ function AttendanceStatsCard({ stats, loading }) {
     );
 }
 
-export default function EmployeeDashboardPage() {
+export default function EmployeeDashboard() {
     const { user, loading: authLoading } = useAuth();
     const [session, setSession] = useState(null);
     const [stats, setStats] = useState(null);
@@ -580,4 +587,3 @@ export default function EmployeeDashboardPage() {
         </DashboardLayout>
     );
 }
-

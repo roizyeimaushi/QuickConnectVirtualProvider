@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+
 import { History } from "lucide-react";
 
 export default function BreakHistoryPage() {
@@ -39,18 +39,7 @@ export default function BreakHistoryPage() {
                     </CardHeader>
                     <CardContent>
                         {loading ? (
-                            <div className="space-y-4">
-                                {[1, 2, 3].map((i) => (
-                                    <div key={i} className="flex items-center gap-4 p-4 border-b">
-                                        <Skeleton className="h-10 w-10 rounded-full" />
-                                        <div className="space-y-2 flex-1">
-                                            <Skeleton className="h-4 w-32" />
-                                            <Skeleton className="h-3 w-48" />
-                                        </div>
-                                        <Skeleton className="h-6 w-20" />
-                                    </div>
-                                ))}
-                            </div>
+                            null
                         ) : (
                             <div className="flex flex-col items-center justify-center py-12 text-center">
                                 <History className="h-12 w-12 text-muted-foreground mb-4" />

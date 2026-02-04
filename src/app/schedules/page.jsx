@@ -7,7 +7,7 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+
 import {
     Table,
     TableBody,
@@ -51,44 +51,7 @@ import {
     ChevronRight,
 } from "lucide-react";
 
-function SchedulesTableSkeleton() {
-    return (
-        <div className="space-y-4">
-            {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="flex items-center gap-4 p-4 border-b">
-                    <div className="space-y-2 flex-1">
-                        <Skeleton className="h-4 w-32" />
-                    </div>
-                    <Skeleton className="h-4 w-16" />
-                    <Skeleton className="h-4 w-16" />
-                    <Skeleton className="h-4 w-16" />
-                    <Skeleton className="h-4 w-14" />
-                    <Skeleton className="h-4 w-14" />
-                    <Skeleton className="h-6 w-16" />
-                    <Skeleton className="h-8 w-8" />
-                </div>
-            ))}
-        </div>
-    );
-}
 
-function ScheduleStatsCardsSkeleton() {
-    return (
-        <div className="grid gap-4 md:grid-cols-3">
-            {[1, 2, 3].map((i) => (
-                <Card key={i}>
-                    <CardContent className="flex items-center gap-4 p-6">
-                        <Skeleton className="h-12 w-12 rounded-lg" />
-                        <div className="space-y-2">
-                            <Skeleton className="h-8 w-12" />
-                            <Skeleton className="h-4 w-24" />
-                        </div>
-                    </CardContent>
-                </Card>
-            ))}
-        </div>
-    );
-}
 
 export default function SchedulesPage() {
     const { user, loading: authLoading, isAdmin } = useAuth();
@@ -237,7 +200,7 @@ export default function SchedulesPage() {
 
                 {/* Stats */}
                 {loading ? (
-                    <ScheduleStatsCardsSkeleton />
+                    null
                 ) : (
                     <div className="grid gap-4 md:grid-cols-3">
                         <Card>
@@ -293,7 +256,7 @@ export default function SchedulesPage() {
                     </CardHeader>
                     <CardContent>
                         {loading ? (
-                            <SchedulesTableSkeleton />
+                            null
                         ) : schedules.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-12 text-center">
                                 <Clock className="h-12 w-12 text-muted-foreground mb-4" />

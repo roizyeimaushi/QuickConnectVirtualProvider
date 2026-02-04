@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Skeleton } from "@/components/ui/skeleton";
+
 import { useAuth } from "@/components/providers/auth-provider";
 import { attendanceApi, sessionsApi, reportsApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
@@ -156,7 +156,7 @@ function LocationStatusCard({ locationState, deviceInfo }) {
 
 function SessionInfoCard({ session, loading, isWeekend }) {
     if (loading) {
-        return <Skeleton className="h-32 w-full" />;
+        return null;
     }
 
     if (isWeekend || !session) {
@@ -200,7 +200,7 @@ function SessionInfoCard({ session, loading, isWeekend }) {
 
 function AttendanceConfirmationCard({ session, canConfirm, onConfirm, confirming, loading, checkInMessage, checkInReason, todayRecord, isWeekend, locationState }) {
     if (loading) {
-        return <Skeleton className="h-48 w-full" />;
+        return null;
     }
 
     if (isWeekend) {
@@ -210,7 +210,6 @@ function AttendanceConfirmationCard({ session, canConfirm, onConfirm, confirming
                     <Calendar className="h-10 w-10 text-muted-foreground mb-4" />
                     <h3 className="text-lg font-medium">It's the Weekend!</h3>
                     <p className="text-sm text-muted-foreground mb-4">No work scheduled for today.</p>
-                    <Button variant="outline" disabled>Time In</Button>
                 </CardContent>
             </Card>
         );
@@ -226,7 +225,7 @@ function AttendanceConfirmationCard({ session, canConfirm, onConfirm, confirming
                     </div>
                     <h3 className="text-lg font-medium">Shift Completed</h3>
                     <p className="text-sm text-muted-foreground mt-1">
-                        You have already timed out for today ({todayRecord.time_out}).
+                        You have already timed out at {formatTime24(todayRecord.time_out)}.
                     </p>
                 </CardContent>
             </Card>
@@ -239,36 +238,28 @@ function AttendanceConfirmationCard({ session, canConfirm, onConfirm, confirming
             <Card className="bg-green-50/50 dark:bg-green-950/10 border-green-200 dark:border-green-800">
                 <CardContent className="flex flex-col items-center justify-center py-10 text-center">
                     <div className="p-4 rounded-full bg-green-100 dark:bg-green-900/20 mb-4">
-                        <Timer className="h-8 w-8 text-green-600 dark:text-green-500" />
+                        <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-500" />
                     </div>
                     <h3 className="text-lg font-medium text-green-800 dark:text-green-400">You are Timed In</h3>
-                    <p className="text-sm text-green-600 dark:text-green-500/80 mt-1">
-                        Status: {todayRecord.status === 'late' ? 'Late' : 'On Time'}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-4">
-                        Checked in at {todayRecord.time_in}
+                    <Badge className={`mt-2 ${todayRecord.status === 'late' ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800'}`}>
+                        {todayRecord.status === 'late' ? 'Late' : 'On Time'}
+                    </Badge>
+                    <p className="text-sm text-muted-foreground mt-4">
+                        Checked in at <span className="font-mono font-semibold">{formatTime24(todayRecord.time_in)}</span>
                     </p>
                 </CardContent>
             </Card>
         );
     }
 
+    // Ready to Time In - Fingerprint Style Button
     return (
-        <Card className="shadow-lg border-primary/20">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <Fingerprint className="h-5 w-5 text-primary" />
-                    Confirm Attendance
-                </CardTitle>
-                <CardDescription>
-                    Ready to start your shift?
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+        <Card className="shadow-lg border-primary/20 overflow-hidden">
+            <CardContent className="flex flex-col items-center justify-center py-10 px-6 text-center">
                 {!canConfirm && checkInMessage && (
-                    <div className="bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 p-4 rounded-lg flex items-start gap-3">
+                    <div className="bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 p-4 rounded-lg flex items-start gap-3 mb-6 w-full max-w-md">
                         <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
-                        <div>
+                        <div className="text-left">
                             <p className="font-medium">Cannot Time In</p>
                             <p className="text-sm opacity-90">{checkInMessage}</p>
                         </div>
@@ -276,35 +267,46 @@ function AttendanceConfirmationCard({ session, canConfirm, onConfirm, confirming
                 )}
 
                 {locationState.error && (
-                    <div className="bg-destructive/10 text-destructive p-3 rounded-lg text-sm flex items-start gap-2">
-                        <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                    <div className="bg-destructive/10 text-destructive p-3 rounded-lg text-sm flex items-center gap-2 mb-6 w-full max-w-md">
+                        <AlertCircle className="h-4 w-4 shrink-0" />
                         <span>{locationState.error}</span>
                     </div>
                 )}
 
-                <div className="flex flex-col gap-3">
-                    <Button
-                        size="lg"
-                        className="w-full text-lg h-14"
-                        onClick={onConfirm}
-                        disabled={!canConfirm || confirming || locationState.loading}
-                    >
-                        {confirming ? (
-                            <>
-                                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                Processing...
-                            </>
-                        ) : (
-                            <>
-                                <Fingerprint className="mr-2 h-5 w-5" />
-                                Time In Now
-                            </>
-                        )}
-                    </Button>
-                    <p className="text-xs text-center text-muted-foreground">
-                        Your location will be recorded for security verification.
-                    </p>
-                </div>
+                {/* Fingerprint Button */}
+                <button
+                    onClick={onConfirm}
+                    disabled={!canConfirm || confirming || locationState.loading}
+                    className={`
+                        relative w-40 h-40 rounded-full 
+                        bg-gradient-to-br from-primary via-primary/90 to-primary/80
+                        flex items-center justify-center
+                        transition-all duration-300 ease-in-out
+                        shadow-lg shadow-primary/30
+                        ${canConfirm && !confirming && !locationState.loading
+                            ? 'hover:scale-105 hover:shadow-xl hover:shadow-primary/40 active:scale-95 cursor-pointer'
+                            : 'opacity-50 cursor-not-allowed'}
+                        focus:outline-none focus:ring-4 focus:ring-primary/30
+                    `}
+                >
+                    {confirming ? (
+                        <Loader2 className="h-16 w-16 text-white animate-spin" />
+                    ) : locationState.loading ? (
+                        <div className="flex flex-col items-center">
+                            <Loader2 className="h-12 w-12 text-white/80 animate-spin" />
+                            <span className="text-white/80 text-xs mt-2">Locating...</span>
+                        </div>
+                    ) : (
+                        <Fingerprint className="h-20 w-20 text-white" />
+                    )}
+                </button>
+
+                <p className="text-lg font-semibold mt-6 text-foreground">
+                    {confirming ? 'Recording...' : locationState.loading ? 'Verifying Location...' : 'Tap to Time In'}
+                </p>
+                <p className="text-xs text-muted-foreground mt-2 max-w-xs">
+                    Your attendance will be recorded with timestamp & location verification.
+                </p>
             </CardContent>
         </Card>
     );

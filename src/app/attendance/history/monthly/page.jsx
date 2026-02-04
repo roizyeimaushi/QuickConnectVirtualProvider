@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+
 import { Progress } from "@/components/ui/progress";
 import {
     Select,
@@ -25,18 +25,7 @@ import {
     BarChart3,
 } from "lucide-react";
 
-function MonthlySummarySkeleton() {
-    return (
-        <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-4">
-                {[1, 2, 3, 4].map((i) => (
-                    <Skeleton key={i} className="h-32" />
-                ))}
-            </div>
-            <Skeleton className="h-64" />
-        </div>
-    );
-}
+
 
 export default function MonthlyHistoryPage() {
     const [loading, setLoading] = useState(true);
@@ -167,7 +156,7 @@ export default function MonthlyHistoryPage() {
                 </div>
 
                 {loading ? (
-                    <MonthlySummarySkeleton />
+                    null
                 ) : (
                     <>
                         {/* Stats Grid */}

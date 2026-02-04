@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+
 import { useAuth } from "@/components/providers/auth-provider";
 import { reportsApi } from "@/lib/api";
 import { formatDate, formatTime24, getCurrentDate } from "@/lib/utils";
@@ -29,18 +29,7 @@ import {
 
 function StatCard({ title, value, description, icon: Icon, trend, loading }) {
     if (loading) {
-        return (
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-8 w-8 rounded" />
-                </CardHeader>
-                <CardContent>
-                    <Skeleton className="h-8 w-16 mb-2" />
-                    <Skeleton className="h-3 w-32" />
-                </CardContent>
-            </Card>
-        );
+        return null;
     }
 
     return (
@@ -71,22 +60,7 @@ function StatCard({ title, value, description, icon: Icon, trend, loading }) {
 
 function AttendanceOverviewCard({ data, loading }) {
     if (loading) {
-        return (
-            <Card className="col-span-full lg:col-span-2">
-                <CardHeader>
-                    <Skeleton className="h-6 w-48" />
-                    <Skeleton className="h-4 w-64" />
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    {[1, 2, 3].map((i) => (
-                        <div key={i} className="space-y-2">
-                            <Skeleton className="h-4 w-32" />
-                            <Skeleton className="h-3 w-full" />
-                        </div>
-                    ))}
-                </CardContent>
-            </Card>
-        );
+        return null;
     }
 
     const presentRate = data?.presentRate || 0;
@@ -207,17 +181,7 @@ function QuickActionsCard() {
 
 function ActiveSessionCard({ session, loading }) {
     if (loading) {
-        return (
-            <Card>
-                <CardHeader>
-                    <Skeleton className="h-6 w-48" />
-                    <Skeleton className="h-4 w-32" />
-                </CardHeader>
-                <CardContent>
-                    <Skeleton className="h-20 w-full" />
-                </CardContent>
-            </Card>
-        );
+        return null;
     }
 
     if (!session) {
