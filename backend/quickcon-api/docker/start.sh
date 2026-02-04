@@ -32,9 +32,14 @@ echo "DB_HOST: ${DB_HOST:-not_set}"
 echo "DB_PORT: ${DB_PORT:-not_set}"
 echo "DB_DATABASE: ${DB_DATABASE:-not_set}"
 
-# Run migrations in background if DB is ready
-echo "Running migrations..."
-php artisan migrate --force --no-interaction 2>&1 || echo "Migration pending - will retry"
+# Run migrations
+if [ "${FORCE_RESET_DB:-false}" = "true" ]; then
+    echo "⚠️ FORCE_RESET_DB is set! Wiping database and reseeding..."
+    php artisan migrate:fresh --seed --force --no-interaction
+else
+    echo "Running standard migrations..."
+    php artisan migrate --force --no-interaction 2>&1 || echo "Migration pending - will retry"
+fi
 
 # Quick optimization (skip if already cached)
 echo "Caching config..."
