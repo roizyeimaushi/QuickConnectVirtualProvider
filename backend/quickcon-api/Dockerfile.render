@@ -1,73 +1,50 @@
 # ============================================
-# Laravel PHP API - Production Dockerfile for Render
+# Laravel PHP API - OPTIMIZED Dockerfile for Render
+# Fast builds with aggressive caching
 # ============================================
 
 FROM php:8.2-fpm-alpine
 
-# Install system dependencies
+# Install ALL system dependencies in ONE layer (better caching)
 RUN apk add --no-cache \
-    git \
-    curl \
-    bash \
-    libpng-dev \
-    libzip-dev \
-    zip \
-    unzip \
-    oniguruma-dev \
-    nginx \
-    supervisor \
-    postgresql-dev \
-    icu-dev
+    git curl bash zip unzip \
+    libpng-dev libzip-dev oniguruma-dev postgresql-dev icu-dev \
+    nginx supervisor \
+    && docker-php-ext-install -j$(nproc) pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd zip intl \
+    && rm -rf /var/cache/apk/* /tmp/*
 
-# Install PHP extensions (including pdo_pgsql for PostgreSQL on Render)
-RUN docker-php-ext-install pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd zip intl
+# Get Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# Set working directory
 WORKDIR /var/www/html
 
-# Copy composer files first for caching
+# Copy ONLY dependency files first (maximizes cache hits)
 COPY composer.json composer.lock ./
 
-# Install dependencies (no dev for production)
-RUN composer install --no-dev --optimize-autoloader --no-scripts --no-interaction
+# Install PHP deps with aggressive caching
+RUN composer install --no-dev --optimize-autoloader --no-scripts --no-interaction --prefer-dist \
+    && rm -rf ~/.composer/cache
 
-# Copy application code
-COPY . .
-
-# Run post-install scripts
-RUN composer dump-autoload --optimize
-
-# Create necessary directories
-RUN mkdir -p /var/www/html/storage/logs \
-    && mkdir -p /var/www/html/storage/framework/cache \
-    && mkdir -p /var/www/html/storage/framework/sessions \
-    && mkdir -p /var/www/html/storage/framework/views \
-    && mkdir -p /var/www/html/bootstrap/cache
-
-# Set permissions
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 775 /var/www/html/storage \
-    && chmod -R 775 /var/www/html/bootstrap/cache
-
-# Copy nginx configuration
+# Copy config files BEFORE app code (they change less often)
 COPY docker/nginx.render.conf /etc/nginx/http.d/default.conf
-
-# Copy supervisord configuration
 COPY docker/supervisord.render.conf /etc/supervisord.conf
-
-# Copy startup script
 COPY docker/start.sh /start.sh
 RUN chmod +x /start.sh
 
-# Expose port (Render uses $PORT env var)
+# Copy application code LAST (changes most often)
+COPY . .
+
+# Final setup in ONE layer
+RUN composer dump-autoload --optimize --no-dev \
+    && mkdir -p storage/logs storage/framework/{cache,sessions,views} bootstrap/cache \
+    && chown -R www-data:www-data /var/www/html \
+    && chmod -R 775 storage bootstrap/cache \
+    && rm -rf tests .git .github .env.example *.md
+
 EXPOSE 10000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:10000/api/health || exit 1
+# Faster health check (shorter intervals during startup)
+HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=6 \
+    CMD curl -sf http://localhost:10000/api/health || exit 1
 
-# Start services
 CMD ["/start.sh"]

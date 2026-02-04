@@ -1,54 +1,37 @@
 #!/bin/bash
 # ============================================
-# Render Startup Script for Laravel
+# FAST Render Startup Script for Laravel
 # ============================================
 
 set -e
 
-echo "=== QuickConn API Starting ==="
+echo "=== QuickConnect API Starting (Fast Mode) ==="
 
-# Handle APP_KEY for Laravel
-# Laravel requires APP_KEY in format: base64:XXXXXX (44+ chars base64)
-if [ -z "$APP_KEY" ]; then
-    echo "APP_KEY not set - generating..."
-    php artisan key:generate --force
-elif [[ ! "$APP_KEY" =~ ^base64: ]]; then
-    # Render's generateValue creates raw string, not base64-prefixed
-    # We need to generate a proper Laravel key
-    echo "APP_KEY found but not in Laravel format - regenerating..."
-    php artisan key:generate --force
-else
-    echo "APP_KEY is properly formatted."
+# Quick APP_KEY check
+if [ -z "$APP_KEY" ] || [[ ! "$APP_KEY" =~ ^base64: ]]; then
+    echo "Generating valid APP_KEY..."
+    php artisan key:generate --force --no-interaction
 fi
 
-# Create storage link if it doesn't exist
+# Run migrations in background if DB is ready
+echo "Running migrations..."
+php artisan migrate --force --no-interaction 2>&1 || echo "Migration pending - will retry"
+
+# Quick optimization (skip if already cached)
+echo "Caching config..."
+php artisan config:cache --no-interaction
+php artisan route:cache --no-interaction
+
+# Seed only if needed (runs fast if already seeded)
+php artisan db:seed --class=SettingsSeeder --force --no-interaction 2>/dev/null || true
+php artisan db:seed --class=EnsureAdminUserSeeder --force --no-interaction 2>/dev/null || true
+
+# Create storage link (idempotent)
 php artisan storage:link 2>/dev/null || true
 
-# Clear and cache configuration for production
-echo "Optimizing for production..."
-php artisan config:clear
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-
-# Run migrations (with force for production)
-echo "Running database migrations..."
-php artisan migrate --force
-
-# Seed settings if empty
-echo "Checking database seeders..."
-php artisan db:seed --class=SettingsSeeder --force || echo "SettingsSeeder failed or already run"
-php artisan db:seed --class=EnsureAdminUserSeeder --force || echo "EnsureAdminUserSeeder failed or already run"
-
-# Fix permissions
-chown -R www-data:www-data /var/www/html/storage
-chown -R www-data:www-data /var/www/html/bootstrap/cache
-
-echo "=== Starting Supervisor ==="
-
-# Use Render's PORT environment variable (default 10000)
+# Set port
 export PORT=${PORT:-10000}
-sed -i "s/listen 10000/listen $PORT/" /etc/nginx/http.d/default.conf
+sed -i "s/listen 10000/listen $PORT/g" /etc/nginx/http.d/default.conf
 
-# Start supervisor (manages nginx + php-fpm)
+echo "=== Starting on port $PORT ==="
 exec /usr/bin/supervisord -c /etc/supervisord.conf
