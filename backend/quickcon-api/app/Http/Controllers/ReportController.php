@@ -752,10 +752,11 @@ class ReportController extends Controller
                     'name' => $user->full_name,
                     'schedule' => $record->session?->schedule?->name ?? 'N/A',
                     'time_in' => $record->time_in?->format('H:i'),
-                    'break_time' => $record->break_start?->format('H:i'),
+                    // FIX: Hide break info for pending/absent records to prevent confusion (ghost data)
+                    'break_time' => ($record->status === 'pending' || $record->status === 'absent') ? '-' : ($record->break_start?->format('H:i')),
                     'time_out' => $record->time_out?->format('H:i'),
                     'hours' => $hours,
-                    'status' => $record->status,
+                    'status' => ($record->status === 'pending' && $isPast) ? 'absent' : $record->status,
                     'minutes_late' => $record->minutes_late,
                     'attendance_date' => $record->attendance_date->toDateString(),
                 ];

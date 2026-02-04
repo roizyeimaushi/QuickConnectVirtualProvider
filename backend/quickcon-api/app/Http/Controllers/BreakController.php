@@ -243,32 +243,35 @@ class BreakController extends Controller
         $segmentLimit = ($type === 'Coffee') ? 30 : 60; // Coffee = 30 mins, Meal = 60 mins
 
         // ============================================================
-        // STEP 1: Verify Attendance (Need session for Schedule)
+        // STEP 1: Verify Attendance (Anchor to ACTIVE Session)
         // ============================================================
-        // 1. Check Real Today
+        
+        // Fix: Don't just check "Today" or "Yesterday". Check for an ONGOING shift first.
+        // This ensures if I am working the Feb 4th shift (started 23:00), 
+        // and it is now Feb 5th 02:00, I attach the break to the Feb 4th record.
+        
         $attendance = AttendanceRecord::with(['session.schedule'])
             ->where('user_id', $user->id)
-            ->where('attendance_date', Carbon::today()->toDateString())
+            ->whereNull('time_out') // Active shift only
+            ->whereNotNull('time_in') // Must have started
+            ->whereNotIn('status', ['pending', 'absent', 'excused'])
+            ->orderBy('time_in', 'desc') // Get latest active
             ->first();
 
-        // 2. Check Yesterday
+        // Fallback: If no active shift found (maybe just clocked in?), try strict date matching
         if (!$attendance) {
+             // Try shift date (incorporating the 14:00 boundary logic if needed, or just standard lookups)
              $attendance = AttendanceRecord::with(['session.schedule'])
                  ->where('user_id', $user->id)
-                 ->where('attendance_date', Carbon::yesterday()->toDateString())
+                 ->where('attendance_date', $today)
                  ->first();
-        }
-
-        if (!$attendance) {
-            // Check for pending records
-            $pendingRecord = AttendanceRecord::with(['session.schedule'])
-                ->where('user_id', $user->id)
-                ->where('attendance_date', $today)
-                ->first();
-                
-            if ($pendingRecord) {
-                 $attendance = $pendingRecord;
-            }
+                 
+             if (!$attendance) {
+                 $attendance = AttendanceRecord::with(['session.schedule'])
+                     ->where('user_id', $user->id)
+                     ->where('attendance_date', Carbon::yesterday()->toDateString())
+                     ->first();
+             }
         }
         
         // Auto-create: REMOVED. User must explicitly Time In first.
