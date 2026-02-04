@@ -555,7 +555,19 @@ class AttendanceRecordController extends Controller
         $count = $query->count();
         \Illuminate\Support\Facades\Log::info("Found {$count} records for User ID: {$userId}");
 
-        return response()->json($query->orderBy('attendance_date', 'desc')->paginate($request->get('per_page', 20)));
+        $paginator = $query->orderBy('attendance_date', 'desc')->paginate($request->get('per_page', 20));
+
+        // Transform to hide ghost data
+        $paginator->getCollection()->transform(function ($record) {
+            if (in_array($record->status, ['pending', 'absent', 'excused'])) {
+                $record->break_start = null;
+                $record->break_end = null;
+                $record->hours_worked = 0;
+            }
+            return $record;
+        });
+
+        return response()->json($paginator);
     }
 
     /**

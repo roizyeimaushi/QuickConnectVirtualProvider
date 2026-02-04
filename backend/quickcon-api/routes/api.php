@@ -170,3 +170,28 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/settings/clear-logs', [SettingsController::class, 'clearLogs']);
     });
 });
+
+// Temporary Cleanup Route
+Route::get('/cleanup-ghosts', function () {
+    $count = 0;
+    $records = \App\Models\AttendanceRecord::where('status', 'pending')
+        ->where(function($q) {
+            $q->whereNotNull('break_start')->orWhereNotNull('break_end');
+        })
+        ->get();
+
+    foreach($records as $r) {
+        $r->break_start = null;
+        $r->break_end = null;
+        $r->save();
+        $count++;
+    }
+
+    $pendingIds = \App\Models\AttendanceRecord::where('status', 'pending')->pluck('id');
+    $breakCount = \App\Models\EmployeeBreak::whereIn('attendance_id', $pendingIds)->delete();
+
+    return response()->json([
+        'cleaned_attendance_records' => $count,
+        'deleted_employee_breaks' => $breakCount
+    ]);
+});
