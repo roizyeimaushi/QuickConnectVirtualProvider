@@ -90,10 +90,23 @@ class AttendanceRecordController extends Controller
 
     /**
      * Get today's attendance record for a user.
-     * CRITICAL: Only looks at today's date, never previous days.
+     * CRITICAL: Prioritize ACTIVE REOCRDS to maintain session continuity for night shifts.
      */
     private function getTodayAttendance(int $userId): ?AttendanceRecord
     {
+        // 1. First, check if there is an OPEN record (Time In, No Time Out)
+        // This handles the night shift scenario: checking in yesterday means TODAY's context is effectively yesterday.
+        $activeRecord = AttendanceRecord::where('user_id', $userId)
+            ->whereNull('time_out')
+            ->whereNotIn('status', ['pending', 'absent', 'excused']) // Must be real work
+            ->orderBy('time_in', 'desc')
+            ->first();
+
+        if ($activeRecord) {
+            return $activeRecord;
+        }
+
+        // 2. Fallback: If no active work, use the calculated "Today" date
         return AttendanceRecord::where('user_id', $userId)
             ->where('attendance_date', $this->getToday())
             ->first();
