@@ -244,7 +244,14 @@ function TodayStatusCard({ user, session, record, breakStatus, loading, constrai
                         )}
                     </div>
                     <div className="text-right">
-                        <p className="text-sm opacity-80 font-medium">{formatDate(getCurrentDate(), "EEEE, MMMM do")}</p>
+                        {/* 
+                            Logic: Show the "Shift Date" (Session Date) if available, to align with the user's mental model 
+                            of their work day, especially for overnight shifts. 
+                            If no session/record, default to current date.
+                        */}
+                        <p className="text-sm opacity-80 font-medium">
+                            {formatDate(record?.attendance_date || session?.date || getCurrentDate(), "EEEE, MMMM do")}
+                        </p>
                         <p className="text-3xl font-bold font-mono tracking-wider text-white drop-shadow-sm">
                             {currentTime}
                         </p>
