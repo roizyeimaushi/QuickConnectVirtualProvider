@@ -523,7 +523,13 @@ export default function EmployeeDashboardPage() {
     }, [authLoading, user]);
 
     if (loading) {
-        return null;
+        return (
+            <DashboardLayout title="Employee Dashboard">
+                <div className="flex items-center justify-center h-[50vh]">
+                    {/* Minimal loading state keeping layout visible */}
+                </div>
+            </DashboardLayout>
+        );
     }
 
     return (

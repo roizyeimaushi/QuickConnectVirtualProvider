@@ -349,7 +349,13 @@ export default function AdminDashboard() {
     }, [authLoading, user, isAdmin]);
 
     if (loading) {
-        return null;
+        return (
+            <DashboardLayout title="Admin Dashboard">
+                <div className="flex items-center justify-center h-[50vh]">
+                    {/* Minimal loading state */}
+                </div>
+            </DashboardLayout>
+        );
     }
 
     return (
