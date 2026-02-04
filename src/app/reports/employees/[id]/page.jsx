@@ -102,9 +102,8 @@ export default function EmployeeReportDetailPage() {
     const unknownConfig = { label: "Unknown", variant: "outline", icon: Clock, className: "bg-gray-100 text-gray-800 border-gray-200" };
 
     // Full-page loader for initial load only
-    if (initialLoad) {
-        return null;
-    }
+    // Full-page loader for initial load only
+
 
     if (!data) {
         return (

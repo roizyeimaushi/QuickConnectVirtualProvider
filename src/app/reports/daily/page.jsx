@@ -158,9 +158,8 @@ export default function DailyReportsPage() {
     };
 
     // Full-page loader for initial load only
-    if (initialLoad) {
-        return null;
-    }
+    // Full-page loader for initial load only
+
 
     return (
         <DashboardLayout title="Daily Attendance Report">

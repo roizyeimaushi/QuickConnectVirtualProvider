@@ -60,9 +60,7 @@ export default function AdminProfilePage() {
         init();
     }, [refetchUser]);
 
-    if (authLoading || initialLoading) {
-        return null;
-    }
+
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];

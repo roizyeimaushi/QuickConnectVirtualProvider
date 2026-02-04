@@ -227,9 +227,8 @@ export default function EmployeesPage() {
     // Loading state is now handled by Skeletons in the main return check
 
     // Full-page logo loader for initial load only
-    if (isFirstLoad) {
-        return null;
-    }
+    // Full-page logo loader for initial load only
+
 
     return (
         <DashboardLayout title="Employees">

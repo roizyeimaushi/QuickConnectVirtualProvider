@@ -167,9 +167,7 @@ export default function CreateEmployeePage() {
         }
     };
 
-    if (loadingId) {
-        return null;
-    }
+
 
     return (
         <DashboardLayout title="Create Employee">
