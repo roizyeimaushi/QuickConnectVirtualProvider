@@ -217,31 +217,14 @@ body::-webkit-scrollbar,
   background: transparent !important;
 }
 
-/* Show scrollbar in Select dropdowns */
-[data-radix-select-viewport] {
-  scrollbar-width: thin !important;
-  scrollbar-color: var(--muted) transparent !important;
-  -ms-overflow-style: auto !important;
-}
-
-[data-radix-select-viewport]::-webkit-scrollbar {
-  display: block !important;
-  width: 6px !important;
-  height: 6px !important;
-}
-
-[data-radix-select-viewport]::-webkit-scrollbar-track {
-  background: transparent !important;
-}
-
-[data-radix-select-viewport]::-webkit-scrollbar-thumb {
-  background-color: var(--muted) !important;
-  border-radius: 3px !important;
-}
-
-[data-radix-select-viewport]::-webkit-scrollbar-thumb:hover {
-  background-color: var(--muted-foreground) !important;
-}
+/* Show scrollbar in Select dropdowns - REMOVED per user request
+   [data-radix-select-viewport] {
+     scrollbar-width: thin !important;
+     scrollbar-color: var(--muted) transparent !important;
+     -ms-overflow-style: auto !important;
+   }
+   ... (rest commented out)
+*/
 
 /* Custom scrollbar utilities */
 @layer utilities {

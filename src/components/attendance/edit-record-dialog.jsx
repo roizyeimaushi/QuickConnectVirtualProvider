@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -36,6 +36,20 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
         break_end: record?.break_end ? format(new Date(record.break_end), "yyyy-MM-dd'T'HH:mm") : "",
         reason: "",
     });
+
+    // CRITICAL FIX: Reset form when record changes
+    useEffect(() => {
+        if (record) {
+            setFormData({
+                status: record.status || "present",
+                time_in: record.time_in ? format(new Date(record.time_in), "yyyy-MM-dd'T'HH:mm") : "",
+                time_out: record.time_out ? format(new Date(record.time_out), "yyyy-MM-dd'T'HH:mm") : "",
+                break_start: record.break_start ? format(new Date(record.break_start), "yyyy-MM-dd'T'HH:mm") : "",
+                break_end: record.break_end ? format(new Date(record.break_end), "yyyy-MM-dd'T'HH:mm") : "",
+                reason: "",
+            });
+        }
+    }, [record, open]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();

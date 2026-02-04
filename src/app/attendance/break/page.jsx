@@ -248,7 +248,7 @@ export default function BreakPage() {
                                 <BreakTypeCard
                                     type="Coffee"
                                     label="Coffee Break"
-                                    duration="15 min"
+                                    duration="30 min"
                                     icon={<Coffee className="h-4 w-4" />}
                                     isUsed={breakStatus?.coffee_used}
                                     isActive={isOnBreak && breakStatus?.current_break?.break_type === 'Coffee'}

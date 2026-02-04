@@ -691,7 +691,7 @@ class AttendanceRecordController extends Controller
         if ($activeBreak) {
              $activeBreak->update([
                  'break_end' => $now,
-                 'duration_minutes' => Carbon::parse($activeBreak->break_start)->diffInMinutes($now)
+                 'duration_minutes' => (int) Carbon::parse($activeBreak->break_start)->diffInMinutes($now)
              ]);
              // Sync legacy columns just in case
              $attendanceRecord->break_end = $now;

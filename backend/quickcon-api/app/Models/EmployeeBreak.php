@@ -95,7 +95,8 @@ class EmployeeBreak extends Model
         }
 
         $this->break_end = now();
-        $this->duration_minutes = Carbon::parse($this->break_start)->diffInMinutes($this->break_end);
+        // CRITICAL: Cast to integer to prevent PostgreSQL "invalid input syntax for type integer" error
+        $this->duration_minutes = (int) Carbon::parse($this->break_start)->diffInMinutes($this->break_end);
         $this->save();
     }
 

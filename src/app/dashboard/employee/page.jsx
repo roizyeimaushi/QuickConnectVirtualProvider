@@ -534,7 +534,7 @@ export default function EmployeeDashboardPage() {
 
     return (
         <DashboardLayout title="Employee Dashboard">
-            <div className="space-y-6 content-start">
+            <div className="space-y-6 content-start animate-fade-in">
                 {/* Welcome Section */}
                 <div className="flex flex-col gap-1 mb-2">
                     <h1 className="text-2xl font-bold tracking-tight">

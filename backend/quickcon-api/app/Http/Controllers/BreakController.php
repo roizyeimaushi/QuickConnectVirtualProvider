@@ -47,22 +47,37 @@ class BreakController extends Controller
     public function getStatus(Request $request)
     {
         $user = $request->user();
-        $today = Carbon::today()->toDateString();
         $currentTime = $this->getCurrentTime();
+        
+        // Use consistent shift boundary logic to determine "shift date"
+        $shiftDate = $this->getToday();
+        $calendarToday = Carbon::today()->toDateString();
 
-        // 1. Check Real Today First (Priority for Day Shifts)
+        // 1. First check for attendance using shift date logic (handles midnight shifts)
         $attendance = AttendanceRecord::with(['session.schedule'])
             ->where('user_id', $user->id)
-            ->where('attendance_date', Carbon::today()->toDateString())
+            ->where('attendance_date', $shiftDate)
             ->first();
 
-        // 2. If no record for today, check Yesterday (Night Shift support)
+        // 2. If no record for shift date, check calendar today (for day shifts)
+        if (!$attendance && $shiftDate !== $calendarToday) {
+            $attendance = AttendanceRecord::with(['session.schedule'])
+                ->where('user_id', $user->id)
+                ->where('attendance_date', $calendarToday)
+                ->first();
+        }
+        
+        // 3. Fallback to yesterday if still not found (ongoing overnight shift)
         if (!$attendance) {
              $attendance = AttendanceRecord::with(['session.schedule'])
                  ->where('user_id', $user->id)
                  ->where('attendance_date', Carbon::yesterday()->toDateString())
+                 ->whereNull('time_out') // Only ongoing shifts
                  ->first();
         }
+        
+        // The "today" for breaks should be the attendance date if we found a record
+        $breakDate = $attendance ? $attendance->attendance_date->toDateString() : $shiftDate;
 
         // Note: $todayBreak is defined later after calculating usage (line ~113)
         // This section was redundant and has been cleaned up.
@@ -100,7 +115,7 @@ class BreakController extends Controller
         if ($attendance) {
             $finishedBreaks->where('attendance_id', $attendance->id);
         } else {
-            $finishedBreaks->where('break_date', $today);
+            $finishedBreaks->where('break_date', $breakDate);
         }
             
         $totalUsedMinutes = $finishedBreaks->sum('duration_minutes');
@@ -176,7 +191,7 @@ class BreakController extends Controller
         }
 
         return response()->json([
-            'break_date' => $today,
+            'break_date' => $breakDate,
             'current_time' => $currentTime,
             
             // Break window info
@@ -230,7 +245,7 @@ class BreakController extends Controller
             'type' => 'required|in:Coffee,Meal',
         ]);
         $type = $request->input('type');
-        $segmentLimit = ($type === 'Coffee') ? 15 : 60;
+        $segmentLimit = ($type === 'Coffee') ? 30 : 60; // Coffee = 30 mins, Meal = 60 mins
 
         // ============================================================
         // STEP 1: Verify Attendance (Need session for Schedule)

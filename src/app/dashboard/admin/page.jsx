@@ -360,7 +360,7 @@ export default function AdminDashboard() {
 
     return (
         <DashboardLayout title="Admin Dashboard">
-            <div className="space-y-6">
+            <div className="space-y-6 animate-fade-in">
                 {/* Welcome Section */}
                 <div className="flex flex-col space-y-0">
                     <h1 className="text-3xl font-bold tracking-tight">
