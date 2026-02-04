@@ -7,16 +7,9 @@ const withPWA = require("next-pwa")({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    // turbopack: {},
     // Note: 'standalone' removed for Vercel - only needed for Docker
-    typescript: {
-        // Allow builds to complete in development only
-        ignoreBuildErrors: process.env.NODE_ENV === 'development',
-    },
-    eslint: {
-        // Allow builds in development only
-        ignoreDuringBuilds: process.env.NODE_ENV === 'development',
-    },
+    // Next.js 16+ doesn't support eslint/typescript config here
+    // Use CLI flags instead: next lint --quiet
 };
 
 // module.exports = withPWA(nextConfig);
