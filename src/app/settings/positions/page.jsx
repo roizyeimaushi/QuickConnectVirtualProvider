@@ -9,7 +9,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { API_BASE_URL } from "@/lib/constants";
 import { Plus, Trash2, Save, ArrowLeft, Briefcase, GripVertical } from "lucide-react";
-import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 
 export default function PositionsSettingsPage() {
     const router = useRouter();

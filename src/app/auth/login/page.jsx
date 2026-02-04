@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 
 
 export default function LoginRedirect() {
@@ -14,6 +13,6 @@ export default function LoginRedirect() {
         router.replace(`/auth/employee/login${search}`);
     }, [router]);
 
-    return <FullscreenLoader />;
+    return null;
 }
 

@@ -33,7 +33,6 @@ import {
     ChevronLeft,
     ChevronRight,
 } from "lucide-react";
-import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 
 export default function EmployeeReportDetailPage() {
     const params = useParams();

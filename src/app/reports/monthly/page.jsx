@@ -31,7 +31,6 @@ import {
     Clock,
     CheckCircle2,
 } from "lucide-react";
-import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 
 const months = [
     "January", "February", "March", "April", "May", "June",

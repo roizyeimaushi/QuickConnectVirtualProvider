@@ -19,7 +19,6 @@ import {
     Briefcase,
     ArrowRight
 } from "lucide-react";
-import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 
 export default function EmployeeReportsPage() {
     const { user, loading: authLoading, isAdmin } = useAuth();

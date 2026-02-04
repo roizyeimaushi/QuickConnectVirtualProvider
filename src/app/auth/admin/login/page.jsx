@@ -15,7 +15,6 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Loader2, AlertCircle, User, KeyRound } from "lucide-react";
-import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 
 export default function AdminLoginPage() {
     const [email, setEmail] = useState("");
@@ -97,7 +96,7 @@ export default function AdminLoginPage() {
     };
 
     if (authLoading) {
-        return <FullscreenLoader />;
+        return null;
     }
 
     return (

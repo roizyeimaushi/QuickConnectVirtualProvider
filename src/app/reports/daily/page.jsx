@@ -39,7 +39,6 @@ import {
     ChartTooltip,
     ChartTooltipContent,
 } from "@/components/ui/chart";
-import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 
 
 const statusConfig = {

@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { breakApi, reportsApi } from "@/lib/api";
 import { formatTime24, formatTime12 } from "@/lib/utils";
 import { Timer, Coffee, Play, StopCircle, AlertCircle, Clock, Ban, Loader2, PauseCircle, Calendar, ThumbsUp } from "lucide-react";
-import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 import { useToast } from "@/hooks/use-toast";
 
 export default function BreakPage() {

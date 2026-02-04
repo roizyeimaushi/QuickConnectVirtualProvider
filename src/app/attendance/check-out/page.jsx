@@ -22,7 +22,6 @@ import {
     Shield,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 
 function LiveClockCard() {
     const [time, setTime] = useState(getCurrentTime());

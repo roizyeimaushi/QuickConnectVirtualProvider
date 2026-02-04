@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 import { useAuth } from "@/components/providers/auth-provider";
 import { reportsApi } from "@/lib/api";
 import { formatDate, formatTime24, getCurrentDate } from "@/lib/utils";

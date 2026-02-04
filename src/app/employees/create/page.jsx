@@ -28,7 +28,6 @@ import {
     Eye,
     EyeOff,
 } from "lucide-react";
-import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 
 export default function CreateEmployeePage() {
     const router = useRouter();

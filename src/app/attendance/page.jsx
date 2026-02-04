@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/auth-provider";
-import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 
 export default function AttendancePage() {
     const router = useRouter();

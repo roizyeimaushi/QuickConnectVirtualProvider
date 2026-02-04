@@ -24,7 +24,6 @@ import {
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
-import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 
 export default function AdminProfilePage() {
     const { user, refetchUser, loading: authLoading } = useAuth();

@@ -25,7 +25,6 @@ import {
     Smartphone,
     Globe
 } from "lucide-react";
-import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 
 // Helper to detect device info
 const getDeviceInfo = () => {

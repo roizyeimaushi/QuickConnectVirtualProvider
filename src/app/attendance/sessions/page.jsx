@@ -49,7 +49,6 @@ import {
     Timer,
     Trash2,
 } from "lucide-react";
-import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 
 function SessionsTableSkeleton() {
     return (

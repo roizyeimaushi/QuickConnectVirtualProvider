@@ -40,7 +40,6 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { FullscreenLoader } from "@/components/ui/fullscreen-loader";
 
 function HistorySkeleton() {
     return (
