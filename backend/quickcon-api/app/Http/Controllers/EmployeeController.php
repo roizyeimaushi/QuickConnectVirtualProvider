@@ -212,8 +212,9 @@ class EmployeeController extends Controller
     public function nextEmployeeId()
     {
         // Get the highest employee_id number from the database
+        // Use PostgreSQL-compatible syntax (SUBSTRING returns text, cast to integer)
         $lastEmployee = User::where('employee_id', 'like', 'QCV-%')
-            ->orderByRaw("CAST(SUBSTRING(employee_id, 5) AS UNSIGNED) DESC")
+            ->orderByRaw("CAST(SUBSTRING(employee_id FROM 5) AS INTEGER) DESC")
             ->first();
 
         if ($lastEmployee) {
