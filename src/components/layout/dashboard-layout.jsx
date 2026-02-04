@@ -101,10 +101,7 @@ export function AppSidebar() {
         }
     }, [pathname, hideSidebar]);
 
-    // Don't show anything while loading
-    if (loading) {
-        return null;
-    }
+
 
     return (
         <Sidebar collapsible={hideSidebar ? "offcanvas" : "icon"}>
