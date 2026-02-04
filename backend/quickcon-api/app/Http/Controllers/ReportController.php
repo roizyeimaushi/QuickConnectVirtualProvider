@@ -190,23 +190,38 @@ class ReportController extends Controller
             // If user is actively working, the Dashboard Date IS the Record Date
             $today = $activeRecord->attendance_date->toDateString();
             $todaySession = AttendanceSession::with('schedule')->find($activeRecord->session_id);
-        } elseif (!$todaySession && $today !== $realToday) {
-            // User is not working, and we defaulted to Yesterday.
-            // But if Yesterday has no session, check if Today (Real) has a relevant morning session?
-            
-            $potentialRealSession = AttendanceSession::with('schedule')
-                ->whereDate('date', $realToday)
-                ->whereIn('status', ['active', 'locked'])
-                ->first();
+        } else {
+            // No active work.
+            // Check if we are defaulting to "Yesterday" (today != realToday) but have ALREADY COMPLETED that shift.
+            if ($today !== $realToday) {
+                 $completedYesterday = AttendanceRecord::where('user_id', $user->id)
+                     ->where('attendance_date', $today)
+                     ->whereNotNull('time_out')
+                     ->exists();
+                     
+                 if ($completedYesterday) {
+                     // We finished yesterday's shift. Roll over to REAL TODAY.
+                     $today = $realToday;
+                     $todaySession = AttendanceSession::with('schedule')
+                        ->whereDate('date', $today)
+                        ->whereIn('status', ['active', 'locked'])
+                        ->first();
+                 }
+            }
+
+            if (!$todaySession && $today !== $realToday) {
+                // User is not working, and we defaulted to Yesterday.
+                // But if Yesterday has no session, check if Today (Real) has a relevant morning session?
                 
-            if ($potentialRealSession) {
-                // We found a session for Calendar Today (e.g. 6AM start).
-                // Should we switch? Only if the schedule actually started?
-                // Or if we are past the "Yesterday" shift window?
-                
-                // Simple heuristic: If "Yesterday" has no session, allow "Today" to take over.
-                $today = $realToday;
-                $todaySession = $potentialRealSession;
+                $potentialRealSession = AttendanceSession::with('schedule')
+                    ->whereDate('date', $realToday)
+                    ->whereIn('status', ['active', 'locked'])
+                    ->first();
+                    
+                if ($potentialRealSession) {
+                    $today = $realToday;
+                    $todaySession = $potentialRealSession;
+                }
             }
         }
 
