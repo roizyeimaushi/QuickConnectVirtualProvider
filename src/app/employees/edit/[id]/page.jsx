@@ -27,6 +27,9 @@ import {
     Loader2,
     Save,
     User,
+    Key,
+    Eye,
+    EyeOff,
 } from "lucide-react";
 
 export default function EditEmployeePage() {
@@ -44,7 +47,10 @@ export default function EditEmployeePage() {
         email: "",
         position: "",
         status: "active",
+        password: "",
+        confirmPassword: "",
     });
+    const [showPassword, setShowPassword] = useState(false);
 
     useEffect(() => {
         const fetchEmployee = async () => {
@@ -99,6 +105,16 @@ export default function EditEmployeePage() {
             newErrors.position = "Position is required";
         }
 
+        // Password validation (only if user is trying to change it)
+        if (formData.password) {
+            if (formData.password.length < 6) {
+                newErrors.password = "Password must be at least 6 characters";
+            }
+            if (formData.password !== formData.confirmPassword) {
+                newErrors.confirmPassword = "Passwords do not match";
+            }
+        }
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -113,13 +129,20 @@ export default function EditEmployeePage() {
         setSaving(true);
 
         try {
-            await employeesApi.update(params.id, {
+            const updateData = {
                 first_name: formData.first_name,
                 last_name: formData.last_name,
                 email: formData.email,
                 position: formData.position,
                 status: formData.status,
-            });
+            };
+
+            // Only include password if it's being changed
+            if (formData.password) {
+                updateData.password = formData.password;
+            }
+
+            await employeesApi.update(params.id, updateData);
 
             toast({
                 title: "Employee updated",
@@ -276,6 +299,61 @@ export default function EditEmployeePage() {
                                 {errors.position && (
                                     <p className="text-sm text-destructive">{errors.position}</p>
                                 )}
+                            </div>
+
+                            {/* Password Change Section */}
+                            <div className="rounded-lg border p-4 space-y-4">
+                                <div className="flex items-center gap-2">
+                                    <Key className="h-4 w-4 text-primary" />
+                                    <Label className="text-base font-medium">Change Password</Label>
+                                    <span className="text-xs text-muted-foreground">(Optional)</span>
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                    Leave blank to keep the current password.
+                                </p>
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="password">New Password</Label>
+                                        <div className="relative">
+                                            <Input
+                                                id="password"
+                                                type={showPassword ? "text" : "password"}
+                                                value={formData.password}
+                                                onChange={(e) => handleChange("password", e.target.value)}
+                                                placeholder="Enter new password"
+                                            />
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                            >
+                                                {showPassword ? (
+                                                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                                                ) : (
+                                                    <Eye className="h-4 w-4 text-muted-foreground" />
+                                                )}
+                                            </Button>
+                                        </div>
+                                        {errors.password && (
+                                            <p className="text-sm text-destructive">{errors.password}</p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="confirmPassword">Confirm Password</Label>
+                                        <Input
+                                            id="confirmPassword"
+                                            type={showPassword ? "text" : "password"}
+                                            value={formData.confirmPassword}
+                                            onChange={(e) => handleChange("confirmPassword", e.target.value)}
+                                            placeholder="Confirm new password"
+                                        />
+                                        {errors.confirmPassword && (
+                                            <p className="text-sm text-destructive">{errors.confirmPassword}</p>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Status Toggle */}

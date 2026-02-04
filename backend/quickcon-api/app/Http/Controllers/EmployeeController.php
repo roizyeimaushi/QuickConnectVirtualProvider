@@ -91,9 +91,18 @@ class EmployeeController extends Controller
             'email' => 'email|unique:users,email,' . $employee->id,
             'position' => 'string|max:100',
             'status' => 'in:active,inactive',
+            'password' => 'nullable|string|min:6',
         ]);
 
         $oldValues = $employee->toArray();
+        
+        // Hash password if provided
+        if (!empty($validated['password'])) {
+            $validated['password'] = \Illuminate\Support\Facades\Hash::make($validated['password']);
+        } else {
+            unset($validated['password']);
+        }
+        
         $employee->update($validated);
 
         // Revoke tokens if status changed to inactive (force logout)
