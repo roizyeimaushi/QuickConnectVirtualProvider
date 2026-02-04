@@ -176,9 +176,13 @@ class ReportController extends Controller
         // B. If no active record, use the Session that matches the current time best.
         
         // Check for active record first (Truth Source)
+        // Fix: Exclude 'pending'/'absent' records (they have no time_out but aren't active work)
+        // Fix: Exclude FUTURE records (prevent testing/ghost data from hijacking today)
         $activeRecord = AttendanceRecord::with(['session.schedule'])
             ->where('user_id', $user->id)
             ->whereNull('time_out')
+            ->whereNotIn('status', ['pending', 'absent', 'excused'])
+            ->where('attendance_date', '<=', Carbon::today()) 
             ->latest('time_in')
             ->first();
 
