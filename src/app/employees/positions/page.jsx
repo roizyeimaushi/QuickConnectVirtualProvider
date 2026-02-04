@@ -138,7 +138,7 @@ export default function PositionsPage() {
         try {
             const token = localStorage.getItem("token");
             const response = await fetch(`${API_BASE_URL}/settings`, {
-                method: "PUT",
+                method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
@@ -173,7 +173,7 @@ export default function PositionsPage() {
         <DashboardLayout title="Manage Positions">
             <div className="space-y-6 animate-fade-in">
                 {/* Header */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
                         <Button
                             variant="ghost"
@@ -192,7 +192,11 @@ export default function PositionsPage() {
                             </p>
                         </div>
                     </div>
-                    <Button onClick={handleSave} disabled={isSaving}>
+                    <Button
+                        onClick={handleSave}
+                        disabled={isSaving}
+                        className="w-full sm:w-auto min-w-[150px] transition-none active:scale-100"
+                    >
                         <Save className="h-4 w-4 mr-2" />
                         {isSaving ? "Saving..." : "Save Changes"}
                     </Button>
@@ -207,7 +211,7 @@ export default function PositionsPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex gap-3">
+                        <div className="flex flex-col sm:flex-row gap-3">
                             <div className="flex-1">
                                 <Label htmlFor="newPosition" className="sr-only">
                                     Position Name
