@@ -185,12 +185,12 @@ function SessionInfoCard({ session, loading, isWeekend }) {
             <CardContent className="grid gap-4 sm:grid-cols-2">
                 <div className="bg-muted/50 p-3 rounded-lg">
                     <p className="text-xs text-muted-foreground mb-1">Shift Name</p>
-                    <p className="font-medium text-sm">{session.name}</p>
+                    <p className="font-medium text-sm">{session.schedule?.name || "Standard Shift"}</p>
                 </div>
                 <div className="bg-muted/50 p-3 rounded-lg">
                     <p className="text-xs text-muted-foreground mb-1">Schedule</p>
                     <p className="font-medium text-sm">
-                        {session.start_time} - {session.end_time}
+                        {session.schedule?.time_in ? formatTime24(session.schedule.time_in) : "--:--"} - {session.schedule?.time_out ? formatTime24(session.schedule.time_out) : "--:--"}
                     </p>
                 </div>
             </CardContent>
