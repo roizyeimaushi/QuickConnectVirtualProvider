@@ -55,9 +55,9 @@ if (!$session) {
     echo "  Shift End:   " . $shiftEnd->format('Y-m-d H:i:s') . "\n";
 
     if ($now->lt($shiftStart)) {
-        echo "RESULT: TOO EARLY (Check-in opens at " . $shiftStart->format('h:i A') . ")\n";
+        echo "RESULT: TOO EARLY (Check-in opens at " . $shiftStart->format('H:i') . ")\n";
     } elseif ($now->gt($shiftEnd)) {
-        echo "RESULT: TOO LATE (Check-in closed at " . $shiftEnd->format('h:i A') . ")\n"; // Fix format call
+        echo "RESULT: TOO LATE (Check-in closed at " . $shiftEnd->format('H:i') . ")\n"; // Fix format call
     } else {
         echo "RESULT: ALLOWED\n";
     }

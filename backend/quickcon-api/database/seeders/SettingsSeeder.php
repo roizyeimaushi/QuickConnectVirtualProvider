@@ -48,6 +48,9 @@ class SettingsSeeder extends Seeder
             ['key' => 'min_work_hours', 'value' => '8', 'group' => 'attendance', 'type' => 'integer'],
             ['key' => 'allow_late_checkout', 'value' => '0', 'group' => 'attendance', 'type' => 'boolean'],
             ['key' => 'strict_mode', 'value' => '1', 'group' => 'attendance', 'type' => 'boolean'],
+            // Night Shift Boundary: Before this hour, system considers it previous day's shift
+            // Set to 14 (2PM) for night shifts that end in the morning (e.g., 23:00 - 07:00)
+            ['key' => 'shift_boundary_hour', 'value' => '14', 'group' => 'attendance', 'type' => 'integer'],
 
             // ==========================================
             // Attendance Rules - Break Rules

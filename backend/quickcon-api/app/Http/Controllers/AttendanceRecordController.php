@@ -273,7 +273,7 @@ class AttendanceRecordController extends Controller
         // VALIDATION: Too Early
         if ($now->lt($windowStart)) {
              return response()->json([
-                'message' => 'Check-in opens at ' . $windowStart->format('h:i A'),
+                'message' => 'Check-in opens at ' . $windowStart->format('H:i'),
                 'error_code' => 'TOO_EARLY'
             ], 403);
         }
@@ -281,7 +281,7 @@ class AttendanceRecordController extends Controller
         // VALIDATION: Check-in Closed (Strict 01:30 cutoff)
         if ($now->gt($windowClose)) {
              return response()->json([
-                'message' => 'Check-in closed at ' . $windowClose->format('h:i A'),
+                'message' => 'Check-in closed at ' . $windowClose->format('H:i'),
                 'error_code' => 'TOO_LATE'
             ], 403);
         }
@@ -768,9 +768,10 @@ class AttendanceRecordController extends Controller
         $attendanceRecord->time_out = $now;
         $attendanceRecord->save(); // Save time_out immediately to prevent race conditions
         
-        // Calculate hours worked (subtracting break)
+        // Calculate hours worked (subtracting break) - Fixed for overnight shifts
         $timeIn = Carbon::parse($attendanceRecord->time_in);
-        $grossMinutes = $now->diffInMinutes($timeIn);
+        // Use absolute difference to handle overnight shifts correctly
+        $grossMinutes = abs($now->diffInMinutes($timeIn));
         
         // Calculate Total Break Duration from EmployeeBreak table (Single Source of Truth)
         // This ensures multiple breaks and admin-edited breaks are accounted for.
@@ -780,7 +781,7 @@ class AttendanceRecordController extends Controller
         if ($totalBreakMinutes == 0 && $attendanceRecord->break_start && $attendanceRecord->break_end) {
              $start = Carbon::parse($attendanceRecord->break_start);
              $end = Carbon::parse($attendanceRecord->break_end);
-             $totalBreakMinutes = $end->diffInMinutes($start);
+             $totalBreakMinutes = abs($end->diffInMinutes($start));
         }
 
         $netMinutes = max(0, $grossMinutes - $totalBreakMinutes);
@@ -928,14 +929,14 @@ class AttendanceRecordController extends Controller
 
         if ($now->lt($breakStartDt)) {
             return response()->json([
-                'message' => 'Break time opens at ' . $breakStartDt->format('h:i A'),
+                'message' => 'Break time opens at ' . $breakStartDt->format('H:i'),
                 'error_code' => 'TOO_EARLY'
             ], 403);
         }
 
         if ($now->gte($breakEndDt)) {
             return response()->json([
-                'message' => 'Break check-in closed at ' . $breakEndDt->format('h:i A'),
+                'message' => 'Break check-in closed at ' . $breakEndDt->format('H:i'),
                 'error_code' => 'TOO_LATE'
             ], 403);
         }
@@ -1153,16 +1154,17 @@ class AttendanceRecordController extends Controller
             $changes[] = "break_end to {$request->break_end}";
         }
 
-        // Recalculate hours worked if times changed
+        // Recalculate hours worked if times changed (Fixed for overnight shifts)
         if ($attendanceRecord->time_in && $attendanceRecord->time_out) {
             $timeIn = Carbon::parse($attendanceRecord->time_in);
             $timeOut = Carbon::parse($attendanceRecord->time_out);
-            $diffInMinutes = $timeOut->diffInMinutes($timeIn);
+            // Use absolute difference for overnight shifts
+            $diffInMinutes = abs($timeOut->diffInMinutes($timeIn));
             
             if ($attendanceRecord->break_start && $attendanceRecord->break_end) {
                 $breakStart = Carbon::parse($attendanceRecord->break_start);
                 $breakEnd = Carbon::parse($attendanceRecord->break_end);
-                $breakMinutes = $breakEnd->diffInMinutes($breakStart);
+                $breakMinutes = abs($breakEnd->diffInMinutes($breakStart));
                 $diffInMinutes = max(0, $diffInMinutes - $breakMinutes);
             }
             
@@ -1325,10 +1327,10 @@ class AttendanceRecordController extends Controller
                 
                 if ($now->lt($shiftStart)) {
                     $canCheckIn = false;
-                    $message = 'Check-in opens at ' . $shiftStart->format('h:i A');
+                    $message = 'Check-in opens at ' . $shiftStart->format('H:i');
                 } elseif ($now->gt($shiftEnd)) {
                     $canCheckIn = false;
-                    $message = 'Check-in closed at ' . Carbon::parse($scheduleTimeOut)->format('h:i A');
+                    $message = 'Check-in closed at ' . Carbon::parse($scheduleTimeOut)->format('H:i');
                 }
             }
 

@@ -285,11 +285,14 @@ class ReportController extends Controller
         // STEP 1: Auto-Detect & Create Session (Virtual / Dynamic)
         // ============================================================
         
-        // 1. First, check if there's already an EXISTING session for today or active overnight
-        $todaySession = AttendanceSession::with('schedule')
-            ->whereDate('date', $today)
-            ->whereIn('status', ['active', 'locked'])
-            ->first();
+        // 1. Only lookup session if we don't already have one from the active record check above
+        // CRITICAL FIX: Preserve $todaySession from active overnight record (line 192)
+        if (!$todaySession) {
+            $todaySession = AttendanceSession::with('schedule')
+                ->whereDate('date', $today)
+                ->whereIn('status', ['active', 'locked'])
+                ->first();
+        }
 
         // Check Overnight from Yesterday
         // IMPORTANT: Skip this if yesterday was a weekend (no work on Sat/Sun)
@@ -424,11 +427,13 @@ class ReportController extends Controller
                 ->first();
         }
         
-        // Priority 2: Any active record (fallback)
+        // Priority 2: Any active record (fallback) - must be actual work, not pending/absent
         if (!$todayRecord) {
              $todayRecord = AttendanceRecord::with(['session.schedule'])
                 ->where('user_id', $user->id)
                 ->whereNull('time_out')
+                ->whereNotIn('status', ['pending', 'absent', 'excused']) // Exclude non-work records
+                ->whereNotNull('time_in') // Must have actually timed in
                 ->latest('time_in')
                 ->first();
         }
@@ -731,15 +736,21 @@ class ReportController extends Controller
             $record = $user->attendanceRecords->first(); // Get record for this date
             
             if ($record) {
-                // Calculate hours worked (Reuse valid logic)
+                // Calculate hours worked (Fixed for overnight shifts)
                 $hours = null;
                 if ($record->time_in && $record->time_out) {
-                    $totalMinutes = $record->time_in->diffInMinutes($record->time_out);
-                    // Subtract break time
+                    // Use absolute difference to handle overnight shifts correctly
+                    $totalMinutes = abs($record->time_in->diffInMinutes($record->time_out));
+                    
+                    // Subtract break time (also use absolute)
                     if ($record->break_start && $record->break_end) {
-                        $breakMinutes = $record->break_start->diffInMinutes($record->break_end);
+                        $breakMinutes = abs($record->break_start->diffInMinutes($record->break_end));
                         $totalMinutes -= $breakMinutes;
                     }
+                    
+                    // Ensure non-negative
+                    $totalMinutes = max(0, $totalMinutes);
+                    
                     $hrs = floor($totalMinutes / 60);
                     $mins = $totalMinutes % 60;
                     $hours = sprintf('%d:%02d', $hrs, $mins);

@@ -495,7 +495,7 @@ class BreakController extends Controller
         $endTime = $maxEndTime->lt($windowEndTime) ? $maxEndTime : $windowEndTime;
         
         $break->break_end = $endTime;
-        $break->duration_minutes = $breakStart->diffInMinutes($endTime);
+        $break->duration_minutes = abs($breakStart->diffInMinutes($endTime));
         $break->save();
 
         // Also update the legacy break fields in attendance_records
@@ -595,7 +595,7 @@ class BreakController extends Controller
         $employeeBreak->break_type = $request->input('break_type');
         
         if ($end) {
-            $employeeBreak->duration_minutes = $start->diffInMinutes($end);
+            $employeeBreak->duration_minutes = abs($start->diffInMinutes($end));
         } else {
             $employeeBreak->duration_minutes = 0;
         }

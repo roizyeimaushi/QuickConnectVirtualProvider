@@ -327,7 +327,15 @@ export function NotificationsPopover() {
         if (!dateStr) return "";
         try {
             const date = new Date(dateStr);
-            return date.toLocaleString();
+            // Use 24-hour format for consistent display
+            return date.toLocaleString([], {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
         } catch (e) {
             return dateStr;
         }

@@ -60,7 +60,7 @@ export function ConnectionStatus({ className }) {
         if (diff < 5) return 'Just now';
         if (diff < 60) return `${diff}s ago`;
         if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-        return date.toLocaleTimeString();
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
     };
 
     return (

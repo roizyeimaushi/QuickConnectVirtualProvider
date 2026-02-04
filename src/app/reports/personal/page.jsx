@@ -184,19 +184,19 @@ export default function PersonalReportPage() {
                                                 <div className="bg-muted/50 rounded p-2 text-center">
                                                     <p className="text-xs text-muted-foreground">Time In</p>
                                                     <p className="font-mono font-medium">
-                                                        {record.time_in ? new Date(record.time_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                                                        {record.time_in ? new Date(record.time_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
                                                     </p>
                                                 </div>
                                                 <div className="bg-muted/50 rounded p-2 text-center">
                                                     <p className="text-xs text-muted-foreground">Break</p>
                                                     <p className="font-mono font-medium">
-                                                        {record.break_start ? new Date(record.break_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                                                        {record.break_start ? new Date(record.break_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
                                                     </p>
                                                 </div>
                                                 <div className="bg-muted/50 rounded p-2 text-center">
                                                     <p className="text-xs text-muted-foreground">Time Out</p>
                                                     <p className="font-mono font-medium">
-                                                        {record.time_out ? new Date(record.time_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                                                        {record.time_out ? new Date(record.time_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
                                                     </p>
                                                 </div>
                                             </div>
@@ -242,13 +242,13 @@ export default function PersonalReportPage() {
                                                     </TableCell>
                                                     <TableCell>{record.session?.schedule?.name || 'N/A'}</TableCell>
                                                     <TableCell className="text-center">
-                                                        {record.time_in ? new Date(record.time_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                                                        {record.time_in ? new Date(record.time_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
                                                     </TableCell>
                                                     <TableCell className="text-center">
-                                                        {record.break_start ? new Date(record.break_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                                                        {record.break_start ? new Date(record.break_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
                                                     </TableCell>
                                                     <TableCell className="text-center">
-                                                        {record.time_out ? new Date(record.time_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                                                        {record.time_out ? new Date(record.time_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
                                                     </TableCell>
                                                     <TableCell className="text-center">
                                                         {record.minutes_late > 0 ? <span className="text-red-500 font-bold">{record.minutes_late}</span> : 0}
