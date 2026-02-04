@@ -106,7 +106,7 @@ class AttendanceSessionController extends Controller
     {
         $attendanceSession->load(['schedule', 'creator', 'records.user' => function ($query) {
             $query->withTrashed();
-        }]);
+        }, 'records.breaks']);
 
         // Fetch all active employees to ensure everyone is listed
         $allEmployees = \App\Models\User::where('role', 'employee')

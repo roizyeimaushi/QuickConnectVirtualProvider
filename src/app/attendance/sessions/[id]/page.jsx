@@ -457,21 +457,55 @@ export default function SessionDetailsPage() {
                                                     <TableCell className="text-center font-mono">
                                                         {formatTime24(record.time_in) || '--:--'}
                                                     </TableCell>
-                                                    <TableCell className="text-center font-mono">
-                                                        {record.break_start ? (
-                                                            <div className="flex flex-col items-center text-xs">
-                                                                <span className="text-amber-600">
-                                                                    {formatTime24(record.break_start)}
-                                                                </span>
-                                                                {record.break_end && (
-                                                                    <span className="text-emerald-600">
-                                                                        {formatTime24(record.break_end)}
+                                                    <TableCell className="text-center">
+                                                        {(() => {
+                                                            // Helper to calculate total minutes
+                                                            const hasBreaks = record.breaks && record.breaks.length > 0;
+                                                            let totalMinutes = 0;
+                                                            let isOnBreak = false;
+
+                                                            if (hasBreaks) {
+                                                                record.breaks.forEach(b => {
+                                                                    if (b.duration_minutes) {
+                                                                        totalMinutes += b.duration_minutes;
+                                                                    } else if (!b.break_end && b.break_start) {
+                                                                        isOnBreak = true;
+                                                                        // Estimate current duration roughly or just flagging
+                                                                        const start = new Date(b.break_start);
+                                                                        const now = new Date();
+                                                                        const diff = Math.floor((now - start) / 60000);
+                                                                        totalMinutes += diff;
+                                                                    }
+                                                                });
+                                                            } else if (record.break_start) {
+                                                                // Legacy fallback
+                                                                const start = new Date(record.break_start);
+                                                                const end = record.break_end ? new Date(record.break_end) : new Date();
+                                                                if (!record.break_end) isOnBreak = true;
+                                                                totalMinutes = Math.floor((end - start) / 60000);
+                                                            }
+
+                                                            if (totalMinutes === 0 && !isOnBreak && !record.break_start) return <span className="text-muted-foreground">-</span>;
+
+                                                            return (
+                                                                <div className="flex flex-col items-center justify-center">
+                                                                    {isOnBreak ? (
+                                                                        <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200 mb-1 text-[10px] px-1 py-0 h-5">
+                                                                            On Break
+                                                                        </Badge>
+                                                                    ) : null}
+                                                                    <span className={`font-mono text-xs ${isOnBreak ? 'font-bold text-amber-700' : ''}`}>
+                                                                        {totalMinutes > 0 ? `${totalMinutes}m` : '0m'}
                                                                     </span>
-                                                                )}
-                                                            </div>
-                                                        ) : (
-                                                            <span className="text-muted-foreground">-</span>
-                                                        )}
+                                                                    {/* Show latest break times if available for context */}
+                                                                    {record.break_start && !hasBreaks && (
+                                                                        <span className="text-[10px] text-muted-foreground mt-0.5">
+                                                                            {formatTime24(record.break_start)} - {record.break_end ? formatTime24(record.break_end) : '...'}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })()}
                                                     </TableCell>
                                                     <TableCell className="text-center font-mono">
                                                         {record.time_out ? (
