@@ -81,6 +81,7 @@ export default function SessionDetailsPage() {
 
     // Delete Dialog State
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [virtualRecordDialogOpen, setVirtualRecordDialogOpen] = useState(false);
     const [recordToDelete, setRecordToDelete] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
@@ -135,6 +136,12 @@ export default function SessionDetailsPage() {
 
     const handleDeleteRecord = (record) => {
         setRecordToDelete(record);
+
+        if (typeof record.id === 'string' && record.id.startsWith('virtual_')) {
+            setVirtualRecordDialogOpen(true);
+            return;
+        }
+
         setDeleteDialogOpen(true);
     };
 
@@ -374,7 +381,6 @@ export default function SessionDetailsPage() {
                                                             <DropdownMenuSeparator />
                                                             <DropdownMenuItem className="text-red-600 focus:text-red-600"
                                                                 onClick={() => handleDeleteRecord(record)}
-                                                                disabled={typeof record.id === 'string' && record.id.startsWith('virtual_')}
                                                             >
                                                                 <Trash2 className="mr-2 h-4 w-4" /> Delete
                                                             </DropdownMenuItem>
@@ -520,10 +526,9 @@ export default function SessionDetailsPage() {
                                                                 variant="ghost"
                                                                 size="icon"
                                                                 onClick={() => handleDeleteRecord(record)}
-                                                                disabled={typeof record.id === 'string' && record.id.startsWith('virtual_')}
-                                                                title={typeof record.id === 'string' && record.id.startsWith('virtual_') ? "Cannot delete virtual record" : "Delete record"}
+                                                                title="Delete record"
                                                             >
-                                                                <Trash2 className={`h-4 w-4 ${typeof record.id === 'string' && record.id.startsWith('virtual_') ? 'text-gray-300' : 'text-muted-foreground hover:text-destructive'}`} />
+                                                                <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
                                                             </Button>
                                                         </div>
                                                     </TableCell>
@@ -581,6 +586,29 @@ export default function SessionDetailsPage() {
                             ) : (
                                 "Delete"
                             )}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Virtual Record Info Dialog */}
+            <AlertDialog open={virtualRecordDialogOpen} onOpenChange={setVirtualRecordDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Cannot Delete Pending Record</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This is a placeholder for an active employee who hasn't checked in yet.
+                            <br /><br />
+                            This employee (<strong>{recordToDelete?.user?.first_name} {recordToDelete?.user?.last_name}</strong>) is currently listed as "Active" in the system.
+                            To remove them from this list, you must <strong>deactivate</strong> or <strong>delete</strong> their account in the Employees section.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Close</AlertDialogCancel>
+                        <AlertDialogAction asChild>
+                            <Link href="/employees">
+                                Go to Employees
+                            </Link>
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
