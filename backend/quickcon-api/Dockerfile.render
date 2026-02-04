@@ -25,7 +25,8 @@ COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-scripts --no-interaction --prefer-dist \
     && rm -rf ~/.composer/cache
 
-# Configure PHP-FPM to use Unix socket (Render optimization)
+# Ensure run directory exists for socket
+RUN mkdir -p /var/run
 RUN echo "[www]" > /usr/local/etc/php-fpm.d/zzz-render.conf \
     && echo "listen = /var/run/php-fpm.sock" >> /usr/local/etc/php-fpm.d/zzz-render.conf \
     && echo "listen.owner = www-data" >> /usr/local/etc/php-fpm.d/zzz-render.conf \
