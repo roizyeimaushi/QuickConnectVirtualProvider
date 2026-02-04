@@ -25,6 +25,13 @@ COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-scripts --no-interaction --prefer-dist \
     && rm -rf ~/.composer/cache
 
+# Configure PHP-FPM to use Unix socket (Render optimization)
+RUN echo "[www]" > /usr/local/etc/php-fpm.d/zzz-render.conf \
+    && echo "listen = /var/run/php-fpm.sock" >> /usr/local/etc/php-fpm.d/zzz-render.conf \
+    && echo "listen.owner = www-data" >> /usr/local/etc/php-fpm.d/zzz-render.conf \
+    && echo "listen.group = www-data" >> /usr/local/etc/php-fpm.d/zzz-render.conf \
+    && echo "listen.mode = 0666" >> /usr/local/etc/php-fpm.d/zzz-render.conf
+
 # Copy config files BEFORE app code (they change less often)
 COPY docker/nginx.render.conf /etc/nginx/http.d/default.conf
 COPY docker/supervisord.render.conf /etc/supervisord.conf
