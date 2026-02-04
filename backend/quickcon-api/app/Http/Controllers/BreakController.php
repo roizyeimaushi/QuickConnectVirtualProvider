@@ -373,16 +373,11 @@ class BreakController extends Controller
     {
         try {
             $user = $request->user();
-            $today = $this->getToday();
-            $now = Carbon::now();
+            
+            // Log attempt
+            Log::info("Break end attempt for user: {$user->id}");
 
-            Log::info("Break end attempt", [
-                'user_id' => $user->id,
-                'date' => $today,
-            ]);
-
-            // Find active break (could be today or part of overnight shift)
-            // First try finding any active break for this user
+            // 1. Find active break
             $break = EmployeeBreak::where('user_id', $user->id)
                 ->whereNull('break_end')
                 ->orderBy('created_at', 'desc')
@@ -395,32 +390,31 @@ class BreakController extends Controller
                 ], 400);
             }
 
-            if (!$break->isActive()) {
-                return response()->json([
-                    'message' => 'Break has already ended.',
-                    'error_code' => 'BREAK_ALREADY_ENDED'
-                ], 400);
+            // 2. End the break (Model method)
+            try {
+                $break->endBreak();
+            } catch (\Exception $e) {
+                Log::error("Failed to call break->endBreak(): " . $e->getMessage());
+                throw $e;
             }
 
-            // End the break
-            $break->endBreak();
-
-            // Also update the legacy break fields in attendance_records for compatibility
+            // 3. Update Legacy Attendance Record
             try {
                 $attendance = $break->attendance;
                 if ($attendance) {
                     $attendance->update([
-                        'break_end' => $now,
+                        'break_end' => $break->break_end,
                     ]);
                 }
             } catch (\Exception $e) {
                  Log::warning("Legacy attendance update failed in endBreak: " . $e->getMessage());
             }
 
+            // 4. Audit Log
             try {
                 AuditLog::log(
                     'break_end',
-                    "{$user->first_name} {$user->last_name} ended break ({$break->duration_minutes} minutes)",
+                    "{$user->first_name} {$user->last_name} ended break",
                     AuditLog::STATUS_SUCCESS,
                     $user->id,
                     'EmployeeBreak',
@@ -430,25 +424,18 @@ class BreakController extends Controller
                 Log::warning("Audit log failed in endBreak: " . $e->getMessage());
             }
 
-            Log::info("Break ended successfully", [
-                'user_id' => $user->id,
-                'break_id' => $break->id,
-                'duration' => $break->duration_minutes,
-            ]);
-
             return response()->json([
                 'message' => 'Break ended successfully.',
                 'break' => $break,
                 'duration_minutes' => $break->duration_minutes,
             ]);
-        } catch (\Exception $e) {
-            Log::error("Critical 500 in endBreak: " . $e->getMessage(), [
-                'exception' => $e,
-                'user_id' => $request->user()?->id,
-                'trace' => $e->getTraceAsString(),
-            ]);
+
+        } catch (\Throwable $e) {
+            // Catch ALL errors including TypeErrors
+            Log::error("Critical 500 in endBreak: " . $e->getMessage());
+            
             return response()->json([
-                 'message' => 'System error ending break. Please try again.',
+                 'message' => 'System error ending break: ' . $e->getMessage(),
                  'error_code' => 'SYSTEM_ERROR',
             ], 500);
         }
