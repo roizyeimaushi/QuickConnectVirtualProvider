@@ -644,6 +644,7 @@ class AttendanceRecordController extends Controller
     {
         $today = $this->getToday();
         $user = $request->user();
+        $now = Carbon::now(); // CRITICAL: Define $now early as it's used throughout
 
         // Verify ownership
         if ($attendanceRecord->user_id !== $user->id && $user->role !== 'admin') {

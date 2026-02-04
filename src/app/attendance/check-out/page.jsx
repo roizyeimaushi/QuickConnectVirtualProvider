@@ -125,63 +125,77 @@ function CheckOutConfirmationCard({ recordId, canCheckOut, onCheckOut, checkingO
         );
     }
 
+    // Not timed in case - redirect to Time In
+    if (!recordId && !checkOutMessage) {
+        return (
+            <Card className="border-dashed">
+                <CardContent className="flex flex-col items-center justify-center py-10 text-center">
+                    <div className="p-4 rounded-full bg-blue-100 dark:bg-blue-900/20 mb-4">
+                        <Clock className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <h3 className="text-lg font-medium">No Active Check-in</h3>
+                    <p className="text-sm text-muted-foreground mb-4">You haven't checked in today yet.</p>
+                    <Button onClick={onGoToTimeIn}>
+                        Go to Time In
+                    </Button>
+                </CardContent>
+            </Card>
+        );
+    }
+
+    // Ready to Time Out - Fingerprint Style Button (matches Time In design)
     return (
-        <Card className="border-[#7C3AED]/20 shadow-lg">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <LogOut className="h-5 w-5 text-[#7C3AED]" />
-                    Confirm Time Out
-                </CardTitle>
-                <CardDescription>
-                    Ready to end your shift?
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+        <Card className="shadow-lg border-[#7C3AED]/20 overflow-hidden">
+            <CardContent className="flex flex-col items-center justify-center py-10 px-6 text-center">
                 {!canCheckOut && checkOutMessage && (
-                    <div className="bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 p-4 rounded-lg flex items-start gap-3">
+                    <div className="bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 p-4 rounded-lg flex items-start gap-3 mb-6 w-full max-w-md">
                         <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
-                        <div>
+                        <div className="text-left">
                             <p className="font-medium">Cannot Time Out</p>
                             <p className="text-sm opacity-90">{checkOutMessage}</p>
                         </div>
                     </div>
                 )}
 
-                {!recordId && !checkOutMessage && (
-                    <div className="bg-blue-50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300 p-4 rounded-lg flex items-start gap-3">
-                        <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
-                        <div>
-                            <p className="font-medium">No Active Check-in</p>
-                            <p className="text-sm opacity-90">You haven't checked in today yet.</p>
-                        </div>
-                    </div>
-                )}
-
-                <div className="flex flex-col gap-3">
-                    <Button
-                        size="lg"
-                        className="w-full text-lg h-14 bg-[#7C3AED] hover:bg-[#6D28D9] shadow-md shadow-purple-200 dark:shadow-none transition-all"
-                        onClick={onCheckOut}
-                        disabled={!canCheckOut || checkingOut}
-                    >
-                        {checkingOut ? (
-                            <>
-                                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                Processing...
-                            </>
-                        ) : (
-                            <>
-                                <LogOut className="mr-2 h-5 w-5" />
-                                Time Out Now
-                            </>
-                        )}
-                    </Button>
-                    {!canCheckOut && (
-                        <Button variant="outline" onClick={onGoToTimeIn} className="w-full">
-                            Check Time In Status
-                        </Button>
+                {/* Fingerprint Button - Purple Theme for Time Out */}
+                <button
+                    onClick={onCheckOut}
+                    disabled={!canCheckOut || checkingOut}
+                    className={`
+                        relative w-40 h-40 rounded-full 
+                        bg-gradient-to-br from-[#7C3AED] via-[#7C3AED]/90 to-[#6D28D9]
+                        flex items-center justify-center
+                        transition-all duration-300 ease-in-out
+                        shadow-lg shadow-purple-300/50 dark:shadow-purple-900/30
+                        ${canCheckOut && !checkingOut
+                            ? 'hover:scale-105 hover:shadow-xl hover:shadow-purple-400/50 active:scale-95 cursor-pointer'
+                            : 'opacity-50 cursor-not-allowed'}
+                        focus:outline-none focus:ring-4 focus:ring-purple-300/50
+                    `}
+                >
+                    {checkingOut ? (
+                        <Loader2 className="h-16 w-16 text-white animate-spin" />
+                    ) : (
+                        <Fingerprint className="h-20 w-20 text-white" />
                     )}
-                </div>
+                </button>
+
+                <p className="text-lg font-semibold mt-6 text-foreground">
+                    {checkingOut ? 'Recording...' : 'Tap to Time Out'}
+                </p>
+                <p className="text-xs text-muted-foreground mt-2 max-w-xs">
+                    Your departure time will be recorded and your shift will be completed.
+                </p>
+
+                {!canCheckOut && (
+                    <Button
+                        variant="outline"
+                        onClick={onGoToTimeIn}
+                        className="mt-6 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-300 dark:hover:bg-purple-950/30"
+                    >
+                        Check Time In Status
+                    </Button>
+                )}
             </CardContent>
         </Card>
     );

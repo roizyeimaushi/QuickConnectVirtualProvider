@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Cookies from "js-cookie";
 import { authApi } from "@/lib/api";
 import { USER_ROLES, ROUTES } from "@/lib/constants";
+import { startKeepAlive, stopKeepAlive } from "@/lib/keep-alive";
 
 const AuthContext = createContext(null);
 
@@ -116,6 +117,9 @@ export function AuthProvider({ children }) {
     useEffect(() => {
         if (!user || DEMO_MODE) return;
 
+        // Start keep-alive to prevent Render.com cold starts
+        startKeepAlive();
+
         const intervalId = setInterval(() => {
             authApi.heartbeat().catch(err => {
                 if (err?.status === 401 || err?.message === 'Unauthorized' || err?.status === 0) return;
@@ -124,7 +128,10 @@ export function AuthProvider({ children }) {
             });
         }, 60000); // 60 seconds
 
-        return () => clearInterval(intervalId);
+        return () => {
+            clearInterval(intervalId);
+            stopKeepAlive();
+        };
     }, [user]);
 
     const login = async (credentials) => {

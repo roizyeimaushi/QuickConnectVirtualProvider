@@ -376,7 +376,7 @@ export default function AttendanceHistoryPage() {
                                                 )}
 
                                                 {/* Time & Schedule Info */}
-                                                <div className="grid grid-cols-3 gap-2 text-sm">
+                                                <div className="grid grid-cols-2 gap-2 text-sm">
                                                     <div className="bg-muted/50 rounded p-2 text-center">
                                                         <p className="text-xs text-muted-foreground">Time In</p>
                                                         <p className="font-mono font-medium">{formatTime24(record.time_in) || '--:--'}</p>
@@ -385,10 +385,19 @@ export default function AttendanceHistoryPage() {
                                                         <p className="text-xs text-muted-foreground">Time Out</p>
                                                         <p className="font-mono font-medium">{formatTime24(record.time_out) || '--:--'}</p>
                                                     </div>
-                                                    <div className="bg-muted/50 rounded p-2 text-center">
-                                                        <p className="text-xs text-muted-foreground">Schedule</p>
-                                                        <p className="font-medium text-xs truncate">{record.schedule}</p>
+                                                    <div className="bg-amber-50 dark:bg-amber-900/20 rounded p-2 text-center">
+                                                        <p className="text-xs text-amber-600 dark:text-amber-400">Break In</p>
+                                                        <p className="font-mono font-medium text-amber-700 dark:text-amber-300">{formatTime24(record.break_start) || '--:--'}</p>
                                                     </div>
+                                                    <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded p-2 text-center">
+                                                        <p className="text-xs text-emerald-600 dark:text-emerald-400">Break Out</p>
+                                                        <p className="font-mono font-medium text-emerald-700 dark:text-emerald-300">{formatTime24(record.break_end) || '--:--'}</p>
+                                                    </div>
+                                                </div>
+                                                {/* Schedule Info */}
+                                                <div className="bg-muted/50 rounded p-2 text-center">
+                                                    <p className="text-xs text-muted-foreground">Schedule</p>
+                                                    <p className="font-medium text-xs truncate">{record.schedule}</p>
                                                 </div>
 
                                                 {/* Actions (admin only) */}
