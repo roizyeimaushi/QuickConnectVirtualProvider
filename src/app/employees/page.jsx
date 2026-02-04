@@ -250,47 +250,51 @@ export default function EmployeesPage() {
                 </div>
 
                 {/* Stats Cards */}
-                <div className="grid gap-4 md:grid-cols-3">
-                    <Card>
-                        <CardContent className="flex items-center gap-4 p-6">
-                            <div className="p-3 rounded-lg bg-primary/10">
-                                <Users className="h-6 w-6 text-primary" />
-                            </div>
-                            <div>
-                                <p className="text-2xl font-bold">{employees.length}</p>
-                                <p className="text-sm text-muted-foreground">Total Employees</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardContent className="flex items-center gap-4 p-6">
-                            <div className="p-3 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
-                                <UserCheck className="h-6 w-6 text-emerald-600" />
-                            </div>
-                            <div>
-                                <p className="text-2xl font-bold">
-                                    {employees.filter((e) => e.status === "active").length}
-                                </p>
-                                <p className="text-sm text-muted-foreground">Active</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Link href="/employees/deactivated">
-                        <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+                {loading ? (
+                    <StatsCardsSkeleton />
+                ) : (
+                    <div className="grid gap-4 md:grid-cols-3">
+                        <Card>
                             <CardContent className="flex items-center gap-4 p-6">
-                                <div className="p-3 rounded-lg bg-amber-100 dark:bg-amber-900/30">
-                                    <UserX className="h-6 w-6 text-amber-600" />
+                                <div className="p-3 rounded-lg bg-primary/10">
+                                    <Users className="h-6 w-6 text-primary" />
                                 </div>
                                 <div>
-                                    <p className="text-2xl font-bold">
-                                        {employees.filter((e) => e.status === "inactive").length}
-                                    </p>
-                                    <p className="text-sm text-muted-foreground">Inactive</p>
+                                    <p className="text-2xl font-bold">{employees.length}</p>
+                                    <p className="text-sm text-muted-foreground">Total Employees</p>
                                 </div>
                             </CardContent>
                         </Card>
-                    </Link>
-                </div>
+                        <Card>
+                            <CardContent className="flex items-center gap-4 p-6">
+                                <div className="p-3 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                                    <UserCheck className="h-6 w-6 text-emerald-600" />
+                                </div>
+                                <div>
+                                    <p className="text-2xl font-bold">
+                                        {employees.filter((e) => e.status === "active").length}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">Active</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                        <Link href="/employees/deactivated">
+                            <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+                                <CardContent className="flex items-center gap-4 p-6">
+                                    <div className="p-3 rounded-lg bg-amber-100 dark:bg-amber-900/30">
+                                        <UserX className="h-6 w-6 text-amber-600" />
+                                    </div>
+                                    <div>
+                                        <p className="text-2xl font-bold">
+                                            {employees.filter((e) => e.status === "inactive").length}
+                                        </p>
+                                        <p className="text-sm text-muted-foreground">Inactive</p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </Link>
+                    </div>
+                )}
 
                 {/* Table Card */}
                 <Card>
@@ -314,7 +318,9 @@ export default function EmployeesPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        {employees.length === 0 ? (
+                        {loading ? (
+                            <EmployeeTableSkeleton />
+                        ) : employees.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-12 text-center">
                                 <Users className="h-12 w-12 text-muted-foreground mb-4" />
                                 <h3 className="text-lg font-semibold">No employees found</h3>
