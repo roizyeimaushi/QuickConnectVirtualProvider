@@ -6,6 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { API_BASE_URL } from "@/lib/constants";
 import { Plus, Trash2, Save, ArrowLeft, Briefcase, GripVertical } from "lucide-react";
@@ -17,6 +27,8 @@ export default function PositionsSettingsPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [positions, setPositions] = useState([]);
     const [newPosition, setNewPosition] = useState("");
+    const [deleteIndex, setDeleteIndex] = useState(null);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
     // Fetch current positions from settings
     useEffect(() => {
@@ -31,17 +43,14 @@ export default function PositionsSettingsPage() {
 
                 if (response.ok) {
                     const settings = await response.json();
-                    // Parse positions from settings (stored as JSON string)
                     if (settings.positions) {
                         try {
                             const parsed = JSON.parse(settings.positions);
                             setPositions(Array.isArray(parsed) ? parsed : []);
                         } catch {
-                            // If not valid JSON, treat as comma-separated
                             setPositions(settings.positions.split(",").map(p => p.trim()).filter(Boolean));
                         }
                     } else {
-                        // Default positions if none exist
                         setPositions([
                             "Sales Agent",
                             "Team Lead",
@@ -89,18 +98,29 @@ export default function PositionsSettingsPage() {
         setPositions([...positions, trimmed]);
         setNewPosition("");
         toast({
-            title: "Added",
-            description: `"${trimmed}" added. Don't forget to save!`,
+            title: "Position Added",
+            description: `"${trimmed}" has been added successfully. Don't forget to save!`,
+            variant: "success",
         });
     };
 
-    const handleRemovePosition = (index) => {
-        const removed = positions[index];
-        setPositions(positions.filter((_, i) => i !== index));
-        toast({
-            title: "Removed",
-            description: `"${removed}" removed. Don't forget to save!`,
-        });
+    const handleDeleteClick = (index) => {
+        setDeleteIndex(index);
+        setShowDeleteDialog(true);
+    };
+
+    const handleConfirmDelete = () => {
+        if (deleteIndex !== null) {
+            const removed = positions[deleteIndex];
+            setPositions(positions.filter((_, i) => i !== deleteIndex));
+            toast({
+                title: "Position Removed",
+                description: `"${removed}" has been removed. Don't forget to save!`,
+                variant: "success",
+            });
+        }
+        setShowDeleteDialog(false);
+        setDeleteIndex(null);
     };
 
     const handleSave = async () => {
@@ -129,8 +149,9 @@ export default function PositionsSettingsPage() {
 
             if (response.ok) {
                 toast({
-                    title: "Success",
-                    description: "Positions saved successfully",
+                    title: "Saved Successfully",
+                    description: "All positions have been saved",
+                    variant: "success",
                 });
             } else {
                 throw new Error("Failed to save");
@@ -152,7 +173,7 @@ export default function PositionsSettingsPage() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 animate-fade-in">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -244,7 +265,7 @@ export default function PositionsSettingsPage() {
                                         variant="ghost"
                                         size="icon"
                                         className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
-                                        onClick={() => handleRemovePosition(index)}
+                                        onClick={() => handleDeleteClick(index)}
                                     >
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
@@ -262,6 +283,28 @@ export default function PositionsSettingsPage() {
                     You can still update their position to a new one when editing their profile.
                 </p>
             </div>
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Position</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to delete "{deleteIndex !== null ? positions[deleteIndex] : ''}"?
+                            This action cannot be undone after saving.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleConfirmDelete}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
