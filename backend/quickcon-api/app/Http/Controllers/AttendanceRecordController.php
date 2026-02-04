@@ -186,7 +186,9 @@ class AttendanceRecordController extends Controller
         }
         
         $user = $request->user();
-        $today = $this->getToday();
+        // DATE LOGIC FIX: Always anchor to the Session Date, never "today" dynamic calculation.
+        // This ensures that if I clock in at 4AM Feb 5th for the Feb 4th session, the record says "Feb 4th".
+        $sessionDate = $session->date->toDateString();
         $now = Carbon::now();
 
         // ============================================================
@@ -204,7 +206,7 @@ class AttendanceRecordController extends Controller
         // ============================================================
         if ($preventDuplicate) {
             $recentConfirm = AttendanceRecord::where('user_id', $user->id)
-                ->where('attendance_date', $today)
+                ->where('attendance_date', $sessionDate)
                 ->where('confirmed_at', '>=', $now->copy()->subSeconds(30))
                 ->exists();
             
@@ -217,23 +219,14 @@ class AttendanceRecordController extends Controller
         }
 
         // ============================================================
-        // RULE 0.6: Time-in Window (Official Rule)
-        // ============================================================
-        // Check-in Window: Opens 18:00, Closes 01:00 (auto-absent), Unavailable 01:30
-        // Shift Start: 23:00 (Official Time-in)
-        // Grace Period: 15 minutes (23:00 - 23:15 = on-time)
-        // Late: After 23:15
-        // Shift End: 07:00 (next day)
-        // Weekend: No work Saturday morning (Friday night ends Sat 07:00) and Sunday
-        
-        // ============================================================
         // RULE 0.6: Time-in Window (Dynamic based on Schedule)
         // ============================================================
-        $baseDate = Carbon::parse($today);
+        // Use Session Date as the anchor
+        $baseDate = Carbon::parse($sessionDate);
         
         // Get Schedule Start Time from the Session (or default to 23:00 if missing)
         $scheduleTimeIn = $session->schedule ? $session->schedule->time_in : '23:00:00';
-        $shiftStart = Carbon::parse($today . ' ' . $scheduleTimeIn);
+        $shiftStart = Carbon::parse($sessionDate . ' ' . $scheduleTimeIn);
         
         // Define Windows Relative to Shift Start
         // Mimic legacy logic: 23:00 Start -> 18:00 Open (-5h), 01:30 Close (+2.5h)
@@ -243,22 +236,9 @@ class AttendanceRecordController extends Controller
         // Grace Period
         $gracePeriodEnd = $shiftStart->copy()->addMinutes($globalGracePeriod);
         
-        // Shift End (Usually +8/9 hours, but we rely on schedule time_out)
-        // This variable was unused in logic but useful for context
-        // $shiftEnd = ...
-        
         // ============================================================
         // WEEKEND CHECK: No work Saturday morning & Sunday
         // ============================================================
-        // Night shift runs Mon-Fri nights only:
-        // - Monday 23:00 -> Tuesday 07:00
-        // - Tuesday 23:00 -> Wednesday 07:00
-        // - Wednesday 23:00 -> Thursday 07:00
-        // - Thursday 23:00 -> Friday 07:00
-        // - Friday 23:00 -> Saturday 07:00 (LAST SHIFT)
-        // - Saturday night: NO WORK (would end Sunday)
-        // - Sunday night: NO WORK (would end Monday, but let admins decide to open)
-        
         $dayOfWeek = $baseDate->dayOfWeek; // 0 = Sunday, 6 = Saturday
         
         // If today is Saturday (6) - no shift, as it would end Sunday
@@ -304,7 +284,7 @@ class AttendanceRecordController extends Controller
         // If not found by session, fall back to Date check (legacy / fail-safe)
         if (!$latestRecord) {
             $latestRecord = AttendanceRecord::where('user_id', $user->id)
-                ->where('attendance_date', $today)
+                ->where('attendance_date', $sessionDate)
                 ->orderBy('created_at', 'desc')
                 ->first();
         }
@@ -387,6 +367,7 @@ class AttendanceRecordController extends Controller
                     'location_city' => $request->input('location_city'),
                     'location_country' => $request->input('location_country'),
                     'confirmed_at' => $now,
+                    'attendance_date' => $sessionDate, // FORCE DATE TO MATCH SESSION
                 ]);
                 $record = $latestRecord->fresh();
             }
@@ -414,6 +395,7 @@ class AttendanceRecordController extends Controller
                     'location_city' => $request->input('location_city'),
                     'location_country' => $request->input('location_country'),
                     'confirmed_at' => $now,
+                    'attendance_date' => $sessionDate, // FORCE DATE TO MATCH SESSION
                 ]);
                 $record = $latestRecord->fresh();
             }
@@ -442,6 +424,7 @@ class AttendanceRecordController extends Controller
                     'location_city' => $request->input('location_city'),
                     'location_country' => $request->input('location_country'),
                     'confirmed_at' => $now,
+                    'attendance_date' => $sessionDate, // FORCE DATE TO MATCH SESSION
                 ]);
                 $record = $latestRecord->fresh();
             }
@@ -451,7 +434,7 @@ class AttendanceRecordController extends Controller
                 $record = AttendanceRecord::create([
                     'session_id' => $sessionId,
                     'user_id' => $user->id,
-                    'attendance_date' => $today,
+                    'attendance_date' => $sessionDate, // FORCE DATE TO MATCH SESSION
                     'time_in' => $now,
                     'status' => $status,
                     'minutes_late' => (int) $minutesLate,
@@ -788,7 +771,9 @@ class AttendanceRecordController extends Controller
         if ($allowOvertime && $attendanceRecord->session && $attendanceRecord->session->schedule) {
             $schedule = $attendanceRecord->session->schedule;
             // Determine Shift End (handle overnight)
+            // Fix: Use the RECORD's attendance_date, not "today", because shift might have started yesterday
             $dateStr = $attendanceRecord->attendance_date->format('Y-m-d');
+            
             $shiftStart = Carbon::parse($dateStr . ' ' . $schedule->time_in);
             $shiftEnd = Carbon::parse($dateStr . ' ' . $schedule->time_out);
             
