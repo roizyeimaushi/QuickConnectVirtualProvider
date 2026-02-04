@@ -168,8 +168,6 @@ export default function BreakPage() {
         }
     };
 
-
-
     const handleEndBreak = async () => {
         setSubmittingType('End');
         try {
@@ -202,10 +200,6 @@ export default function BreakPage() {
     const hasCheckedIn = breakStatus?.has_checked_in;
     const hasCheckedOut = breakStatus?.has_checked_out;
     const breakMessage = breakStatus?.break_message;
-
-    if (loading) {
-        return null;
-    }
 
     return (
         <DashboardLayout title="Break Time">

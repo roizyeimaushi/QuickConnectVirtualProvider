@@ -83,17 +83,6 @@ export default function PersonalReportPage() {
         }
     };
 
-    if (loading) {
-        return (
-            <DashboardLayout title="My Report">
-                <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in">
-                    <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                    <p className="mt-4 text-muted-foreground animate-pulse">Loading usage report...</p>
-                </div>
-            </DashboardLayout>
-        );
-    }
-
     const { employee, summary, history } = data || {};
 
     return (

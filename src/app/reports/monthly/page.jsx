@@ -73,10 +73,6 @@ export default function MonthlyReportsPage() {
         ? Math.round(report.summary.reduce((acc, emp) => acc + emp.attendance_rate, 0) / report.summary.length)
         : 0;
 
-    if (loading) {
-        return null;
-    }
-
     return (
         <DashboardLayout title="Monthly Summary Report">
             <div className="space-y-6 animate-fade-in">

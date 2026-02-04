@@ -66,7 +66,6 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-
 function SessionDetailsSkeleton() {
     return (
         <div className="space-y-6">
@@ -262,10 +261,6 @@ export default function SessionDetailsPage() {
             icon: AlertCircle,
         }
     };
-
-    if (loading) {
-        return null;
-    }
 
     if (!session) {
         return (

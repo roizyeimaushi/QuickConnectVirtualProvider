@@ -95,10 +95,6 @@ export default function AdminLoginPage() {
         }
     };
 
-    if (authLoading) {
-        return null;
-    }
-
     return (
         <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden">
             {/* Background Image */}

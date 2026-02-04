@@ -196,10 +196,6 @@ export default function EditEmployeePage() {
         }
     };
 
-    if (loading) {
-        return null;
-    }
-
     return (
         <DashboardLayout title="Edit Employee">
             <div className="max-w-2xl mx-auto space-y-6 animate-fade-in">

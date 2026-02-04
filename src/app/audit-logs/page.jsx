@@ -329,13 +329,10 @@ export default function AuditLogsPage() {
     if (authLoading || (loading && isFirstLoad)) {
         return (
             <DashboardLayout title="Audit Logs">
-                <div className="flex items-center justify-center h-[60vh]">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                </div>
+                null
             </DashboardLayout>
         );
     }
-
 
     return (
         <DashboardLayout title="Audit Logs">
@@ -793,7 +790,6 @@ export default function AuditLogsPage() {
                                         </div>
                                     </div>
                                 )}
-
 
                             </div>
                         )}

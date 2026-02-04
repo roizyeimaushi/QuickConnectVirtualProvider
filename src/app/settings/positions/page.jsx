@@ -168,10 +168,6 @@ export default function PositionsSettingsPage() {
         }
     };
 
-    if (isLoading) {
-        return null;
-    }
-
     return (
         <div className="space-y-6 animate-fade-in">
             {/* Header */}

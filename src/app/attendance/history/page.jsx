@@ -254,12 +254,6 @@ export default function AttendanceHistoryPage() {
         left_early: Timer,
     };
 
-
-
-    if (loading) {
-        return null;
-    }
-
     return (
         <DashboardLayout title="Attendance History">
             <div className="space-y-6 animate-fade-in">

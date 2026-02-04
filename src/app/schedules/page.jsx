@@ -216,10 +216,6 @@ export default function SchedulesPage() {
         }
     };
 
-    if (loading) {
-        return null;
-    }
-
     return (
         <DashboardLayout title="Schedules">
             <div className="space-y-6 animate-fade-in">
@@ -464,7 +460,6 @@ export default function SchedulesPage() {
                         )}
                     </CardContent>
                 </Card>
-
 
                 {/* Pagination Controls */}
                 {totalPages > 1 && (

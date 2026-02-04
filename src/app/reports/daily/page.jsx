@@ -40,7 +40,6 @@ import {
     ChartTooltipContent,
 } from "@/components/ui/chart";
 
-
 const statusConfig = {
     present: {
         label: "Present",
@@ -157,8 +156,6 @@ export default function DailyReportsPage() {
             color: statusConfig.pending.color,
         },
     };
-
-
 
     // Full-page loader for initial load only
     if (initialLoad) {

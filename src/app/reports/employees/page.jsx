@@ -69,10 +69,6 @@ export default function EmployeeReportsPage() {
             (emp.position && emp.position.toLowerCase().includes(query));
     });
 
-    if (loading) {
-        return null;
-    }
-
     return (
         <DashboardLayout title="Employee Reports">
             <div className="space-y-6 animate-fade-in">

@@ -82,17 +82,12 @@ export default function AttendanceSettingsPage() {
         }
     }, [settings, loading]);
 
-
-
     // Local loader while preparing form data
     if (loading || !isReady) {
         return (
-            <div className="flex items-center justify-center h-[60vh]">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            </div>
+            null
         );
     }
-
 
     const handleTabChange = (value) => {
         router.push(`/settings/attendance?tab=${value}`);

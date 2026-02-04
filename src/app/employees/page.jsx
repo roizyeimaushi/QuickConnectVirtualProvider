@@ -117,7 +117,6 @@ export default function EmployeesPage() {
         return () => clearTimeout(handler);
     }, [searchQuery]);
 
-
     const fetchEmployees = async (search = "", isPolling = false) => {
         if (!isPolling) setLoading(true);
         try {
@@ -226,7 +225,6 @@ export default function EmployeesPage() {
     };
 
     // Loading state is now handled by Skeletons in the main return check
-
 
     // Full-page logo loader for initial load only
     if (isFirstLoad) {
@@ -524,7 +522,6 @@ export default function EmployeesPage() {
                         )}
                     </CardContent>
                 </Card>
-
 
                 {/* Pagination Controls */}
                 {totalPages > 1 && (

@@ -120,9 +120,7 @@ export default function DataManagementPage() {
 
     if (loading || !isReady) {
         return (
-            <div className="flex items-center justify-center h-[60vh]">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            </div>
+            null
         );
     }
 
@@ -238,7 +236,6 @@ export default function DataManagementPage() {
                     </div>
                 </CardContent>
             </Card>
-
 
             <AlertDialog open={clearDialogOpen} onOpenChange={setClearDialogOpen}>
                 <AlertDialogContent>

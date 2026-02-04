@@ -209,12 +209,6 @@ export default function BreakHistoryPage() {
         return () => clearInterval(timer);
     }, []);
 
-
-
-    if (loading) {
-        return null;
-    }
-
     return (
         <DashboardLayout title="Break History">
             <div className="space-y-6 animate-fade-in">

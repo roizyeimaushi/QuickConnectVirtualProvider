@@ -98,10 +98,6 @@ export default function EmployeeLoginPage() {
         }
     };
 
-    if (authLoading) {
-        return null;
-    }
-
     return (
         <>
             {/* Error Modal */}

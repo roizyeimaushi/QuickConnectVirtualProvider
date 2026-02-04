@@ -197,10 +197,6 @@ export default function DeactivatedEmployeesPage() {
         }
     };
 
-    if (loading) {
-        return null;
-    }
-
     return (
         <DashboardLayout title="Deactivated Employees">
             <div className="space-y-6 animate-fade-in">
@@ -448,7 +444,6 @@ export default function DeactivatedEmployeesPage() {
                         )}
                     </CardContent>
                 </Card>
-
 
                 {/* Pagination Controls */}
                 {totalPages > 1 && (

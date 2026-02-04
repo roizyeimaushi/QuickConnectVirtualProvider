@@ -243,9 +243,7 @@ export default function PositionsPage() {
                     </CardHeader>
                     <CardContent>
                         {isLoading ? (
-                            <div className="text-center py-8 text-muted-foreground">
-                                Loading positions...
-                            </div>
+                            null
                         ) : positions.length === 0 ? (
                             <div className="text-center py-8 text-muted-foreground">
                                 <Briefcase className="h-12 w-12 mx-auto mb-3 opacity-30" />

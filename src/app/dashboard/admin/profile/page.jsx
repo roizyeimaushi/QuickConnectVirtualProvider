@@ -134,8 +134,6 @@ export default function AdminProfilePage() {
         }
     };
 
-
-
     return (
         <DashboardLayout title="Profile">
             <div className="max-w-2xl mx-auto space-y-6 animate-fade-in">

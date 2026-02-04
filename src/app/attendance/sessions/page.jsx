@@ -270,11 +270,6 @@ export default function AttendanceSessionsPage() {
 
     const activeSession = sessions.find((s) => s.status === "active");
 
-    if (loading) {
-        return null;
-    }
-
-
     return (
         <DashboardLayout title="Attendance Sessions">
             <div className="space-y-6 animate-fade-in">
