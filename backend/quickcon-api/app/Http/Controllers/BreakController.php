@@ -88,8 +88,8 @@ class BreakController extends Controller
         $maxMinutes = (int)(\App\Models\Setting::where('key', 'break_duration')->value('value') ?? 60);
 
         // Ensure 24-hour format logic for comparison if needed, but for display we send raw or formatted
-        $startFormatted = Carbon::parse($startTime)->format('h:i A');
-        $endFormatted = Carbon::parse($endTime)->format('h:i A');
+        $startFormatted = Carbon::parse($startTime)->format('H:i');
+        $endFormatted = Carbon::parse($endTime)->format('H:i');
         
         $isWithinBreakWindow = true; // Default to open, but check times:
         if ($startTime !== '00:00:00' || $endTime !== '23:59:59') {

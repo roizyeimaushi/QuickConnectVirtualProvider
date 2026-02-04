@@ -44,18 +44,18 @@ class BreakRule extends Model
     }
 
     /**
-     * Get formatted start time (12-hour format).
+     * Get formatted start time (24-hour format).
      */
     public function getFormattedStartTimeAttribute(): string
     {
-        return \Carbon\Carbon::parse($this->start_time)->format('g:i A');
+        return \Carbon\Carbon::parse($this->start_time)->format('H:i');
     }
 
     /**
-     * Get formatted end time (12-hour format).
+     * Get formatted end time (24-hour format).
      */
     public function getFormattedEndTimeAttribute(): string
     {
-        return \Carbon\Carbon::parse($this->end_time)->format('g:i A');
+        return \Carbon\Carbon::parse($this->end_time)->format('H:i');
     }
 }
