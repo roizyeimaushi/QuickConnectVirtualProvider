@@ -7,11 +7,30 @@ set -e
 
 echo "=== QuickConnect API Starting (Fast Mode) ==="
 
-# Quick APP_KEY check
+# Quick APP_KEY check and FIX
+# We must export the new key to override the bad env var from Render
 if [ -z "$APP_KEY" ] || [[ ! "$APP_KEY" =~ ^base64: ]]; then
-    echo "Generating valid APP_KEY..."
-    php artisan key:generate --force --no-interaction
+    echo "Detected invalid/missing APP_KEY. Regenerating..."
+    # Generate new key and grab it
+    NEW_KEY="base64:$(php -r 'echo base64_encode(random_bytes(32));')"
+    
+    # Export to current shell so php artisan config:cache sees it
+    export APP_KEY="$NEW_KEY"
+    
+    # Also write to .env so other independent calls might see it
+    if grep -q "APP_KEY=" .env; then
+        sed -i "s|^APP_KEY=.*|APP_KEY=$NEW_KEY|" .env
+    else
+        echo "APP_KEY=$NEW_KEY" >> .env
+    fi
+    echo "APP_KEY passed to environment."
 fi
+
+# Debug Database Connection (Non-sensitive info)
+echo "Checking DB config..."
+echo "DB_HOST: ${DB_HOST:-not_set}"
+echo "DB_PORT: ${DB_PORT:-not_set}"
+echo "DB_DATABASE: ${DB_DATABASE:-not_set}"
 
 # Run migrations in background if DB is ready
 echo "Running migrations..."
