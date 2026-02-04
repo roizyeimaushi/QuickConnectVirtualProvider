@@ -127,7 +127,7 @@ export default function DataManagementPage() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 animate-fade-in">
             <div className="space-y-0">
                 <h3 className="text-lg font-medium">Data Management</h3>
                 <p className="text-sm text-muted-foreground">

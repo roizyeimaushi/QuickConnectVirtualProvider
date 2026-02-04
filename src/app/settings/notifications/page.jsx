@@ -48,7 +48,7 @@ export default function NotificationsSettingsPage() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 animate-fade-in">
             <div>
                 <h3 className="text-lg font-medium">Notifications</h3>
                 <p className="text-sm text-muted-foreground">
