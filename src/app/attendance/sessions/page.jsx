@@ -195,6 +195,11 @@ export default function AttendanceSessionsPage() {
             color: "bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-400 border-slate-200",
             icon: Lock,
         },
+        pending: {
+            label: "Pending",
+            color: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400 border-gray-200",
+            icon: AlertCircle,
+        },
     };
 
     const activeSession = sessions.find((s) => s.status === "active");
