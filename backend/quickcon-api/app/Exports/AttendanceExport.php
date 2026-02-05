@@ -127,7 +127,24 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Sho
 
         $row[] = ucfirst($record->status);
         $row[] = $record->minutes_late;
-        $row[] = $record->hours_worked;
+
+        // FIXED HOURS ON THE FLY (Excel)
+        $hoursWorked = $record->hours_worked;
+        if ($record->time_in && $record->time_out && !in_array($record->status, ['pending', 'absent'])) {
+            $totalMinutes = $record->time_in->diffInMinutes($record->time_out, false);
+            if ($totalMinutes < 0) $totalMinutes += 1440;
+            
+            $breakMinutes = $record->breaks()->sum('duration_minutes');
+            if ($breakMinutes == 0 && $record->break_start && $record->break_end) {
+                $bDiff = $record->break_start->diffInMinutes($record->break_end, false);
+                $breakMinutes = $bDiff < 0 ? $bDiff + 1440 : $bDiff;
+            }
+            
+            $netMinutes = max(0, $totalMinutes - $breakMinutes);
+            $hoursWorked = round($netMinutes / 60, 2);
+        }
+
+        $row[] = $hoursWorked;
 
         return $row;
     }
