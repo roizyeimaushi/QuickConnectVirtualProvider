@@ -12,7 +12,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { employeesApi } from "@/lib/api";
 import { useAuth } from "@/components/providers/auth-provider";
 import { getInitials } from "@/lib/utils";
-import { getInitials } from "@/lib/utils";
 import {
     Search,
     Download,
