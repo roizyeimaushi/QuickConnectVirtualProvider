@@ -95,9 +95,8 @@ class EmployeeBreak extends Model
         }
 
         $this->break_end = now();
-        // CRITICAL: Cast to integer to prevent PostgreSQL "invalid input syntax for type integer" error
-        // Use abs() for overnight shifts
-        $this->duration_minutes = (int) abs(Carbon::parse($this->break_start)->diffInMinutes($this->break_end));
+        $diff = Carbon::parse($this->break_start)->diffInMinutes($this->break_end, false);
+        $this->duration_minutes = (int) ($diff < 0 ? $diff + 1440 : $diff);
         $this->save();
     }
 

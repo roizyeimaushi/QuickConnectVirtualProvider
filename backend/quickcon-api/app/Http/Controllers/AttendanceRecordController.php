@@ -987,8 +987,9 @@ class AttendanceRecordController extends Controller
 
         // Check if break limit reached
         $maxBreaks = (int) (Setting::where('key', 'max_breaks')->value('value') ?: 1);
+        $shiftDate = $attendanceRecord->attendance_date->toDateString();
         $todaysBreaksCount = \App\Models\EmployeeBreak::where('user_id', $user->id)
-            ->where('break_date', $today)
+            ->where('break_date', $shiftDate)
             ->count();
 
         if ($todaysBreaksCount >= $maxBreaks) {
@@ -1014,7 +1015,7 @@ class AttendanceRecordController extends Controller
         \App\Models\EmployeeBreak::create([
             'attendance_id' => $attendanceRecord->id,
             'user_id' => $user->id,
-            'break_date' => $today,
+            'break_date' => $attendanceRecord->attendance_date,
             'break_start' => $now,
         ]);
 
@@ -1070,7 +1071,7 @@ class AttendanceRecordController extends Controller
 
         // Also update entry in new breaks table
         $breakRecord = \App\Models\EmployeeBreak::where('attendance_id', $attendanceRecord->id)
-            ->where('break_date', $today)
+            ->where('break_date', $attendanceRecord->attendance_date)
             ->whereNull('break_end')
             ->first();
 
