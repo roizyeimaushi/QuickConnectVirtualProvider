@@ -122,7 +122,7 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-md w-full">
+            <DialogContent className="max-w-md w-full max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Edit Attendance Record</DialogTitle>
                     <DialogDescription>

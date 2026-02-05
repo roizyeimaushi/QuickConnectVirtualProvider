@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Clock } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, ChevronDown } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -12,19 +12,13 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 
 export function DateTimePicker({ value, onChange, placeholder = "Pick a date" }) {
     const [date, setDate] = React.useState(value ? new Date(value) : undefined);
     const [time, setTime] = React.useState(
         value ? format(new Date(value), "HH:mm") : "00:00"
     );
+    const [showTimePicker, setShowTimePicker] = React.useState(false);
 
     // Sync internal state with external value prop
     React.useEffect(() => {
@@ -94,87 +88,77 @@ export function DateTimePicker({ value, onChange, placeholder = "Pick a date" })
                         !date && "text-muted-foreground"
                     )}
                 >
-                    <span className="flex items-center">
-                        <CalendarIcon className="mr-2 h-4 w-4" />
+                    <span className="flex items-center truncate">
+                        <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
                         {date ? (
-                            <span>
-                                {format(date, "yyyy-MM-dd")} <span className="text-muted-foreground">at</span> {format(date, "HH:mm")}
+                            <span className="truncate">
+                                {format(date, "MMM d")} <span className="text-muted-foreground">@</span> {time}
                             </span>
                         ) : (
                             <span>{placeholder}</span>
                         )}
                     </span>
-                    {/* Consistent Chevron Down Style */}
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="h-4 w-4 opacity-50"
-                    >
-                        <path d="m6 9 6 6 6-6" />
-                    </svg>
+                    <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
                 </Button>
             </PopoverTrigger>
             <PopoverContent
-                className="w-auto p-0 max-h-[80vh] overflow-auto"
+                className="w-auto p-0"
                 align="start"
                 sideOffset={4}
+                side="bottom"
             >
-                <div className="flex flex-col md:flex-row">
+                <div className="flex flex-col">
+                    {/* Compact Calendar - Fixed size */}
                     <Calendar
                         mode="single"
                         selected={date}
                         onSelect={handleDateSelect}
                         initialFocus
-                        className="border-b md:border-b-0 md:border-r border-border"
+                        className="border-b border-border p-2"
                     />
-                    <div className="p-3 flex flex-col gap-2 min-w-[120px]">
-                        <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm font-medium">Time (24h)</span>
-                        </div>
-                        <div className="flex flex-row gap-2 items-end">
-                            <div className="flex flex-col gap-1">
-                                <span className="text-[10px] text-muted-foreground uppercase text-center">Hour</span>
-                                <Select
-                                    value={time.split(':')[0]}
-                                    onValueChange={(val) => handleTimeChange('hour', val)}
-                                >
-                                    <SelectTrigger className="w-[60px] h-9">
-                                        <SelectValue placeholder="Hr" />
-                                    </SelectTrigger>
-                                    <SelectContent position="popper" className="max-h-[200px]">
-                                        {hours24.map((h) => (
-                                            <SelectItem key={h} value={h.toString()}>
-                                                {h.toString().padStart(2, '0')}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+
+                    {/* Time Picker - Inline scrollable */}
+                    <div className="p-3 border-t border-border bg-muted/30">
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-2">
+                                <Clock className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-sm font-medium">Time (24h)</span>
                             </div>
-                            <div className="flex flex-col gap-1">
-                                <span className="text-[10px] text-muted-foreground uppercase text-center">Min</span>
-                                <Select
-                                    value={parseInt(time.split(':')[1]).toString()}
-                                    onValueChange={(val) => handleTimeChange('minute', val)}
-                                >
-                                    <SelectTrigger className="w-[60px] h-9">
-                                        <SelectValue placeholder="Min" />
-                                    </SelectTrigger>
-                                    <SelectContent position="popper" className="max-h-[200px]">
-                                        {minutes.map((m) => (
-                                            <SelectItem key={m} value={m.toString()}>
-                                                {m.toString().padStart(2, '0')}
-                                            </SelectItem>
+
+                            <div className="flex items-center gap-1">
+                                {/* Hour Dropdown */}
+                                <div className="relative">
+                                    <select
+                                        value={time.split(':')[0]}
+                                        onChange={(e) => handleTimeChange('hour', e.target.value)}
+                                        className="appearance-none bg-background border border-input rounded-md px-3 py-1.5 pr-8 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
+                                    >
+                                        {hours24.map((h) => (
+                                            <option key={h} value={h.toString().padStart(2, '0')}>
+                                                {h.toString().padStart(2, '0')}
+                                            </option>
                                         ))}
-                                    </SelectContent>
-                                </Select>
+                                    </select>
+                                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 opacity-50 pointer-events-none" />
+                                </div>
+
+                                <span className="text-lg font-bold text-muted-foreground">:</span>
+
+                                {/* Minute Dropdown */}
+                                <div className="relative">
+                                    <select
+                                        value={time.split(':')[1]}
+                                        onChange={(e) => handleTimeChange('minute', e.target.value)}
+                                        className="appearance-none bg-background border border-input rounded-md px-3 py-1.5 pr-8 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
+                                    >
+                                        {minutes.map((m) => (
+                                            <option key={m} value={m.toString().padStart(2, '0')}>
+                                                {m.toString().padStart(2, '0')}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 opacity-50 pointer-events-none" />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -183,3 +167,4 @@ export function DateTimePicker({ value, onChange, placeholder = "Pick a date" })
         </Popover>
     );
 }
+
