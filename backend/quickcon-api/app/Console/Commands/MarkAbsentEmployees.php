@@ -34,12 +34,14 @@ class MarkAbsentEmployees extends Command
         $now = Carbon::now();
         
         // ============================================================
-        // WEEKEND CHECK: No absent marking on Saturday/Sunday
+        // WEEKEND CHECK: Based on 'weekend_checkin' setting
         // ============================================================
         $dayOfWeek = Carbon::today()->dayOfWeek;
-        if ($dayOfWeek === Carbon::SATURDAY || $dayOfWeek === Carbon::SUNDAY) {
+        $allowWeekend = filter_var(\App\Models\Setting::where('key', 'weekend_checkin')->value('value'), FILTER_VALIDATE_BOOLEAN);
+        
+        if (!$allowWeekend && ($dayOfWeek === Carbon::SATURDAY || $dayOfWeek === Carbon::SUNDAY)) {
             $dayName = $dayOfWeek === Carbon::SATURDAY ? 'Saturday' : 'Sunday';
-            $this->info("Today is {$dayName}. No work scheduled, skipping absent marking.");
+            $this->info("Today is {$dayName}. 'weekend_checkin' is disabled. Skipping absent marking.");
             return 0;
         }
         

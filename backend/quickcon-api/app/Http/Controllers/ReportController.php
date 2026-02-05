@@ -1092,4 +1092,27 @@ class ReportController extends Controller
             'total_processed' => $records->count()
         ]);
     }
+
+    /**
+     * Utility to enable weekend shifts (7 days a week)
+     */
+    public function enableWeekendShifts()
+    {
+        $setting = \App\Models\Setting::where('key', 'weekend_checkin')->first();
+        if ($setting) {
+            $setting->update(['value' => '1']);
+        } else {
+            \App\Models\Setting::create([
+                'key' => 'weekend_checkin',
+                'value' => '1',
+                'group' => 'attendance',
+                'type' => 'boolean'
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Weekend sessions and shifts have been enabled (7 days a week).',
+            'weekend_checkin' => '1'
+        ]);
+    }
 }

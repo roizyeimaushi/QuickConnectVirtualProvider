@@ -44,21 +44,14 @@ class ResetDailyAttendanceSession extends Command
         $today = Carbon::today();
         
         // ============================================================
-        // WEEKEND CHECK: No sessions on Saturday and Sunday
+        // WEEKEND CHECK: Based on 'weekend_checkin' setting
         // ============================================================
-        // Night shift runs Mon-Fri only:
-        // - Session created at 17:30 runs that night (e.g., Mon 17:30 -> Mon 23:00 shift)
-        // - Saturday: Skip (would be Saturday night shift ending Sunday)
-        // - Sunday: Skip (would be Sunday night shift ending Monday)
         $dayOfWeek = $today->dayOfWeek;
+        $allowWeekend = filter_var(\App\Models\Setting::where('key', 'weekend_checkin')->value('value'), FILTER_VALIDATE_BOOLEAN);
         
-        if ($dayOfWeek === Carbon::SATURDAY) {
-            $this->info('Today is Saturday. No shift scheduled for Saturday nights. Skipping session creation.');
-            return 0;
-        }
-        
-        if ($dayOfWeek === Carbon::SUNDAY) {
-            $this->info('Today is Sunday. No shift scheduled for Sunday nights. Skipping session creation.');
+        if (!$allowWeekend && ($dayOfWeek === Carbon::SATURDAY || $dayOfWeek === Carbon::SUNDAY)) {
+            $dayName = $dayOfWeek === Carbon::SATURDAY ? 'Saturday' : 'Sunday';
+            $this->info("Today is {$dayName}. 'weekend_checkin' is disabled. Skipping session creation.");
             return 0;
         }
         

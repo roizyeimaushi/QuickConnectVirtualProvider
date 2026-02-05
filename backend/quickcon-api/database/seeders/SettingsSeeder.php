@@ -38,7 +38,7 @@ class SettingsSeeder extends Seeder
             // ==========================================
             ['key' => 'checkin_start', 'value' => '18:00', 'group' => 'attendance', 'type' => 'string'],
             ['key' => 'checkin_end', 'value' => '01:30', 'group' => 'attendance', 'type' => 'string'],
-            ['key' => 'weekend_checkin', 'value' => '0', 'group' => 'attendance', 'type' => 'boolean'],
+            ['key' => 'weekend_checkin', 'value' => '1', 'group' => 'attendance', 'type' => 'boolean'],
             ['key' => 'holiday_checkin', 'value' => '1', 'group' => 'attendance', 'type' => 'boolean'],
 
             // Core attendance time settings
