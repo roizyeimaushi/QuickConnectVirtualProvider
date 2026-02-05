@@ -220,15 +220,18 @@ export default function DailyReportsPage() {
                                     const allRecords = paginator?.data ? paginator.data : (Array.isArray(response.records) ? response.records : []);
                                     const rows = (Array.isArray(allRecords) ? allRecords : []).filter(r => r && typeof r === 'object');
 
-                                    const headers = ["Employee ID", "Name", "Schedule", "Time In", "Break", "Time Out", "Hours", "Status"];
+                                    const headers = ["ID", "Name", "Schedule", "In", "Break S", "Break E", "Out", "Hrs", "Late", "OT", "Status"];
                                     const rowData = rows.map(r => [
                                         r.employee_id,
                                         r.name,
                                         r.schedule || "",
                                         r.time_in || "",
-                                        r.break_time || "",
+                                        r.break_start || "",
+                                        r.break_end || "",
                                         r.time_out || "",
                                         r.hours || "",
+                                        r.late_duration || "",
+                                        r.overtime || "",
                                         r.status
                                     ]);
 
@@ -423,20 +426,35 @@ export default function DailyReportsPage() {
                                                 {/* Times Grid */}
                                                 <div className="grid grid-cols-4 gap-2 text-sm">
                                                     <div className="bg-muted/50 rounded p-2 text-center">
-                                                        <p className="text-xs text-muted-foreground">Time In</p>
+                                                        <p className="text-xs text-muted-foreground">In</p>
                                                         <p className="font-mono font-medium">{record.time_in || "—"}</p>
                                                     </div>
                                                     <div className="bg-muted/50 rounded p-2 text-center">
-                                                        <p className="text-xs text-muted-foreground">Break</p>
-                                                        <p className="font-mono font-medium">{record.break_time || "—"}</p>
-                                                    </div>
-                                                    <div className="bg-muted/50 rounded p-2 text-center">
-                                                        <p className="text-xs text-muted-foreground">Time Out</p>
+                                                        <p className="text-xs text-muted-foreground">Out</p>
                                                         <p className="font-mono font-medium">{record.time_out || "—"}</p>
                                                     </div>
                                                     <div className="bg-muted/50 rounded p-2 text-center">
-                                                        <p className="text-xs text-muted-foreground">Hours</p>
-                                                        <p className="font-mono font-medium">{record.hours || "—"}</p>
+                                                        <p className="text-xs text-muted-foreground">Break S</p>
+                                                        <p className="font-mono font-medium">{record.break_start || "—"}</p>
+                                                    </div>
+                                                    <div className="bg-muted/50 rounded p-2 text-center">
+                                                        <p className="text-xs text-muted-foreground">Break E</p>
+                                                        <p className="font-mono font-medium">{record.break_end || "—"}</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-3 gap-2 text-sm">
+                                                    <div className="bg-primary/5 rounded p-2 text-center border border-primary/10">
+                                                        <p className="text-xs text-primary font-medium">Hours</p>
+                                                        <p className="font-bold">{record.hours || "—"}</p>
+                                                    </div>
+                                                    <div className="bg-amber-50 dark:bg-amber-900/20 rounded p-2 text-center">
+                                                        <p className="text-xs text-amber-600">Late</p>
+                                                        <p className="font-medium text-amber-700">{record.late_duration || "—"}</p>
+                                                    </div>
+                                                    <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded p-2 text-center">
+                                                        <p className="text-xs text-emerald-600">OT</p>
+                                                        <p className="font-medium text-emerald-700">{record.overtime || "—"}</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -448,15 +466,18 @@ export default function DailyReportsPage() {
                                 <div className="hidden md:block overflow-x-auto">
                                     <Table>
                                         <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Employee ID</TableHead>
-                                                <TableHead>Name</TableHead>
-                                                <TableHead>Schedule</TableHead>
-                                                <TableHead className="text-center">Time In</TableHead>
-                                                <TableHead className="text-center">Break</TableHead>
-                                                <TableHead className="text-center">Time Out</TableHead>
-                                                <TableHead className="text-center">Hours</TableHead>
-                                                <TableHead className="text-center">Status</TableHead>
+                                            <TableRow className="bg-muted/50 hover:bg-muted/50">
+                                                <TableHead className="font-bold">ID</TableHead>
+                                                <TableHead className="font-bold">Name</TableHead>
+                                                <TableHead className="font-bold">Schedule</TableHead>
+                                                <TableHead className="text-center font-bold">In</TableHead>
+                                                <TableHead className="text-center font-bold">Break S</TableHead>
+                                                <TableHead className="text-center font-bold">Break E</TableHead>
+                                                <TableHead className="text-center font-bold">Out</TableHead>
+                                                <TableHead className="text-center font-bold">Hours</TableHead>
+                                                <TableHead className="text-center font-bold text-amber-600">Late</TableHead>
+                                                <TableHead className="text-center font-bold text-emerald-600">OT</TableHead>
+                                                <TableHead className="text-center font-bold">Status</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -464,14 +485,21 @@ export default function DailyReportsPage() {
                                                 const config = statusConfig[record.status] || statusConfig.present;
                                                 const StatusIcon = config.icon;
                                                 return (
-                                                    <TableRow key={record.id}>
-                                                        <TableCell className="font-mono">{record.employee_id}</TableCell>
+                                                    <TableRow key={record.id} className="hover:bg-muted/30">
+                                                        <TableCell className="font-mono text-xs">{record.employee_id}</TableCell>
                                                         <TableCell className="font-medium">{record.name}</TableCell>
-                                                        <TableCell>{record.schedule || "—"}</TableCell>
+                                                        <TableCell className="text-xs text-muted-foreground">{record.schedule || "—"}</TableCell>
                                                         <TableCell className="font-mono text-center">{record.time_in || "—"}</TableCell>
-                                                        <TableCell className="font-mono text-center">{record.break_time || "—"}</TableCell>
+                                                        <TableCell className="font-mono text-center text-xs opacity-70">{record.break_start || "—"}</TableCell>
+                                                        <TableCell className="font-mono text-center text-xs opacity-70">{record.break_end || "—"}</TableCell>
                                                         <TableCell className="font-mono text-center">{record.time_out || "—"}</TableCell>
-                                                        <TableCell className="font-mono text-center">{record.hours || "—"}</TableCell>
+                                                        <TableCell className="font-mono text-center font-bold text-primary">{record.hours || "—"}</TableCell>
+                                                        <TableCell className="text-center text-amber-600 font-medium text-xs">
+                                                            {record.late_duration || "—"}
+                                                        </TableCell>
+                                                        <TableCell className="text-center text-emerald-600 font-medium text-xs">
+                                                            {record.overtime || "—"}
+                                                        </TableCell>
                                                         <TableCell className="text-center">
                                                             <Badge className={`gap-1 ${config.badgeClass}`}>
                                                                 <StatusIcon className="h-3 w-3" />
@@ -519,7 +547,31 @@ export default function DailyReportsPage() {
                         )}
                     </CardContent>
                 </Card>
+
+                {/* Important Notes */}
+                <div className="grid gap-4 md:grid-cols-2">
+                    <div className="text-xs text-muted-foreground bg-muted/30 rounded-lg p-4 border flex items-start gap-3">
+                        <CheckCircle2 className="h-4 w-4 mt-0.5 flex-shrink-0 text-primary" />
+                        <div>
+                            <p className="font-semibold text-foreground">Night Shift Rule</p>
+                            <p>
+                                Records are anchored to the <strong>Shift Start Date</strong>.
+                                If a shift starts at 23:00 on Feb 4 and ends at 07:00 on Feb 5, it is logged under Feb 4.
+                            </p>
+                        </div>
+                    </div>
+                    <div className="text-xs text-muted-foreground bg-muted/30 rounded-lg p-4 border flex items-start gap-3">
+                        <Clock className="h-4 w-4 mt-0.5 flex-shrink-0 text-primary" />
+                        <div>
+                            <p className="font-semibold text-foreground">Hours Calculation</p>
+                            <p>
+                                <strong>Hours Worked</strong> = (Time Out - Time In) - Total Break Duration.
+                                Calculations automatically account for cross-day (overnight) sessions.
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </DashboardLayout >
+        </DashboardLayout>
     );
 }

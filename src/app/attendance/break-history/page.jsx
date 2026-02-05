@@ -131,11 +131,9 @@ export default function BreakHistoryPage() {
                 }
 
                 // Status
-                let status = 'Completed';
+                let status = 'completed';
                 if (!record.break_end) {
-                    status = 'On Break';
-                } else {
-                    status = 'Completed';
+                    status = 'ongoing';
                 }
 
                 return {
@@ -145,10 +143,11 @@ export default function BreakHistoryPage() {
                         avatar: record.user?.avatar,
                         position: record.user?.position || 'Employee',
                     },
-                    date: record.break_date || record.created_at,
+                    date: record.break_date || record.attendance?.attendance_date || record.created_at,
+                    schedule: record.attendance?.session?.schedule?.name || "Regular Shift",
                     type: typeLabel,
                     duration: duration,
-                    status: status,
+                    status: status.toLowerCase(),
                     break_start: record.break_start,
                     break_end: record.break_end,
                     break_type: record.break_type // raw type for editing
@@ -181,7 +180,7 @@ export default function BreakHistoryPage() {
         const timer = setInterval(() => {
             setGroupedRecords(prev => {
                 return prev.map(rec => {
-                    if (rec.status === 'On Break') {
+                    if (rec.status === 'ongoing') {
                         const newDur = calculateDuration(rec.break_start, new Date());
                         return { ...rec, duration: newDur };
                     }
@@ -237,13 +236,13 @@ export default function BreakHistoryPage() {
                                                         </div>
                                                     </div>
                                                     <div className="text-right">
-                                                        {record.status === 'On Break' ? (
+                                                        {record.status === 'ongoing' || record.status === 'on break' ? (
                                                             <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 animate-pulse">
-                                                                On Break
+                                                                ongoing
                                                             </Badge>
                                                         ) : (
-                                                            <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">
-                                                                Completed
+                                                            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                                                                completed
                                                             </Badge>
                                                         )}
                                                     </div>
@@ -251,7 +250,7 @@ export default function BreakHistoryPage() {
 
                                                 <div className="grid grid-cols-2 gap-y-2 text-sm pt-2 border-t">
                                                     <div className="flex flex-col gap-1">
-                                                        <span className="text-muted-foreground text-xs uppercase tracking-wider">Date</span>
+                                                        <span className="text-muted-foreground text-xs uppercase tracking-wider">Shift Date</span>
                                                         <div className="flex items-center gap-1 font-medium">
                                                             <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
                                                             {formatDate(record.date)}
@@ -263,10 +262,18 @@ export default function BreakHistoryPage() {
                                                             {record.type}
                                                         </div>
                                                     </div>
+                                                    <div className="flex flex-col gap-1">
+                                                        <span className="text-muted-foreground text-xs uppercase tracking-wider">Start</span>
+                                                        <div className="font-mono font-medium">{formatTime24(record.break_start)}</div>
+                                                    </div>
+                                                    <div className="flex flex-col gap-1 text-right">
+                                                        <span className="text-muted-foreground text-xs uppercase tracking-wider">End</span>
+                                                        <div className="font-mono font-medium">{formatTime24(record.break_end) || '--:--'}</div>
+                                                    </div>
                                                     <div className="flex flex-col gap-1 col-span-2">
                                                         <span className="text-muted-foreground text-xs uppercase tracking-wider">Duration</span>
                                                         <div className="flex items-center gap-1">
-                                                            <span className="font-bold text-slate-900">
+                                                            <span className="font-bold text-slate-900 border-b border-dashed border-slate-300">
                                                                 {record.duration} min
                                                             </span>
                                                         </div>
@@ -307,9 +314,11 @@ export default function BreakHistoryPage() {
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
-                                                <TableHead className="w-[30%]">Employee</TableHead>
-                                                <TableHead className="text-center">Date</TableHead>
-                                                <TableHead className="text-center">Break Type</TableHead>
+                                                {user?.role === 'admin' && <TableHead>Employee</TableHead>}
+                                                <TableHead>Shift Date</TableHead>
+                                                <TableHead className="text-center">Schedule</TableHead>
+                                                <TableHead className="text-center">Start</TableHead>
+                                                <TableHead className="text-center">End</TableHead>
                                                 <TableHead className="text-center">Duration</TableHead>
                                                 <TableHead className="text-center">Status</TableHead>
                                                 {user?.role === 'admin' && <TableHead className="text-center">Actions</TableHead>}
@@ -318,40 +327,48 @@ export default function BreakHistoryPage() {
                                         <TableBody>
                                             {groupedRecords.map((record) => (
                                                 <TableRow key={record.id}>
-                                                    <TableCell>
-                                                        <div className="flex items-center gap-3">
-                                                            <Avatar className="h-9 w-9">
-                                                                <AvatarImage src={record.employee.avatar} />
-                                                                <AvatarFallback>{getInitials(record.employee.name)}</AvatarFallback>
-                                                            </Avatar>
-                                                            <div className="text-left">
-                                                                <p className="font-medium">{record.employee.name}</p>
-                                                                <p className="text-xs text-muted-foreground">{record.employee.position}</p>
+                                                    {user?.role === 'admin' && (
+                                                        <TableCell>
+                                                            <div className="flex items-center gap-3">
+                                                                <Avatar className="h-9 w-9">
+                                                                    <AvatarImage src={record.employee.avatar} />
+                                                                    <AvatarFallback>{getInitials(record.employee.name)}</AvatarFallback>
+                                                                </Avatar>
+                                                                <div className="text-left">
+                                                                    <p className="font-medium">{record.employee.name}</p>
+                                                                    <p className="text-xs text-muted-foreground">{record.employee.position}</p>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell>
+                                                        </TableCell>
+                                                    )}
+                                                    <TableCell className="text-center">
                                                         <div className="flex items-center justify-center gap-2">
                                                             <Calendar className="h-4 w-4 text-muted-foreground" />
                                                             <span>{formatDate(record.date)}</span>
                                                         </div>
                                                     </TableCell>
                                                     <TableCell className="text-center font-medium">
-                                                        {record.type}
+                                                        {record.schedule}
+                                                    </TableCell>
+                                                    <TableCell className="text-center font-mono">
+                                                        {formatTime24(record.break_start)}
+                                                    </TableCell>
+                                                    <TableCell className="text-center font-mono">
+                                                        {formatTime24(record.break_end) || '--:--'}
                                                     </TableCell>
                                                     <TableCell className="text-center">
                                                         <span className="font-bold text-slate-700">
-                                                            {record.duration} minutes
+                                                            {record.duration}m
                                                         </span>
                                                     </TableCell>
                                                     <TableCell className="text-center">
-                                                        {record.status === 'On Break' ? (
+                                                        {record.status === 'ongoing' || record.status === 'on break' ? (
                                                             <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 animate-pulse">
-                                                                On Break
+                                                                ongoing
                                                             </Badge>
                                                         ) : (
-                                                            <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">
-                                                                Completed
+                                                            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                                                                completed
                                                             </Badge>
                                                         )}
                                                     </TableCell>
@@ -388,6 +405,18 @@ export default function BreakHistoryPage() {
                         )}
                     </CardContent>
                 </Card>
+
+                {/* Night Shift Info Note */}
+                <div className="text-xs text-muted-foreground bg-muted/30 rounded-lg p-4 border flex items-start gap-3 mt-6">
+                    <History className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <div>
+                        <p className="font-semibold text-foreground">Night Shift & Break Tracking</p>
+                        <p>
+                            Break records are anchored to the <strong>Shift Date</strong> (the day the work shift started).
+                            Even if a break occurs after midnight, it will be listed under the original shift date to maintain reporting consistency.
+                        </p>
+                    </div>
+                </div>
             </div>
             <EditBreakDialog
                 record={editingRecord}

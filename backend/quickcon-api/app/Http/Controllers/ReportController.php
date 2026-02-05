@@ -764,6 +764,47 @@ class ReportController extends Controller
                     $hours = sprintf('%d:%02d', $hrs, $mins);
                 }
                 
+                // Calculate Late Duration
+                $lateDuration = null;
+                if ($record->status === 'late' || ($record->minutes_late && $record->minutes_late > 0)) {
+                    $hrsLat = floor($record->minutes_late / 60);
+                    $minsLat = $record->minutes_late % 60;
+                    $lateDuration = $hrsLat > 0 ? sprintf('%dh %dm', $hrsLat, $minsLat) : sprintf('%dm', $minsLat);
+                }
+
+                // Calculate Overtime
+                $overtime = null;
+                if ($record->time_out && $record->session?->schedule) {
+                    $schedOut = Carbon::parse($record->attendance_date->toDateString() . ' ' . $record->session->schedule->time_out);
+                    if ($record->session->schedule->is_overnight) $schedOut->addDay();
+                    
+                    if ($record->time_out->gt($schedOut)) {
+                        $otMins = $schedOut->diffInMinutes($record->time_out);
+                        if ($otMins >= 15) { // Minimum 15 mins for OT display
+                            $otHrs = floor($otMins / 60);
+                            $otMinsRem = $otMins % 60;
+                            $overtime = $otHrs > 0 ? sprintf('%dh %dm', $otHrs, $otMinsRem) : sprintf('%dm', $otMinsRem);
+                        }
+                    }
+                }
+
+                // Break Summary
+                $breakMinutes = 0;
+                $bStart = null;
+                $bEnd = null;
+                if ($record->breaks()->exists()) {
+                    $breakMinutes = $record->breaks()->sum('duration_minutes');
+                    $firstBreak = $record->breaks()->orderBy('break_start')->first();
+                    $lastBreak = $record->breaks()->whereNotNull('break_end')->orderBy('break_end', 'desc')->first();
+                    $bStart = $firstBreak ? $firstBreak->break_start?->format('H:i') : null;
+                    $bEnd = $lastBreak ? $lastBreak->break_end?->format('H:i') : null;
+                } elseif ($record->break_start && $record->break_end) {
+                    $breakMinutes = $record->break_start->diffInMinutes($record->break_end, false);
+                    if ($breakMinutes < 0) $breakMinutes += 1440;
+                    $bStart = $record->break_start->format('H:i');
+                    $bEnd = $record->break_end->format('H:i');
+                }
+                
                 return [
                     'id' => $record->id,
                     'is_virtual' => false,
@@ -771,10 +812,13 @@ class ReportController extends Controller
                     'name' => $user->full_name,
                     'schedule' => $record->session?->schedule?->name ?? 'N/A',
                     'time_in' => $record->time_in?->format('H:i'),
-                    // FIX: Hide break info for pending/absent records to prevent confusion (ghost data)
-                    'break_time' => ($record->status === 'pending' || $record->status === 'absent') ? '-' : ($record->break_start?->format('H:i')),
+                    'break_start' => ($record->status === 'pending' || $record->status === 'absent') ? '-' : ($bStart ?? '-'),
+                    'break_end' => ($record->status === 'pending' || $record->status === 'absent') ? '-' : ($bEnd ?? '-'),
+                    'total_break_minutes' => $breakMinutes,
                     'time_out' => $record->time_out?->format('H:i'),
                     'hours' => $hours,
+                    'late_duration' => $lateDuration,
+                    'overtime' => $overtime,
                     'status' => ($record->status === 'pending' && $isPast) ? 'absent' : $record->status,
                     'minutes_late' => $record->minutes_late,
                     'attendance_date' => $record->attendance_date->toDateString(),
@@ -789,10 +833,14 @@ class ReportController extends Controller
                     'employee_id' => $user->employee_id ?? 'N/A',
                     'name' => $user->full_name,
                     'schedule' => '-',
-                    'time_in' => '-', // Or null? Frontend handles strings better usually
-                    'break_time' => '-',
+                    'time_in' => '-',
+                    'break_start' => '-',
+                    'break_end' => '-',
+                    'total_break_minutes' => 0,
                     'time_out' => '-',
                     'hours' => '-',
+                    'late_duration' => null,
+                    'overtime' => null,
                     'status' => $virtualStatus,
                     'minutes_late' => 0,
                     'attendance_date' => $date,

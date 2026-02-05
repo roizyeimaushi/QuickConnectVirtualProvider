@@ -198,6 +198,10 @@ export function getNavigationItems(user) {
                             title: "Attendance History",
                             url: "/attendance/history",
                         },
+                        {
+                            title: "Break History",
+                            url: "/attendance/break-history",
+                        },
                     ]
                 },
             ]
