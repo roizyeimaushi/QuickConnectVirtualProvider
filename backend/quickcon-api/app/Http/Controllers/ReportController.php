@@ -110,7 +110,57 @@ class ReportController extends Controller
                 $q->where('date', '>=', $thisMonth);
             })->where('status', 'present')->count();
             
-            // Simple Presentation Rate for Dashboard
+            // FETCH ALL SESSIONS FOR TODAY (to support quick stats per schedule)
+            $allTodaySessions = AttendanceSession::with(['schedule'])
+                ->whereDate('date', $today)
+                ->get();
+
+            // Support overnight session from yesterday as well
+            $yesterday = Carbon::yesterday();
+            $yesterdayDayOfWeek = $yesterday->dayOfWeek;
+            $overnightFromYesterday = null;
+            if ($yesterdayDayOfWeek !== Carbon::SATURDAY && $yesterdayDayOfWeek !== Carbon::SUNDAY) {
+                $overnightFromYesterday = AttendanceSession::with('schedule')
+                    ->whereDate('date', $yesterday->toDateString())
+                    ->whereIn('status', ['active', 'locked'])
+                    ->whereHas('schedule', function ($q) {
+                        $q->where('is_overnight', true);
+                    })
+                    ->first();
+            }
+
+            $sessionsList = $allTodaySessions->map(function($session) {
+                $confirmed = AttendanceRecord::where('session_id', $session->id)
+                    ->whereNotNull('time_in')
+                    ->count();
+                $total = AttendanceRecord::where('session_id', $session->id)->count();
+                
+                return [
+                    'id' => $session->id,
+                    'status' => $session->status,
+                    'schedule' => $session->schedule,
+                    'confirmed_count' => $confirmed,
+                    'total_count' => $total,
+                    'date' => $session->date->toDateString(),
+                ];
+            });
+
+            if ($overnightFromYesterday && !$sessionsList->contains('id', $overnightFromYesterday->id)) {
+                $confirmed = AttendanceRecord::where('session_id', $overnightFromYesterday->id)
+                    ->whereNotNull('time_in')
+                    ->count();
+                $total = AttendanceRecord::where('session_id', $overnightFromYesterday->id)->count();
+
+                $sessionsList->push([
+                    'id' => $overnightFromYesterday->id,
+                    'status' => $overnightFromYesterday->status,
+                    'schedule' => $overnightFromYesterday->schedule,
+                    'confirmed_count' => $confirmed,
+                    'total_count' => $total,
+                    'date' => $overnightFromYesterday->date->toDateString(),
+                ]);
+            }
+
             $attendanceRate = $totalEmployees > 0 
                 ? round(($presentToday / $totalEmployees) * 100, 1)
                 : 0;
@@ -121,15 +171,11 @@ class ReportController extends Controller
                 'late_today' => $lateToday,
                 'absent_today' => $absentToday,
                 'pending_today' => $pendingToday,
-                'active_sessions' => $activeSessions,
                 'attendance_rate' => $attendanceRate,
-                'has_active_session' => $todaySession !== null,
-                'active_session' => $todaySession ? [
-                    'id' => $todaySession->id,
-                    'schedule' => $todaySession->schedule,
-                    'confirmed_count' => $confirmedCount,
-                    'pending_count' => $pendingToday
-                ] : null,
+                'active_sessions_count' => $sessionsList->where('status', 'active')->count(),
+                'active_sessions' => $sessionsList,
+                // Primary session for standard display
+                'active_session' => $sessionsList->where('status', 'active')->first() ?? $sessionsList->first(),
             ]);
         });
     }

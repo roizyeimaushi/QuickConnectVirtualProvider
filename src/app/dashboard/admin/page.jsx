@@ -175,8 +175,83 @@ function QuickActionsCard() {
     );
 }
 
-function ActiveSessionCard({ session, loading }) {
+function SessionCountdown({ endTime, date }) {
+    const [timeLeft, setTimeLeft] = useState("");
 
+    useEffect(() => {
+        const calculateTimeLeft = () => {
+            if (!endTime) return "";
+
+            const now = new Date();
+            const [hours, minutes] = endTime.split(':');
+
+            // Create target date object
+            const targetDate = new Date(date);
+            targetDate.setHours(parseInt(hours), parseInt(minutes), 0);
+
+            // If endTime is earlier than shift start, it's next day (overnight)
+            // But we already handle that with date from backend if it's anchored.
+            // Let's assume the backend 'date' is the anchor date.
+            // If now is already past target, usually the session is 'completed'
+            // but just in case:
+            if (now > targetDate && now.getHours() > 12) { // Just a heuristic
+                targetDate.setDate(targetDate.getDate() + 1);
+            } else if (now > targetDate) {
+                // Already past
+                return "Session ended";
+            }
+
+            const diff = targetDate - now;
+            const h = Math.floor(diff / (1000 * 60 * 60));
+            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+            return `${h > 0 ? h + " hours " : ""}${m} minutes`;
+        };
+
+        setTimeLeft(calculateTimeLeft());
+        const interval = setInterval(() => {
+            setTimeLeft(calculateTimeLeft());
+        }, 30000); // Update every 30 seconds
+
+        return () => clearInterval(interval);
+    }, [endTime, date]);
+
+    if (!timeLeft) return null;
+
+    return (
+        <div className="flex items-center gap-2 text-sm font-medium text-amber-600 animate-pulse">
+            <Timer className="h-4 w-4" />
+            <span>Session ends in: {timeLeft}</span>
+        </div>
+    );
+}
+
+function ScheduleStatsCard({ sessions }) {
+    if (!sessions || sessions.length === 0) return null;
+
+    return (
+        <Card>
+            <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Schedule Check-in</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+                {sessions.map((s) => (
+                    <div key={s.id} className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-primary" />
+                            <span className="font-medium">{s.schedule?.name || "Shift"}</span>
+                        </div>
+                        <span className="text-muted-foreground">
+                            {s.confirmed_count}/{s.total_count} checked in
+                        </span>
+                    </div>
+                ))}
+            </CardContent>
+        </Card>
+    );
+}
+
+function ActiveSessionCard({ session, loading }) {
     if (!session) {
         return (
             <Card>
@@ -203,35 +278,47 @@ function ActiveSessionCard({ session, loading }) {
     }
 
     return (
-        <Card>
+        <Card className="overflow-hidden border-2 border-primary/10">
+            <div className="h-1 bg-primary" />
             <CardHeader>
                 <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2">
                         <Clock className="h-5 w-5 text-primary" />
                         Active Session
                     </CardTitle>
+                    <Badge variant={session.status === 'active' ? 'default' : 'secondary'}>
+                        {session.status === 'active' ? 'Active' : 'Locked'}
+                    </Badge>
                 </div>
-                <CardDescription>Currently accepting attendance</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-                <div className="p-4 rounded-lg bg-muted/50 space-y-2">
-                    <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Schedule</span>
-                        <span className="font-medium">{session.schedule?.name || "Default"}</span>
+                <div className="space-y-1">
+                    <h3 className="text-xl font-bold">{session.schedule?.name}</h3>
+                    <p className="font-mono text-sm text-muted-foreground">
+                        {formatTime24(session.schedule?.time_in)} - {formatTime24(session.schedule?.time_out)}
+                    </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 py-2 border-y border-dashed">
+                    <div>
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider">Confirmed</p>
+                        <p className="text-lg font-bold text-emerald-600">{session.confirmed_count} employees</p>
                     </div>
-                    <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Shift Time</span>
-                        <span className="font-mono font-medium">
-                            {formatTime24(session.schedule?.time_in)} - {formatTime24(session.schedule?.time_out)}
-                        </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Confirmed</span>
-                        <span className="font-medium text-emerald-600">{session.confirmedCount || 0} employees</span>
+                    <div>
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider">Status</p>
+                        <p className="text-lg font-bold capitalize">{session.status}</p>
                     </div>
                 </div>
+
+                {session.status === 'active' && session.schedule?.time_out && (
+                    <SessionCountdown
+                        endTime={session.schedule.time_out}
+                        date={session.date}
+                    />
+                )}
+
                 <Button asChild variant="outline" className="w-full">
-                    <Link href="/attendance/sessions">Manage Sessions</Link>
+                    <Link href={`/attendance/sessions/${session.id}`}>View Attendance</Link>
                 </Button>
             </CardContent>
         </Card>
@@ -280,10 +367,8 @@ export default function AdminDashboard() {
                     absentRate: Math.round((absentToday / denominator) * 100),
                     pendingRate: Math.round((pendingToday / denominator) * 100),
 
-                    activeSession: response.active_session ? {
-                        ...response.active_session,
-                        confirmedCount: response.active_session.confirmed_count
-                    } : null,
+                    activeSession: response.active_session,
+                    activeSessions: response.active_sessions || [],
                 });
             } catch (error) {
                 // Log detailed error information for debugging (development only)
@@ -361,30 +446,36 @@ export default function AdminDashboard() {
                     </div>
 
                     {/* Stats Grid */}
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
                         <StatCard
                             title="Total Employees"
                             value={stats?.totalEmployees || 0}
-                            description="Registered employees"
+                            description="Registered"
                             icon={Users}
                         />
                         <StatCard
                             title="Present Today"
                             value={stats?.activeToday || 0}
-                            description="Timed in on time"
+                            description="Timed in"
                             icon={CheckCircle2}
                         />
                         <StatCard
                             title="Late Today"
                             value={stats?.lateToday || 0}
-                            description="Arrived after schedule"
+                            description="Arrived late"
                             icon={Timer}
                         />
                         <StatCard
-                            title={stats?.pendingToday > 0 ? "Pending Check-in" : "Absent Today"}
-                            value={stats?.pendingToday > 0 ? stats.pendingToday : (stats?.absentToday || 0)}
-                            description={stats?.pendingToday > 0 ? "Not yet timed in" : "Did not report"}
-                            icon={stats?.pendingToday > 0 ? Clock : AlertTriangle}
+                            title="Pending Check-in"
+                            value={stats?.pendingToday || 0}
+                            icon={Clock}
+                            description="Waiting"
+                        />
+                        <StatCard
+                            title="Absent Today"
+                            value={stats?.absentToday || 0}
+                            icon={AlertTriangle}
+                            description="Not reporting"
                         />
                     </div>
 
@@ -393,6 +484,7 @@ export default function AdminDashboard() {
                         <AttendanceOverviewCard data={stats} />
                         <div className="space-y-4">
                             <ActiveSessionCard session={stats?.activeSession} />
+                            <ScheduleStatsCard sessions={stats?.activeSessions} />
                             <QuickActionsCard />
                         </div>
                     </div>
