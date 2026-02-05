@@ -183,6 +183,7 @@ export default function AttendanceHistoryPage() {
                 break_end: record.break_end,
                 status: record.status,
                 schedule: record.session?.schedule?.name || "Regular Shift",
+                hours_worked: record.hours_worked || null,
             }));
 
             setRecords(formattedRecords);
@@ -371,7 +372,7 @@ export default function AttendanceHistoryPage() {
                                                     <div className="flex items-center gap-2 text-sm">
                                                         <CalendarIcon className="h-4 w-4 text-muted-foreground" />
                                                         <span>{formatDate(record.date, "MMM d, yyyy")}</span>
-                                                        <span className="text-muted-foreground">({formatDate(record.date, "EEEE")})</span>
+                                                        <span className="text-muted-foreground text-xs uppercase font-bold tracking-tight">Shift Date</span>
                                                     </div>
                                                 )}
 
@@ -394,10 +395,15 @@ export default function AttendanceHistoryPage() {
                                                         <p className="font-mono font-medium text-emerald-700 dark:text-emerald-300">{formatTime24(record.break_end) || '--:--'}</p>
                                                     </div>
                                                 </div>
-                                                {/* Schedule Info */}
-                                                <div className="bg-muted/50 rounded p-2 text-center">
-                                                    <p className="text-xs text-muted-foreground">Schedule</p>
-                                                    <p className="font-medium text-xs truncate">{record.schedule}</p>
+                                                <div className="grid grid-cols-2 gap-2 mt-2">
+                                                    <div className="bg-muted/50 rounded p-2 text-center">
+                                                        <p className="text-xs text-muted-foreground">Schedule</p>
+                                                        <p className="font-medium text-xs truncate">{record.schedule}</p>
+                                                    </div>
+                                                    <div className="bg-primary/5 rounded p-2 text-center border border-primary/10">
+                                                        <p className="text-xs text-primary font-medium">Worked Hours</p>
+                                                        <p className="font-bold text-xs">{record.hours_worked ? `${record.hours_worked}h` : '--'}</p>
+                                                    </div>
                                                 </div>
 
                                                 {/* Actions (admin only) */}
@@ -439,12 +445,13 @@ export default function AttendanceHistoryPage() {
                                                 {user?.role === 'admin' && (
                                                     <TableHead>Employee</TableHead>
                                                 )}
-                                                <TableHead>Date</TableHead>
+                                                <TableHead>Shift Date</TableHead>
                                                 <TableHead className="text-center">Schedule</TableHead>
                                                 <TableHead className="text-center">Time In</TableHead>
                                                 <TableHead className="text-center">Break Start</TableHead>
                                                 <TableHead className="text-center">Break End</TableHead>
                                                 <TableHead className="text-center">Time Out</TableHead>
+                                                <TableHead className="text-center">Hours</TableHead>
                                                 <TableHead className="text-center">Status</TableHead>
                                                 {user?.role === 'admin' && (
                                                     <TableHead className="text-center">Actions</TableHead>
@@ -489,6 +496,9 @@ export default function AttendanceHistoryPage() {
                                                         </TableCell>
                                                         <TableCell className="font-mono text-center">
                                                             {formatTime24(record.time_out) || '--:--'}
+                                                        </TableCell>
+                                                        <TableCell className="font-mono text-center font-bold text-primary">
+                                                            {record.hours_worked ? `${record.hours_worked}h` : '--'}
                                                         </TableCell>
                                                         <TableCell className="text-center">
                                                             <div className="flex justify-center">
@@ -564,6 +574,19 @@ export default function AttendanceHistoryPage() {
                         )}
                     </CardContent>
                 </Card>
+
+                {/* Night Shift Info Note */}
+                <div className="text-xs text-muted-foreground bg-muted/30 rounded-lg p-4 border flex items-start gap-3">
+                    <History className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <div>
+                        <p className="font-semibold text-foreground">Night Shift & Date Accuracy</p>
+                        <p>
+                            Attendance records are anchored to the <strong>Shift Start Date</strong>.
+                            For night shifts (e.g., 10:00 PM to 6:00 AM), the "Time Out" and "Hours Worked"
+                            correctly account for time crossing over into the next calendar day.
+                        </p>
+                    </div>
+                </div>
 
                 {editingRecord && (
                     <EditRecordDialog
