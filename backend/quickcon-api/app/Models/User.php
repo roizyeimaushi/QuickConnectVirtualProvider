@@ -75,9 +75,14 @@ class User extends Authenticatable
             return 'https://ui-avatars.com/api/?name=' . urlencode($this->first_name . ' ' . $this->last_name) . '&background=0D8ABC&color=fff';
         }
 
-        // Dynamically replace localhost with the actual server IP for mobile device compatibility
-        if (str_contains($value, 'localhost') && request()->getHost() !== 'localhost') {
-            return str_replace('localhost', request()->getHost(), $value);
+        // Dynamically replace localhost/127.0.0.1 with the actual server IP for mobile device compatibility
+        $requestHost = request()->getHost();
+        if ($requestHost !== 'localhost' && $requestHost !== '127.0.0.1') {
+            if (str_contains($value, 'localhost')) {
+                return str_replace('localhost', $requestHost, $value);
+            } elseif (str_contains($value, '127.0.0.1')) {
+                return str_replace('127.0.0.1', $requestHost, $value);
+            }
         }
 
         return $value;

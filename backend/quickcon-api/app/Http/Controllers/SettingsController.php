@@ -48,6 +48,23 @@ class SettingsController extends Controller
                 $settings[$key] = $defaultValue;
             }
         }
+
+        // DYNAMIC FIX FOR MOBILE/LAN ACCESS: 
+        // If the logo URL contains localhost/127.0.0.1 but we are accessing via an IP, 
+        // swap it out so the logo loads on mobile devices.
+        if (isset($settings['system_logo']) && !empty($settings['system_logo'])) {
+            $logoUrl = $settings['system_logo'];
+            $requestHost = request()->getHost();
+            
+            // If accessing via IP (not localhost) but logo is stored as localhost
+            if ($requestHost !== 'localhost' && $requestHost !== '127.0.0.1') {
+                if (str_contains($logoUrl, 'localhost')) {
+                    $settings['system_logo'] = str_replace('localhost', $requestHost, $logoUrl);
+                } elseif (str_contains($logoUrl, '127.0.0.1')) {
+                    $settings['system_logo'] = str_replace('127.0.0.1', $requestHost, $logoUrl);
+                }
+            }
+        }
         
         return response()->json($settings);
     }

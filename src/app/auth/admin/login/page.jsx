@@ -15,8 +15,10 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Loader2, AlertCircle, User, KeyRound } from "lucide-react";
+import { useSettingsContext } from "@/components/providers/settings-provider";
 
 export default function AdminLoginPage() {
+    const { settings } = useSettingsContext();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -144,7 +146,11 @@ export default function AdminLoginPage() {
             <div className="relative z-10 w-full max-w-sm px-6 sm:px-8">
                 {/* Logo - with max-width to prevent stretching */}
                 <div className="flex justify-center mb-4 sm:mb-6">
-                    <img src="/logo.png" alt="QuickConn Logo" className="h-auto max-h-16 md:max-h-24 w-auto max-w-[180px] sm:max-w-[220px] object-contain" />
+                    <img
+                        src={settings?.system_logo || "/logo.png"}
+                        alt="QuickConn Logo"
+                        className="h-auto max-h-16 md:max-h-24 w-auto max-w-[180px] sm:max-w-[220px] object-contain"
+                    />
                 </div>
 
                 {/* Title */}

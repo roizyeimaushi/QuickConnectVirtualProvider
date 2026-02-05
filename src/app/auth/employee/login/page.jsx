@@ -16,8 +16,10 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Loader2, AlertCircle, Mail, Lock } from "lucide-react";
+import { useSettingsContext } from "@/components/providers/settings-provider";
 
 export default function EmployeeLoginPage() {
+    const { settings } = useSettingsContext();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -153,7 +155,11 @@ export default function EmployeeLoginPage() {
                     <div className="w-full max-w-md mx-auto">
                         {/* Logo - using max-w to prevent stretching */}
                         <div className="flex justify-center mb-4 sm:mb-6">
-                            <img src="/logo.png" alt="QuickConn Logo" className="h-auto max-h-16 md:max-h-24 w-auto max-w-[300px] sm:max-w-[350px] object-contain" />
+                            <img
+                                src={settings?.system_logo || "/logo.png"}
+                                alt="QuickConn Logo"
+                                className="h-auto max-h-16 md:max-h-24 w-auto max-w-[300px] sm:max-w-[350px] object-contain"
+                            />
                         </div>
 
                         {/* Subtitle */}
