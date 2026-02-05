@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { PageLoader } from "@/components/ui/fullscreen-loader";
 
 import {
     Table,
@@ -388,7 +387,7 @@ export default function DailyReportsPage() {
                     </CardHeader>
                     <CardContent>
                         {initialLoad ? (
-                            <PageLoader />
+                            null
                         ) : recordsList.length === 0 ? (
                             <div className="text-center py-8 text-muted-foreground">
                                 No attendance records found for this date

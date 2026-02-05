@@ -22,7 +22,10 @@ class SettingsController extends Controller
             'company_name', 'system_logo', 'timezone', 'language', 'date_format', 'time_format',
             'grace_period', 'late_threshold', 'allow_multi_checkin', 'checkin_start', 'session_timeout',
             'require_ot_approval', 'break_duration', 'break_start_window', 'break_end_window',
-            '2fa_enabled', 'pass_min_length', 'pass_special_chars'
+            '2fa_enabled', 'pass_min_length', 'pass_special_chars',
+            'weekend_checkin', 'holiday_checkin', 'auto_checkout', 'prevent_duplicate_checkin',
+            'max_breaks', 'max_break_duration', 'auto_end_break', 'prevent_overlap_break',
+            'allow_overtime', 'min_overtime_minutes', 'overtime_rate', 'ot_rounding'
         ];
 
         // Filter settings

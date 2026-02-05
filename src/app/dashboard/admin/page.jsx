@@ -28,12 +28,8 @@ import {
 } from "lucide-react";
 
 function StatCard({ title, value, description, icon: Icon, trend, loading }) {
-    if (loading) {
-        return null;
-    }
-
     return (
-        <Card className="transition-all hover:shadow-lg hover:border-primary/20">
+        <Card className="transition-all hover:shadow-lg hover:border-primary/20 animate-fade-in">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                     {title}
@@ -43,7 +39,7 @@ function StatCard({ title, value, description, icon: Icon, trend, loading }) {
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="text-3xl font-bold">{value}</div>
+                <div className="text-3xl font-bold font-mono">{loading ? "..." : value}</div>
                 <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                     {trend && (
                         <span className={trend > 0 ? "text-emerald-600" : "text-red-600"}>
@@ -59,9 +55,6 @@ function StatCard({ title, value, description, icon: Icon, trend, loading }) {
 }
 
 function AttendanceOverviewCard({ data, loading }) {
-    if (loading) {
-        return null;
-    }
 
     const presentRate = data?.presentRate || 0;
     const lateRate = data?.lateRate || 0;
@@ -180,11 +173,7 @@ function QuickActionsCard() {
 }
 
 function ActiveSessionCard({ session, loading }) {
-    if (loading) {
-        return null;
-    }
-
-    if (!session) {
+    if (loading || !session) {
         return (
             <Card>
                 <CardHeader>
@@ -348,15 +337,6 @@ export default function AdminDashboard() {
         }
     }, [authLoading, user, isAdmin]);
 
-    if (loading) {
-        return (
-            <DashboardLayout title="Admin Dashboard">
-                <div className="flex items-center justify-center h-[50vh]">
-                    {/* Minimal loading state */}
-                </div>
-            </DashboardLayout>
-        );
-    }
 
     return (
         <DashboardLayout title="Admin Dashboard">

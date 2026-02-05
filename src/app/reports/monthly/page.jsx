@@ -5,7 +5,6 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PageLoader } from "@/components/ui/fullscreen-loader";
 import { Progress } from "@/components/ui/progress";
 import {
     Select,
@@ -181,7 +180,7 @@ export default function MonthlyReportsPage() {
                     </CardHeader>
                     <CardContent>
                         {loading ? (
-                            <PageLoader />
+                            null
                         ) : report.summary.length === 0 ? (
                             <div className="text-center py-8 text-muted-foreground">
                                 No attendance data found for this period
