@@ -142,7 +142,7 @@ export default function AttendanceSettingsPage() {
                                 <div className="space-y-2">
                                     <Label className="text-muted-foreground">Time Format</Label>
                                     <p className="font-mono font-medium">
-                                        24-hour (Strict)
+                                        24-hour
                                     </p>
                                 </div>
                                 <div className="space-y-2">

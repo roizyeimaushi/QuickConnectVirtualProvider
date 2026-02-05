@@ -23,6 +23,7 @@ import {
     TrendingUp,
     CheckCircle2,
     XCircle,
+    Loader2,
     Timer,
     ArrowRight,
 } from "lucide-react";
@@ -39,7 +40,13 @@ function StatCard({ title, value, description, icon: Icon, trend, loading }) {
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="text-3xl font-bold font-mono">{loading ? "..." : value}</div>
+                <div className="text-3xl font-bold font-mono">
+                    {loading ? (
+                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground/50" />
+                    ) : (
+                        value
+                    )}
+                </div>
                 <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                     {trend && (
                         <span className={trend > 0 ? "text-emerald-600" : "text-red-600"}>
@@ -55,6 +62,25 @@ function StatCard({ title, value, description, icon: Icon, trend, loading }) {
 }
 
 function AttendanceOverviewCard({ data, loading }) {
+    if (loading) {
+        return (
+            <Card className="col-span-full lg:col-span-2">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <CalendarCheck className="h-5 w-5 text-primary" />
+                        Today's Attendance Overview
+                    </CardTitle>
+                    <CardDescription>
+                        Real-time attendance statistics for {formatDate(getCurrentDate())}
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col items-center justify-center py-20 animate-pulse">
+                    <Loader2 className="h-12 w-12 text-primary/20 animate-spin mb-4" />
+                    <p className="text-sm text-muted-foreground">Calculating attendance stats...</p>
+                </CardContent>
+            </Card>
+        );
+    }
 
     const presentRate = data?.presentRate || 0;
     const lateRate = data?.lateRate || 0;
@@ -173,7 +199,27 @@ function QuickActionsCard() {
 }
 
 function ActiveSessionCard({ session, loading }) {
-    if (loading || !session) {
+    if (loading) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Clock className="h-5 w-5 text-muted-foreground" />
+                        Active Session
+                    </CardTitle>
+                    <CardDescription>Current attendance session status</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex flex-col items-center justify-center py-10 text-center animate-pulse">
+                        <Loader2 className="h-10 w-10 text-primary/20 animate-spin mb-4" />
+                        <p className="text-sm text-muted-foreground">Checking session status...</p>
+                    </div>
+                </CardContent>
+            </Card>
+        );
+    }
+
+    if (!session) {
         return (
             <Card>
                 <CardHeader>

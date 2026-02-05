@@ -204,7 +204,7 @@ export default function GeneralSettingsPage() {
                                     <SelectValue placeholder="Select format" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="24h">24-hour (Strict)</SelectItem>
+                                    <SelectItem value="24h">24-hour</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
