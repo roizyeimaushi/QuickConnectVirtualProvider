@@ -20,6 +20,8 @@ class User extends Authenticatable
         'password',
         'role',
         'position',
+        'department',
+        'employee_type',
         'avatar',
         'status',
     ];

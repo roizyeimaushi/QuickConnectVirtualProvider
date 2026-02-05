@@ -47,6 +47,8 @@ export default function CreateEmployeePage() {
         password: "",
         password_confirmation: "",
         position: "",
+        department: "",
+        employee_type: "Full-time",
     });
 
     // Fetch the next employee ID and positions from backend on mount
@@ -300,6 +302,43 @@ export default function CreateEmployeePage() {
                                 {errors.position && (
                                     <p className="text-sm text-destructive">{errors.position}</p>
                                 )}
+                            </div>
+
+                            {/* Department */}
+                            <div className="space-y-2">
+                                <Label htmlFor="department">Department</Label>
+                                <Input
+                                    id="department"
+                                    value={formData.department}
+                                    onChange={(e) => handleChange("department", e.target.value)}
+                                    placeholder="e.g. Operations, IT, Sales"
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    The department this employee belongs to.
+                                </p>
+                            </div>
+
+                            {/* Employee Type */}
+                            <div className="space-y-2">
+                                <Label htmlFor="employee_type">Employee Type</Label>
+                                <Select
+                                    value={formData.employee_type}
+                                    onValueChange={(value) => handleChange("employee_type", value)}
+                                >
+                                    <SelectTrigger id="employee_type">
+                                        <SelectValue placeholder="Select type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Full-time">Full-time</SelectItem>
+                                        <SelectItem value="Part-time">Part-time</SelectItem>
+                                        <SelectItem value="Contractor">Contractor</SelectItem>
+                                        <SelectItem value="Freelance">Freelance</SelectItem>
+                                        <SelectItem value="Intern">Intern</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <p className="text-xs text-muted-foreground">
+                                    Employment classification.
+                                </p>
                             </div>
 
                             {/* Password Fields */}

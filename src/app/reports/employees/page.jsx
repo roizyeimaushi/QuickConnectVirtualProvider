@@ -66,7 +66,9 @@ export default function EmployeeReportsPage() {
         const fullName = `${emp.first_name} ${emp.last_name}`.toLowerCase();
         return fullName.includes(query) ||
             (emp.employee_id && emp.employee_id.toLowerCase().includes(query)) ||
-            (emp.position && emp.position.toLowerCase().includes(query));
+            (emp.position && emp.position.toLowerCase().includes(query)) ||
+            (emp.department && emp.department.toLowerCase().includes(query)) ||
+            (emp.employee_type && emp.employee_type.toLowerCase().includes(query));
     });
 
     return (
@@ -87,7 +89,7 @@ export default function EmployeeReportsPage() {
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
-                            placeholder="Search by name, ID or position..."
+                            placeholder="Search by name, ID, position, or department..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             className="pl-9"
@@ -137,9 +139,19 @@ export default function EmployeeReportsPage() {
                                     </div>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-                                        <Briefcase className="h-4 w-4" />
-                                        {employee.position || "No position"}
+                                    <div className="flex flex-col gap-2 text-sm text-muted-foreground mb-4">
+                                        <div className="flex items-center gap-2">
+                                            <Briefcase className="h-4 w-4" />
+                                            {employee.position || "No position"}
+                                        </div>
+                                        {employee.department && (
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-4 h-4 rounded-full bg-primary/10 flex items-center justify-center">
+                                                    <span className="text-[10px] font-bold text-primary">D</span>
+                                                </div>
+                                                {employee.department} • {employee.employee_type || "Full-time"}
+                                            </div>
+                                        )}
                                     </div>
                                     <Button asChild className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors" variant="outline">
                                         <Link href={`/reports/employees/${employee.employee_id}`}>

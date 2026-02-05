@@ -188,11 +188,19 @@ export default function EmployeeReportDetailPage() {
                                     <Badge variant="outline" className="font-mono">
                                         {employee.employee_id}
                                     </Badge>
-                                    <span>•</span>
                                     <span className="flex items-center gap-1">
                                         <Briefcase className="h-3 w-3" />
                                         {employee.position}
                                     </span>
+                                    {employee.department && (
+                                        <>
+                                            <span>•</span>
+                                            <span className="flex items-center gap-1">
+                                                <span className="text-[10px] font-bold text-primary">D</span>
+                                                {employee.department} ({employee.employee_type || "Full-time"})
+                                            </span>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </div>
