@@ -18,6 +18,7 @@ class AttendanceRecord extends Model
         'break_end',
         'time_out',
         'status',
+        'excuse_reason',
         'minutes_late',
         'hours_worked',
         'notes',

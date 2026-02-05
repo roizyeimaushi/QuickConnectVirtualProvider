@@ -30,6 +30,7 @@ class AttendanceRecordController extends Controller
             'break_start' => 'nullable|date',
             'break_end' => 'nullable|date',
             'reason' => 'required|string|min:5',
+            'excuse_reason' => 'nullable|string',
         ]);
 
         // Check if record already exists
@@ -49,6 +50,7 @@ class AttendanceRecordController extends Controller
             'session_id' => $validated['session_id'],
             'attendance_date' => $validated['attendance_date'],
             'status' => $validated['status'],
+            'excuse_reason' => $request->input('excuse_reason'),
             'time_in' => $validated['time_in'] ? Carbon::parse($validated['time_in']) : null,
             'time_out' => $validated['time_out'] ? Carbon::parse($validated['time_out']) : null,
             'break_start' => $validated['break_start'] ? Carbon::parse($validated['break_start']) : null,
@@ -1210,6 +1212,7 @@ class AttendanceRecordController extends Controller
             'break_start' => 'nullable|date',
             'break_end' => 'nullable|date',
             'reason' => 'required|string|min:5',
+            'excuse_reason' => 'nullable|string',
         ]);
 
         $changes = [];
@@ -1217,6 +1220,11 @@ class AttendanceRecordController extends Controller
         if ($request->has('status')) {
             $attendanceRecord->status = $request->status;
             $changes[] = "status to {$request->status}";
+        }
+
+        if ($request->has('excuse_reason')) {
+            $attendanceRecord->excuse_reason = $request->excuse_reason;
+            $changes[] = "excuse_reason updated";
         }
 
         if ($request->has('time_in')) {

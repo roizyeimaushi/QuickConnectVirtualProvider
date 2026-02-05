@@ -143,30 +143,13 @@ class AttendanceSessionController extends Controller
             }
 
             // Determine status based on session state
-            // If session is locked or completed, missing records are 'absent'
-            // If active, checks if shift has ended to mark 'absent' automatically
-            $status = in_array($attendanceSession->status, ['locked', 'completed']) ? 'absent' : 'pending';
+            // Status stays 'pending' even if session is completed, until admin explicitly marks it.
+            // Only 'locked' sessions might imply a final state, but per user request, we keep them pending.
+            $status = in_array($attendanceSession->status, ['locked']) ? 'pending' : 'pending';
             
-            // Auto-Absent logic for Active sessions:
-            // If the current time is past the shift end time, the employee is Absent
-            if ($status === 'pending' && $attendanceSession->schedule) {
-                $schedule = $attendanceSession->schedule;
-                $sessionDate = $attendanceSession->date->format('Y-m-d');
-                
-                // Parse times
-                $shiftStart = Carbon::parse("$sessionDate {$schedule->time_in}");
-                $shiftEnd = Carbon::parse("$sessionDate {$schedule->time_out}");
-                
-                // Handle overnight shifts
-                if ($shiftEnd->lt($shiftStart)) {
-                    $shiftEnd->addDay();
-                }
-                
-                // If now > shift_end, they missed the shift completely
-                if (Carbon::now()->gt($shiftEnd)) {
-                    $status = 'absent';
-                }
-            }
+            // Re-evaluating: If the user wants "Pending -> stays Pending", then status is always pending 
+            // unless a real record exists.
+            $status = 'pending';
 
             // Create Virtual Record
             return [
@@ -384,9 +367,7 @@ class AttendanceSessionController extends Controller
                 $shiftEnd->addDay();
             }
 
-            // Margin: 30 minutes grace period
-            $shiftEnd->addMinutes(30);
-
+            // Completion check: If current time is past shift end, session is completed.
             if ($now->gt($shiftEnd)) {
                 $session->update(['status' => 'completed']);
                 event(new SessionUpdated($session, 'completed'));

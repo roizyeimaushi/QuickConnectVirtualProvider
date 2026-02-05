@@ -286,8 +286,17 @@ function ActiveSessionCard({ session, loading }) {
                         <Clock className="h-5 w-5 text-primary" />
                         Active Session
                     </CardTitle>
-                    <Badge variant={session.status === 'active' ? 'default' : 'secondary'}>
-                        {session.status === 'active' ? 'Active' : 'Locked'}
+                    <Badge
+                        variant={
+                            session.status === 'active' ? 'default' :
+                                session.status === 'completed' ? 'secondary' :
+                                    'outline'
+                        }
+                        className={session.status === 'completed' ? 'bg-amber-100 text-amber-700 border-amber-200' : ''}
+                    >
+                        {session.status === 'active' ? 'Active' :
+                            session.status === 'completed' ? 'Completed (Awaiting Review)' :
+                                session.status.charAt(0).toUpperCase() + session.status.slice(1)}
                     </Badge>
                 </div>
             </CardHeader>
@@ -306,7 +315,9 @@ function ActiveSessionCard({ session, loading }) {
                     </div>
                     <div>
                         <p className="text-xs text-muted-foreground uppercase tracking-wider">Status</p>
-                        <p className="text-lg font-bold capitalize">{session.status}</p>
+                        <p className="text-lg font-bold capitalize">
+                            {session.status === 'completed' ? 'Awaiting Review' : session.status}
+                        </p>
                     </div>
                 </div>
 

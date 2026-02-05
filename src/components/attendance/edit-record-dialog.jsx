@@ -34,6 +34,7 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
         time_out: record?.time_out ? format(new Date(record.time_out), "yyyy-MM-dd'T'HH:mm") : "",
         break_start: record?.break_start ? format(new Date(record.break_start), "yyyy-MM-dd'T'HH:mm") : "",
         break_end: record?.break_end ? format(new Date(record.break_end), "yyyy-MM-dd'T'HH:mm") : "",
+        excuse_reason: record?.excuse_reason || "",
         reason: "",
     });
 
@@ -46,6 +47,7 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                 time_out: record.time_out ? format(new Date(record.time_out), "yyyy-MM-dd'T'HH:mm") : "",
                 break_start: record.break_start ? format(new Date(record.break_start), "yyyy-MM-dd'T'HH:mm") : "",
                 break_end: record.break_end ? format(new Date(record.break_end), "yyyy-MM-dd'T'HH:mm") : "",
+                excuse_reason: record.excuse_reason || "",
                 reason: "",
             });
         }
@@ -187,6 +189,21 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                             />
                         </div>
                     </div>
+
+                    {formData.status === 'excused' && (
+                        <div className="grid gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <Label htmlFor="excuse_reason">Excuse Reason / Incident</Label>
+                            <Input
+                                id="excuse_reason"
+                                placeholder="e.g. Natural Disaster, Sick Leave..."
+                                value={formData.excuse_reason}
+                                onChange={(e) => setFormData({ ...formData, excuse_reason: e.target.value })}
+                            />
+                            <p className="text-[10px] text-muted-foreground">
+                                This will be displayed in attendance reports.
+                            </p>
+                        </div>
+                    )}
 
                     <div className="grid gap-2">
                         <Label htmlFor="reason">Reason for Correction <span className="text-red-500">*</span></Label>

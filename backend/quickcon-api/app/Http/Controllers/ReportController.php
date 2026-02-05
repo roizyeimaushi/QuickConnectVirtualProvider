@@ -77,22 +77,12 @@ class ReportController extends Controller
             $pendingToday = 0;
             $remainingCount = max(0, $totalEmployees - $confirmedCount);
 
-            // Official Rule: Absent cutoff at 01:00 AM (Next Day)
-            $windowClose = Carbon::parse($today)->addDay()->setTime(1, 0, 0);
+            // Official Rule Updated: Missing employees stay PENDING until admin marks them ABSENT
+            // We no longer auto-mark them as absent based on time.
+            $autoAbsent = 0;
+            $pendingToday = $remainingCount;
             
-            $isSessionActive = $todaySession && $todaySession->status === 'active';
-
-            if (Carbon::now()->gt($windowClose)) {
-                // Cutoff reached (01:00 AM Next Day) -> Everyone remaining is ABSENT
-                $autoAbsent = $remainingCount;
-                $pendingToday = 0;
-            } else {
-                // Before cutoff -> Everyone remaining is PENDING (waiting for work to start or in progress)
-                $autoAbsent = 0;
-                $pendingToday = $remainingCount;
-            }
-            
-            // Total Absent = Manual Absent + Auto Absent
+            // Total Absent = Manual Absent + Auto Absent (now 0)
             $absentToday = $manualAbsentToday + $autoAbsent;
 
             $activeSessions = AttendanceSession::where('status', 'active')->count();
@@ -746,12 +736,9 @@ class ReportController extends Controller
         
         $unaccounted = max(0, $totalEmployees - $recordsCount);
         
-        // Official Absent Rule logic for current day
-        $cutoffTime = Carbon::parse($date)->addDay()->setTime(1, 0, 0);
-        $isPast = Carbon::now()->gt($cutoffTime);
-        
-        $finalAbsent = $explicitAbsent + ($isPast ? $unaccounted : 0);
-        $finalPending = $explicitPending + (!$isPast ? $unaccounted : 0);
+        // Official Rule Updated: Missing employees stay PENDING until admin marks them ABSENT
+        $finalAbsent = $explicitAbsent;
+        $finalPending = $explicitPending + $unaccounted;
 
         $summary = [
             'total' => $totalEmployees, // Updated to show Total Expectation
