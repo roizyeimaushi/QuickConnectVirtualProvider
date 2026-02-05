@@ -146,6 +146,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/monthly/{year}/{month}', [ReportController::class, 'monthlyReport']);
             Route::get('/employee/{employeeId}', [ReportController::class, 'employeeReport']);
             Route::get('/export/excel', [ReportController::class, 'exportExcel']);
+            Route::get('/fix-hours-cleanup', [ReportController::class, 'reconcileDatabaseHours']); // Cleanup route
         });
 
         // Audit Logs (static routes BEFORE parameterized routes)

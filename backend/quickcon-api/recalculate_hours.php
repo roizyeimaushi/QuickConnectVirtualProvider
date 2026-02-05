@@ -29,15 +29,17 @@ foreach ($records as $record) {
     try {
         $oldHours = $record->hours_worked;
         
-        // Recalculate using absolute difference for overnight shifts
-        $totalMinutes = abs($record->time_in->diffInMinutes($record->time_out));
+        // Recalculate (handle overnight shifts)
+        $totalMinutes = $record->time_in->diffInMinutes($record->time_out, false);
+        if ($totalMinutes < 0) $totalMinutes += 1440;
         
         // Subtract break time from EmployeeBreak table
         $breakMinutes = $record->breaks()->sum('duration_minutes');
         
         // Fallback to legacy break columns
         if ($breakMinutes == 0 && $record->break_start && $record->break_end) {
-            $breakMinutes = abs($record->break_start->diffInMinutes($record->break_end));
+            $breakMinutes = $record->break_start->diffInMinutes($record->break_end, false);
+            if ($breakMinutes < 0) $breakMinutes += 1440;
         }
         
         $netMinutes = max(0, $totalMinutes - $breakMinutes);

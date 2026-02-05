@@ -560,12 +560,28 @@ class AttendanceRecordController extends Controller
 
         $paginator = $query->orderBy('attendance_date', 'desc')->paginate($request->get('per_page', 20));
 
-        // Transform to hide ghost data
+        // Transform to hide ghost data and FIX HOURS ON-THE-FLY
         $paginator->getCollection()->transform(function ($record) {
             if (in_array($record->status, ['pending', 'absent', 'excused'])) {
                 $record->break_start = null;
                 $record->break_end = null;
                 $record->hours_worked = 0;
+            } elseif ($record->time_in && $record->time_out) {
+                // FIXED CALCULATION (Ignore broken DB column)
+                $timeIn = Carbon::parse($record->time_in);
+                $timeOut = Carbon::parse($record->time_out);
+                
+                $diff = $timeIn->diffInMinutes($timeOut, false);
+                if ($diff < 0) $diff += 1440;
+                
+                $breakMins = $record->breaks()->sum('duration_minutes');
+                if ($breakMins == 0 && $record->break_start && $record->break_end) {
+                    $bDiff = Carbon::parse($record->break_start)->diffInMinutes(Carbon::parse($record->break_end), false);
+                    $breakMins = $bDiff < 0 ? $bDiff + 1440 : $bDiff;
+                }
+                
+                $net = max(0, $diff - $breakMins);
+                $record->hours_worked = round($net / 60, 2);
             }
             return $record;
         });
@@ -698,7 +714,28 @@ class AttendanceRecordController extends Controller
             $query->whereBetween('attendance_date', [$request->start_date, $request->end_date]);
         }
 
-        return response()->json($query->orderBy('attendance_date', 'desc')->paginate(20));
+        $paginator = $query->orderBy('attendance_date', 'desc')->paginate(20);
+
+        // Fix hours on the fly
+        $paginator->getCollection()->transform(function ($record) {
+            if ($record->time_in && $record->time_out && !in_array($record->status, ['pending', 'absent'])) {
+                $timeIn = Carbon::parse($record->time_in);
+                $timeOut = Carbon::parse($record->time_out);
+                $diff = $timeIn->diffInMinutes($timeOut, false);
+                if ($diff < 0) $diff += 1440;
+                
+                $breakMins = $record->breaks()->sum('duration_minutes');
+                if ($breakMins == 0 && $record->break_start && $record->break_end) {
+                    $bDiff = Carbon::parse($record->break_start)->diffInMinutes(Carbon::parse($record->break_end), false);
+                    $breakMins = $bDiff < 0 ? $bDiff + 1440 : $bDiff;
+                }
+                
+                $record->hours_worked = round(max(0, $diff - $breakMins) / 60, 2);
+            }
+            return $record;
+        });
+
+        return response()->json($paginator);
     }
 
     /**
@@ -771,10 +808,11 @@ class AttendanceRecordController extends Controller
         $attendanceRecord->time_out = $now;
         $attendanceRecord->save(); // Save time_out immediately to prevent race conditions
         
-        // Calculate hours worked (subtracting break) - Fixed for overnight shifts
-        $timeIn = Carbon::parse($attendanceRecord->time_in);
-        // Use absolute difference to handle overnight shifts correctly
-        $grossMinutes = abs($now->diffInMinutes($timeIn));
+        // Calculate gross minutes (handle overnight shifts)
+        $grossMinutes = $timeIn->diffInMinutes($now, false);
+        if ($grossMinutes < 0) {
+            $grossMinutes += 1440;
+        }
         
         // Calculate Total Break Duration from EmployeeBreak table (Single Source of Truth)
         // This ensures multiple breaks and admin-edited breaks are accounted for.
@@ -784,7 +822,10 @@ class AttendanceRecordController extends Controller
         if ($totalBreakMinutes == 0 && $attendanceRecord->break_start && $attendanceRecord->break_end) {
              $start = Carbon::parse($attendanceRecord->break_start);
              $end = Carbon::parse($attendanceRecord->break_end);
-             $totalBreakMinutes = abs($end->diffInMinutes($start));
+             $totalBreakMinutes = $start->diffInMinutes($end, false);
+             if ($totalBreakMinutes < 0) {
+                 $totalBreakMinutes += 1440;
+             }
         }
 
         $netMinutes = max(0, $grossMinutes - $totalBreakMinutes);
@@ -1157,17 +1198,57 @@ class AttendanceRecordController extends Controller
             $changes[] = "break_end to {$request->break_end}";
         }
 
+        // Sync EmployeeBreak (SSOT) to ensure consistency with legacy columns
+        if ($request->has('break_start') || $request->has('break_end')) {
+             $break = \App\Models\EmployeeBreak::where('attendance_id', $attendanceRecord->id)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+             if ($break) {
+                 if ($request->has('break_start')) {
+                     $break->break_start = $attendanceRecord->break_start;
+                 }
+                 if ($request->has('break_end')) {
+                     $break->break_end = $attendanceRecord->break_end;
+                 }
+                 // Recalc duration
+                 if ($break->break_start && $break->break_end) {
+                     $break->duration_minutes = ($break->break_start->diffInMinutes($break->break_end, false) < 0 ? $break->break_start->diffInMinutes($break->break_end, false) + 1440 : $break->break_start->diffInMinutes($break->break_end, false));
+                 } else {
+                     $break->duration_minutes = 0;
+                 }
+                 $break->save();
+             } else {
+                 // Create new entry if legacy columns are set but no break record exists
+                 if ($attendanceRecord->break_start) {
+                     \App\Models\EmployeeBreak::create([
+                         'attendance_id' => $attendanceRecord->id,
+                         'user_id' => $attendanceRecord->user_id,
+                         'break_date' => $attendanceRecord->attendance_date,
+                         'break_start' => $attendanceRecord->break_start,
+                         'break_end' => $attendanceRecord->break_end,
+                         'duration_minutes' => ($attendanceRecord->break_start && $attendanceRecord->break_end) 
+                             ? ($attendanceRecord->break_start->diffInMinutes($attendanceRecord->break_end, false) < 0 ? $attendanceRecord->break_start->diffInMinutes($attendanceRecord->break_end, false) + 1440 : $attendanceRecord->break_start->diffInMinutes($attendanceRecord->break_end, false))
+                             : 0,
+                         'break_type' => 'Manual'
+                     ]);
+                 }
+             }
+        }
+
         // Recalculate hours worked if times changed (Fixed for overnight shifts)
         if ($attendanceRecord->time_in && $attendanceRecord->time_out) {
             $timeIn = Carbon::parse($attendanceRecord->time_in);
             $timeOut = Carbon::parse($attendanceRecord->time_out);
-            // Use absolute difference for overnight shifts
-            $diffInMinutes = abs($timeOut->diffInMinutes($timeIn));
+            // Handle overnight shifts
+            $diffInMinutes = $timeIn->diffInMinutes($timeOut, false);
+            if ($diffInMinutes < 0) $diffInMinutes += 1440;
             
             if ($attendanceRecord->break_start && $attendanceRecord->break_end) {
                 $breakStart = Carbon::parse($attendanceRecord->break_start);
                 $breakEnd = Carbon::parse($attendanceRecord->break_end);
-                $breakMinutes = abs($breakEnd->diffInMinutes($breakStart));
+                $breakMinutes = $breakStart->diffInMinutes($breakEnd, false);
+                if ($breakMinutes < 0) $breakMinutes += 1440;
                 $diffInMinutes = max(0, $diffInMinutes - $breakMinutes);
             }
             

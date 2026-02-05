@@ -739,14 +739,24 @@ class ReportController extends Controller
                 // Calculate hours worked (Fixed for overnight shifts)
                 $hours = null;
                 if ($record->time_in && $record->time_out) {
-                    // Use absolute difference to handle overnight shifts correctly
-                    $totalMinutes = abs($record->time_in->diffInMinutes($record->time_out));
+                    // Calculate total duration
+                    $totalMinutes = $record->time_in->diffInMinutes($record->time_out, false);
                     
-                    // Subtract break time (also use absolute)
-                    if ($record->break_start && $record->break_end) {
-                        $breakMinutes = abs($record->break_start->diffInMinutes($record->break_end));
-                        $totalMinutes -= $breakMinutes;
+                    // If negative, it means it's an overnight shift stored on same day date
+                    if ($totalMinutes < 0) {
+                        $totalMinutes += 1440; // Add 24 hours
                     }
+                    
+                    // Subtract break time
+                    $breakMinutes = 0;
+                    if ($record->breaks()->exists()) {
+                        $breakMinutes = $record->breaks()->sum('duration_minutes');
+                    } elseif ($record->break_start && $record->break_end) {
+                        $breakMinutes = $record->break_start->diffInMinutes($record->break_end, false);
+                        if ($breakMinutes < 0) $breakMinutes += 1440;
+                    }
+                    
+                    $totalMinutes -= $breakMinutes;
                     
                     // Ensure non-negative
                     $totalMinutes = max(0, $totalMinutes);
@@ -776,7 +786,7 @@ class ReportController extends Controller
                 $virtualStatus = $isPast ? 'absent' : 'pending';
                 
                 return [
-                    'id' => 'virtual_' . $user->id,
+                    'id' => 'virtual_' . hash('sha256', $user->id . config('app.key')),
                     'is_virtual' => true,
                     'employee_id' => $user->employee_id ?? 'N/A',
                     'name' => $user->full_name,
@@ -1017,5 +1027,51 @@ class ReportController extends Controller
         $filename = "attendance-report-{$user->employee_id}.xlsx";
         
         return Excel::download(new \App\Exports\EmployeeHistoryExport($user), $filename);
+    }
+
+    /**
+     * Fix all attendance records in the database (Cleanup Utility).
+     * Since Shell is not available on Render Free Tier, this can be triggered via URL.
+     */
+    public function reconcileDatabaseHours(Request $request)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $records = \App\Models\AttendanceRecord::whereNotNull('time_in')
+            ->whereNotNull('time_out')
+            ->get();
+
+        $fixedCount = 0;
+        foreach ($records as $record) {
+            $timeIn = $record->time_in;
+            $timeOut = $record->time_out;
+
+            // Proper midnight-aware difference
+            $grossMinutes = $timeIn->diffInMinutes($timeOut, false);
+            if ($grossMinutes < 0) $grossMinutes += 1440;
+
+            // Break calculation
+            $breakMinutes = $record->breaks()->sum('duration_minutes');
+            if ($breakMinutes == 0 && $record->break_start && $record->break_end) {
+                $bDiff = $record->break_start->diffInMinutes($record->break_end, false);
+                $breakMinutes = $bDiff < 0 ? $bDiff + 1440 : $bDiff;
+            }
+
+            $netHours = round(max(0, $grossMinutes - $breakMinutes) / 60, 2);
+
+            // Update only if different
+            if (abs($record->hours_worked - $netHours) > 0.01) {
+                $record->hours_worked = $netHours;
+                $record->save();
+                $fixedCount++;
+            }
+        }
+
+        return response()->json([
+            'message' => "Successfully reconciled $fixedCount records.",
+            'total_processed' => $records->count()
+        ]);
     }
 }

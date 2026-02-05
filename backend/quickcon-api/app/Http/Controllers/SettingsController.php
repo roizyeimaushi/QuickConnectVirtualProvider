@@ -15,7 +15,18 @@ class SettingsController extends Controller
      */
     public function index()
     {
-        $settings = Setting::all()->pluck('value', 'key')->toArray();
+        $allSettings = Setting::all()->pluck('value', 'key')->toArray();
+        
+        // Define public-safe keys (whitelist)
+        $publicKeys = [
+            'company_name', 'system_logo', 'timezone', 'language', 'date_format', 'time_format',
+            'grace_period', 'late_threshold', 'allow_multi_checkin', 'checkin_start', 'session_timeout',
+            'require_ot_approval', 'break_duration', 'break_start_window', 'break_end_window',
+            '2fa_enabled', 'pass_min_length', 'pass_special_chars'
+        ];
+
+        // Filter settings
+        $settings = array_intersect_key($allSettings, array_flip($publicKeys));
         
         // Define defaults for critical settings that should never be empty
         $defaults = [

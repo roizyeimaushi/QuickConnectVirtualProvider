@@ -127,7 +127,10 @@ class AuthController extends Controller
         // Clear rate limit on successful login
         RateLimiter::clear($throttleKey);
 
-        // No 2FA - proceed with normal login
+        // Security: Revoke all previous tokens to enforce single active session per user
+        // This prevents concurrent session hijacking
+        $user->tokens()->delete();
+        
         $token = $user->createToken('auth_token')->plainTextToken;
 
         // Create new User Session
@@ -185,6 +188,7 @@ class AuthController extends Controller
             $user->id
         );
 
+        // Revoke the specific token used for the request
         $request->user()->currentAccessToken()->delete();
 
         return response()->json(['message' => 'Logged out successfully']);
@@ -211,6 +215,8 @@ class AuthController extends Controller
                     'logout_time' => now(),
                     'is_online' => false
                 ]);
+                
+                // Revoke token
                 $user->currentAccessToken()->delete();
                 
                 return response()->json(['message' => 'Session expired due to inactivity'], 401);
@@ -221,15 +227,32 @@ class AuthController extends Controller
                 'is_online' => true
             ]);
         } else {
-            // If no active session but user is authenticated, create one (healing)
-             $session = UserSession::create([
-                'user_id' => $user->id,
-                'login_time' => now(),
-                'is_online' => true,
-                'last_activity' => now(),
-                'ip_address' => $request->ip(),
-                'user_agent' => $request->header('User-Agent'),
-            ]);
+            // Self-Healing: If authenticated but no session marked online, verify if a recent session exists
+            // This prevents creating duplicates if the heartbeat logic runs multiple times or after a server restart
+            
+            $recentSession = UserSession::where('user_id', $user->id)
+                ->where('created_at', '>=', now()->subHours(12)) // Conservative check
+                ->whereNull('logout_time')
+                ->orderBy('created_at', 'desc')
+                ->first();
+                
+            if ($recentSession) {
+                // Reactive existing session
+                $recentSession->update([
+                    'is_online' => true,
+                    'last_activity' => now()
+                ]);
+            } else {
+                // Create new only if absolutely needed
+                $session = UserSession::create([
+                    'user_id' => $user->id,
+                    'login_time' => now(),
+                    'is_online' => true,
+                    'last_activity' => now(),
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->header('User-Agent'),
+                ]);
+            }
         }
 
         return response()->json(['status' => 'ok']);
