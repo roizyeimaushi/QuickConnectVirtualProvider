@@ -971,10 +971,30 @@ class ReportController extends Controller
             : 0;
             
         // 2. Get Full History (Paginated)
-        $history = AttendanceRecord::with(['session.schedule'])
+        $history = AttendanceRecord::with(['session.schedule', 'breaks'])
             ->where('user_id', $user->id)
             ->orderBy('attendance_date', 'desc')
-            ->get(); // Fetch all for this page, usually fine for single user history
+            ->get();
+        
+        // 3. Recalculate hours_worked for each record (fix for overnight shifts)
+        $history->transform(function ($record) {
+            if ($record->time_in && $record->time_out) {
+                // Recalculate using absolute difference for overnight shifts
+                $totalMinutes = abs($record->time_in->diffInMinutes($record->time_out));
+                
+                // Subtract break time from EmployeeBreak table
+                $breakMinutes = $record->breaks()->sum('duration_minutes');
+                
+                // Fallback to legacy break columns
+                if ($breakMinutes == 0 && $record->break_start && $record->break_end) {
+                    $breakMinutes = abs($record->break_start->diffInMinutes($record->break_end));
+                }
+                
+                $netMinutes = max(0, $totalMinutes - $breakMinutes);
+                $record->hours_worked = round($netMinutes / 60, 2);
+            }
+            return $record;
+        });
             
         return response()->json([
             'employee' => $user,
