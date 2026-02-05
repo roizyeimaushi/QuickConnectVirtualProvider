@@ -292,11 +292,14 @@ function ActiveSessionCard({ session, loading }) {
                                 session.status === 'completed' ? 'secondary' :
                                     'outline'
                         }
-                        className={session.status === 'completed' ? 'bg-amber-100 text-amber-700 border-amber-200' : ''}
+                        className={
+                            session.status === 'completed' ? 'bg-amber-100 text-amber-700 border-amber-200 shadow-sm' :
+                                session.status === 'locked' ? 'bg-slate-100 text-slate-700 border-slate-200' : ''
+                        }
                     >
-                        {session.status === 'active' ? 'Active' :
-                            session.status === 'completed' ? 'Completed (Awaiting Review)' :
-                                session.status.charAt(0).toUpperCase() + session.status.slice(1)}
+                        {session.status === 'active' ? 'Live' :
+                            session.status === 'completed' ? 'Awaiting Review' :
+                                session.status === 'locked' ? 'Finalized' : 'Scheduled'}
                     </Badge>
                 </div>
             </CardHeader>

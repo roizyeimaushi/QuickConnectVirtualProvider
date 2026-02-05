@@ -230,33 +230,75 @@ class AttendanceSessionController extends Controller
         return response()->json(['message' => 'Session and associated records deleted successfully']);
     }
 
-    public function lock(AttendanceSession $attendanceSession)
+    public function lock(Request $request, AttendanceSession $attendanceSession)
     {
         if ($attendanceSession->status === 'locked') {
             return response()->json(['message' => 'Session is already locked'], 422);
         }
 
+        $validated = $request->validate([
+            'attendance_required' => 'nullable|boolean',
+            'session_type' => 'nullable|string|in:Normal,Emergency,Holiday,Maintenance',
+            'completion_reason' => 'nullable|string|max:255',
+        ]);
+
         $oldStatus = $attendanceSession->status;
         $attendanceSession->update([
             'status' => 'locked',
+            'attendance_required' => $validated['attendance_required'] ?? $attendanceSession->attendance_required,
+            'session_type' => $validated['session_type'] ?? $attendanceSession->session_type,
+            'completion_reason' => $validated['completion_reason'] ?? $attendanceSession->completion_reason,
             'locked_at' => now(),
+            'locked_by' => auth()->id(),
         ]);
 
         AuditLog::log(
             'lock_session',
-            "Locked attendance session for {$attendanceSession->date->format('Y-m-d')}",
+            "Locked attendance session for {$attendanceSession->date->format('Y-m-d')}. Type: {$attendanceSession->session_type}, Required: " . ($attendanceSession->attendance_required ? 'Yes' : 'No'),
             AuditLog::STATUS_SUCCESS,
             auth()->id(),
             'AttendanceSession',
             $attendanceSession->id,
             ['status' => $oldStatus],
-            ['status' => 'locked']
+            ['status' => 'locked', 'type' => $attendanceSession->session_type]
         );
+
+        // 3. Finalize Employee Statuses
+        $finalStatus = $attendanceSession->attendance_required ? 'absent' : 'excused';
+        $reason = $attendanceSession->completion_reason ?: ($attendanceSession->session_type . " Finalization");
+
+        // Use a loop to ensure audit logs/events are triggered if necessary, 
+        // but for performance, bulk update is better for large teams.
+        // We'll update only those who are still 'pending' or have no record (virtual)
+        
+        // First, get all employees who SHOULD have been there
+        $activeEmployees = \App\Models\User::where('role', 'employee')->where('status', 'active')->get();
+        
+        foreach ($activeEmployees as $employee) {
+            $record = \App\Models\AttendanceRecord::firstOrNew([
+                'user_id' => $employee->id,
+                'session_id' => $attendanceSession->id,
+                'attendance_date' => $attendanceSession->date->toDateString(),
+            ]);
+
+            // Only update if it's a new record or still pending
+            if (!$record->exists || $record->status === 'pending') {
+                $record->status = $finalStatus;
+                if (!$record->exists) {
+                    $record->created_by = auth()->id();
+                }
+                // Only set excuse_reason if we are marking as excused
+                if ($finalStatus === 'excused') {
+                    $record->excuse_reason = $reason;
+                }
+                $record->save();
+            }
+        }
 
         // Broadcast real-time session update
         event(new SessionUpdated($attendanceSession, 'locked'));
 
-        return response()->json($attendanceSession->load(['schedule', 'creator']));
+        return response()->json($attendanceSession->load(['schedule', 'creator', 'lockedBy']));
     }
 
     public function unlock(AttendanceSession $attendanceSession)

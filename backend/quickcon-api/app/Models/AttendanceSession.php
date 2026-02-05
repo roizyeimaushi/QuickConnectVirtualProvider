@@ -13,8 +13,12 @@ class AttendanceSession extends Model
         'schedule_id',
         'date',
         'status',
+        'attendance_required',
+        'session_type',
+        'completion_reason',
         'opened_at',
         'locked_at',
+        'locked_by',
         'auto_lock_time',
         'created_by',
     ];
@@ -23,6 +27,7 @@ class AttendanceSession extends Model
     {
         return [
             'date' => 'date',
+            'attendance_required' => 'boolean',
             'opened_at' => 'datetime',
             'locked_at' => 'datetime',
             'auto_lock_time' => 'datetime',
@@ -37,6 +42,11 @@ class AttendanceSession extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function lockedBy()
+    {
+        return $this->belongsTo(User::class, 'locked_by');
     }
 
     public function records()

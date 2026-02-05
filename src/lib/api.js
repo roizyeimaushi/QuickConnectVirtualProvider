@@ -372,8 +372,8 @@ export const sessionsApi = {
         invalidateCache(['/sessions', '/attendance-sessions', '/dashboard']);
         return result;
     },
-    lock: async (id) => {
-        const result = await api.patch(`/attendance-sessions/${id}/lock`);
+    lock: async (id, data = {}) => {
+        const result = await api.patch(`/attendance-sessions/${id}/lock`, data);
         invalidateCache(['/sessions', '/attendance-sessions', '/dashboard']);
         return result;
     },

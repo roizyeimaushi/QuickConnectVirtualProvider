@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { EditRecordDialog } from "@/components/attendance/edit-record-dialog";
+import { LockSessionDialog } from "@/components/attendance/lock-session-dialog";
 import { attendanceApi, sessionsApi } from "@/lib/api";
 import { formatTime24, formatDate } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -84,6 +85,7 @@ export default function SessionDetailsPage() {
     const [virtualRecordDialogOpen, setVirtualRecordDialogOpen] = useState(false);
     const [recordToDelete, setRecordToDelete] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [lockDialogOpen, setLockDialogOpen] = useState(false);
 
     const fetchSession = async (isPolling = false) => {
         if (!id) return;
@@ -171,25 +173,44 @@ export default function SessionDetailsPage() {
         }
     };
 
+    const handleLockSession = async (lockData) => {
+        try {
+            await sessionsApi.lock(id, lockData);
+            toast({
+                title: "Session locked",
+                description: "The attendance session has been finalized.",
+                variant: "success",
+            });
+            fetchSession(true);
+            setLockDialogOpen(false);
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: error.message || "Failed to lock session",
+                variant: "destructive",
+            });
+        }
+    };
+
     const statusConfig = {
         active: {
             label: "Active",
-            color: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400",
-            icon: CheckCircle2,
-        },
-        pending: {
-            label: "Pending",
-            color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+            color: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 shadow-sm font-semibold",
             icon: Timer,
         },
+        pending: {
+            label: "Scheduled",
+            color: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400 border-gray-200",
+            icon: Calendar,
+        },
         locked: {
-            label: "Locked",
-            color: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
+            label: "Finalized",
+            color: "bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-400 border-slate-200 font-medium",
             icon: Lock,
         },
         completed: {
             label: "Completed",
-            color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+            color: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 font-medium",
             icon: CheckCircle2,
         },
         // Record Statuses (Matching History Page)
@@ -210,7 +231,7 @@ export default function SessionDetailsPage() {
         },
         excused: {
             label: "Excused",
-            color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+            color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 font-medium",
             icon: CheckCircle2,
         },
         left_early: {
@@ -261,56 +282,119 @@ export default function SessionDetailsPage() {
                             {formatDate(session.date, "MMMM d, yyyy")} • {session.schedule?.name}
                         </p>
                     </div>
-                    <div className="ml-auto">
-                        <Badge className={`${statusColor} px-3 py-1`}>
+                    <div className="ml-auto flex items-center gap-3">
+                        {session.status === 'completed' && (
+                            <Button
+                                onClick={() => setLockDialogOpen(true)}
+                                className="bg-amber-600 hover:bg-amber-700"
+                            >
+                                <Lock className="mr-2 h-4 w-4" />
+                                Finalize & Lock
+                            </Button>
+                        )}
+                        <Badge className={`${statusColor} px-3 py-1 border shadow-sm`}>
                             <StatusIcon className="mr-1 h-3 w-3" />
                             {statusLabel}
                         </Badge>
                     </div>
                 </div>
 
-                {/* Session Info Card */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Session Information</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid gap-6 md:grid-cols-4">
-                            <div className="space-y-1">
-                                <p className="text-sm font-medium text-muted-foreground">Date</p>
-                                <div className="flex items-center gap-2">
-                                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                                    <span className="font-medium">{formatDate(session.date, "MMM d, yyyy")}</span>
+                <div className="grid gap-6 md:grid-cols-2">
+                    {/* Session Info Card */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                                Schedule Information
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <div className="space-y-1">
+                                    <p className="text-xs font-medium text-muted-foreground">Date</p>
+                                    <div className="flex items-center gap-2 text-sm">
+                                        <Calendar className="h-4 w-4 text-primary" />
+                                        <span className="font-semibold">{formatDate(session.date, "MMM d, yyyy")}</span>
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-xs font-medium text-muted-foreground">Schedule Time</p>
+                                    <div className="flex items-center gap-2 text-sm">
+                                        <Clock className="h-4 w-4 text-primary" />
+                                        <span className="font-semibold">
+                                            {formatTime24(session.schedule?.time_in)} - {formatTime24(session.schedule?.time_out)}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-xs font-medium text-muted-foreground">Created By</p>
+                                    <div className="flex items-center gap-2 text-sm">
+                                        <User className="h-4 w-4 text-primary" />
+                                        <span className="font-semibold">{session.creator?.name || "System"}</span>
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-xs font-medium text-muted-foreground">Attendance</p>
+                                    <div className="flex items-center gap-2 text-sm">
+                                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                                        <span className="font-semibold">
+                                            {session.records?.filter(r => r.time_in).length || 0} / {session.total_employees_count || session.records?.length || 0} Present
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="space-y-1">
-                                <p className="text-sm font-medium text-muted-foreground">Schedule Time</p>
-                                <div className="flex items-center gap-2">
-                                    <Clock className="h-4 w-4 text-muted-foreground" />
-                                    <span className="font-medium">
-                                        {formatTime24(session.schedule?.time_in)} - {formatTime24(session.schedule?.time_out)}
-                                    </span>
+                        </CardContent>
+                    </Card>
+
+                    {/* Context Card */}
+                    <Card className={session.status === 'locked' && session.session_type === 'Emergency' ? 'border-amber-200 bg-amber-50/30' : ''}>
+                        <CardHeader>
+                            <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
+                                Decision Context
+                                {session.status === 'locked' && (
+                                    <Badge variant="outline" className="text-[10px] bg-white">
+                                        {session.session_type}
+                                    </Badge>
+                                )}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <div className="space-y-1">
+                                    <p className="text-xs font-medium text-muted-foreground">Attendance Required</p>
+                                    <div className="flex items-center gap-2 text-sm">
+                                        {session.status === 'locked' ? (
+                                            session.attendance_required ? (
+                                                <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 h-6">✅ Yes</Badge>
+                                            ) : (
+                                                <Badge variant="destructive" className="bg-red-100 text-red-800 hover:bg-red-100 border-red-200 h-6">❌ No</Badge>
+                                            )
+                                        ) : (
+                                            <span className="italic text-muted-foreground">Awaiting review...</span>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-xs font-medium text-muted-foreground">
+                                        {session.status === 'locked' ? 'Finalized By' : 'Review Status'}
+                                    </p>
+                                    <div className="flex items-center gap-2 text-sm">
+                                        <User className="h-4 w-4 text-muted-foreground" />
+                                        <span className="font-semibold">
+                                            {session.status === 'locked' ? (session.locked_by_user?.name || "Administrator") : "Pending Review"}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="md:col-span-2 space-y-1">
+                                    <p className="text-xs font-medium text-muted-foreground">Reason / Context</p>
+                                    <div className="p-2 rounded bg-muted min-h-[40px] text-sm">
+                                        {session.completion_reason || (session.status === 'locked' ? "No protocol notes provided." : "Attendance finalized by system time policy. Waiting for admin verdict.")}
+                                    </div>
                                 </div>
                             </div>
-                            <div className="space-y-1">
-                                <p className="text-sm font-medium text-muted-foreground">Created By</p>
-                                <div className="flex items-center gap-2">
-                                    <User className="h-4 w-4 text-muted-foreground" />
-                                    <span className="font-medium">{session.creator?.name || "System"}</span>
-                                </div>
-                            </div>
-                            <div className="space-y-1">
-                                <p className="text-sm font-medium text-muted-foreground">Attendance</p>
-                                <div className="flex items-center gap-2">
-                                    <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-                                    <span className="font-medium">
-                                        {session.records?.length || 0} Records
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
+                </div>
 
                 {/* Attendance Records Table */}
                 <Card>
@@ -434,6 +518,7 @@ export default function SessionDetailsPage() {
                                                 <TableHead className="text-center">Break</TableHead>
                                                 <TableHead className="text-center">Time Out</TableHead>
                                                 <TableHead className="text-center">Status</TableHead>
+                                                <TableHead className="text-center">Reason</TableHead>
                                                 <TableHead className="text-center">Device & Location</TableHead>
                                                 <TableHead className="text-right">Actions</TableHead>
                                             </TableRow>
@@ -524,6 +609,11 @@ export default function SessionDetailsPage() {
                                                             {record.user?.status === 'inactive' ? 'inactive' : (statusConfig[record.status]?.label || record.status)}
                                                         </Badge>
                                                     </TableCell>
+                                                    <TableCell className="text-center">
+                                                        <span className="text-xs text-muted-foreground italic">
+                                                            {record.excuse_reason || (record.status === 'late' ? 'Late Arrival' : record.status === 'absent' ? 'Unaccounted' : '-')}
+                                                        </span>
+                                                    </TableCell>
                                                     <TableCell className="text-center text-xs text-muted-foreground">
                                                         {record.user?.status === 'inactive' ? (
                                                             <span className="italic text-red-500">Account inactive</span>
@@ -591,6 +681,14 @@ export default function SessionDetailsPage() {
                     onSuccess={() => fetchSession(true)}
                 />
             )}
+
+            {/* Lock Session Dialog */}
+            <LockSessionDialog
+                session={session}
+                open={lockDialogOpen}
+                onOpenChange={setLockDialogOpen}
+                onConfirm={handleLockSession}
+            />
 
             {/* Delete Confirmation Dialog */}
             <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

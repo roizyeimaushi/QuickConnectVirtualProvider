@@ -6,6 +6,7 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { LockSessionDialog } from "@/components/attendance/lock-session-dialog";
 
 import {
     Table,
@@ -103,11 +104,11 @@ export default function AttendanceSessionsPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const handleLockSession = async () => {
+    const handleLockSession = async (lockData) => {
         if (!lockDialog.session) return;
 
         try {
-            await sessionsApi.lock(lockDialog.session.id);
+            await sessionsApi.lock(lockDialog.session.id, lockData);
             setSessions((prev) =>
                 prev.map((s) =>
                     s.id === lockDialog.session.id ? { ...s, status: "locked" } : s
@@ -116,7 +117,7 @@ export default function AttendanceSessionsPage() {
 
             toast({
                 title: "Session locked",
-                description: "The attendance session has been locked.",
+                description: "The attendance session has been finalized and locked.",
             });
         } catch (error) {
             toast({
@@ -182,23 +183,23 @@ export default function AttendanceSessionsPage() {
     const statusConfig = {
         active: {
             label: "Active",
-            color: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200",
+            color: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 shadow-sm font-semibold",
             icon: Timer,
         },
         completed: {
             label: "Completed",
-            color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200",
+            color: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 font-medium",
             icon: CheckCircle2,
         },
         locked: {
-            label: "Locked",
-            color: "bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-400 border-slate-200",
+            label: "Finalized",
+            color: "bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-400 border-slate-200 font-medium",
             icon: Lock,
         },
         pending: {
-            label: "Pending",
+            label: "Scheduled",
             color: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400 border-gray-200",
-            icon: AlertCircle,
+            icon: Calendar,
         },
     };
 
@@ -555,28 +556,12 @@ export default function AttendanceSessionsPage() {
                 </Card>
 
                 {/* Lock Confirmation Dialog */}
-                <AlertDialog
+                <LockSessionDialog
                     open={lockDialog.open}
                     onOpenChange={(open) => setLockDialog({ open, session: lockDialog.session })}
-                >
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Lock Session</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                Are you sure you want to lock this session? This will prevent any further
-                                attendance confirmations for{" "}
-                                <strong>{formatDate(lockDialog.session?.date, "MMMM d, yyyy")}</strong>.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleLockSession}>
-                                <Lock className="mr-2 h-4 w-4" />
-                                Lock Session
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
+                    session={lockDialog.session}
+                    onConfirm={handleLockSession}
+                />
 
                 {/* Unlock Confirmation Dialog */}
                 <AlertDialog
