@@ -38,7 +38,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { employeesApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import { getInitials, debounce } from "@/lib/utils";
+import { getInitials, debounce, formatDate } from "@/lib/utils";
 import {
     Search,
     Plus,
@@ -383,8 +383,8 @@ export default function EmployeesPage() {
                                                     </div>
                                                     {employee.last_attendance_status && (
                                                         <Badge variant="outline" className={`text-[10px] h-4 py-0 ${employee.last_attendance_status === 'present' ? 'text-emerald-600 border-emerald-200' :
-                                                                employee.last_attendance_status === 'late' ? 'text-amber-600 border-amber-200' :
-                                                                    'text-red-600 border-red-200'
+                                                            employee.last_attendance_status === 'late' ? 'text-amber-600 border-amber-200' :
+                                                                'text-red-600 border-red-200'
                                                             }`}>
                                                             {employee.last_attendance_status}
                                                         </Badge>
