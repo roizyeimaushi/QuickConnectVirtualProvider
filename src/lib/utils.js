@@ -46,6 +46,34 @@ export function formatTime24(time) {
     return time;
 }
 
+/**
+ * Format minutes to HH:mm format
+ * @param {number} minutes - Total minutes
+ * @returns {string} Formatted duration string (e.g., 4:35)
+ */
+export function formatDuration(minutes) {
+    if (minutes === null || minutes === undefined || isNaN(minutes)) return '0:00';
+
+    const absMinutes = Math.abs(minutes);
+    const h = Math.floor(absMinutes / 60);
+    const m = Math.round(absMinutes % 60);
+
+    return `${h}:${m.toString().padStart(2, '0')}`;
+}
+
+/**
+ * Format decimal hours to HH:mm format
+ * @param {number|string} decimal - Hours in decimal (e.g., 4.58)
+ * @returns {string} Formatted duration string (e.g., 4:35)
+ */
+export function formatDecimalHours(decimal) {
+    if (decimal === null || decimal === undefined || decimal === "") return "—";
+    const num = parseFloat(decimal);
+    if (isNaN(num) || num === 0) return "—";
+
+    return formatDuration(num * 60);
+}
+
 
 
 /**

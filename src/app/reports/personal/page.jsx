@@ -16,6 +16,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { formatDecimalHours, formatDuration } from "@/lib/utils";
 
 export default function PersonalReportPage() {
     const { toast } = useToast();
@@ -188,9 +189,9 @@ export default function PersonalReportPage() {
                                                     </p>
                                                 </div>
                                                 <div className="bg-muted/50 rounded p-2 text-center">
-                                                    <p className="text-xs text-muted-foreground">Break</p>
+                                                    <p className="text-xs text-muted-foreground">Break Duration</p>
                                                     <p className="font-mono font-medium">
-                                                        {record.break_start ? new Date(record.break_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
+                                                        {record.break_minutes > 0 ? formatDuration(record.break_minutes) : "0:00"}
                                                     </p>
                                                 </div>
                                                 <div className="bg-muted/50 rounded p-2 text-center">
@@ -204,15 +205,14 @@ export default function PersonalReportPage() {
                                             {/* Stats */}
                                             <div className="grid grid-cols-2 gap-2 text-sm pt-2 border-t">
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-muted-foreground">Late:</span>
-                                                    {record.minutes_late > 0 ?
-                                                        <span className="text-red-500 font-bold">{record.minutes_late} min</span> :
-                                                        <span>0 min</span>
-                                                    }
+                                                    <span className="text-muted-foreground">Worked Time:</span>
+                                                    <span className="font-medium">{formatDecimalHours(record.hours_worked)}</span>
                                                 </div>
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-muted-foreground">Worked:</span>
-                                                    <span className="font-medium">{record.hours_worked} hrs</span>
+                                                    <span className="text-muted-foreground">Overtime:</span>
+                                                    <span className="font-medium text-amber-600">
+                                                        {record.overtime_minutes > 0 ? formatDuration(record.overtime_minutes) : "0:00"}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
@@ -227,10 +227,10 @@ export default function PersonalReportPage() {
                                                 <TableHead>Date</TableHead>
                                                 <TableHead>Schedule</TableHead>
                                                 <TableHead className="text-center">Time In</TableHead>
-                                                <TableHead className="text-center">Break</TableHead>
+                                                <TableHead className="text-center">Break Duration</TableHead>
                                                 <TableHead className="text-center">Time Out</TableHead>
-                                                <TableHead className="text-center">Late (mins)</TableHead>
-                                                <TableHead className="text-center">Worked (hrs)</TableHead>
+                                                <TableHead className="text-center">Worked Time</TableHead>
+                                                <TableHead className="text-center">Overtime</TableHead>
                                                 <TableHead className="text-right">Status</TableHead>
                                             </TableRow>
                                         </TableHeader>
@@ -245,15 +245,17 @@ export default function PersonalReportPage() {
                                                         {record.time_in ? new Date(record.time_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
                                                     </TableCell>
                                                     <TableCell className="text-center">
-                                                        {record.break_start ? new Date(record.break_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
+                                                        {record.break_minutes > 0 ? formatDuration(record.break_minutes) : "0:00"}
                                                     </TableCell>
                                                     <TableCell className="text-center">
                                                         {record.time_out ? new Date(record.time_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
                                                     </TableCell>
-                                                    <TableCell className="text-center">
-                                                        {record.minutes_late > 0 ? <span className="text-red-500 font-bold">{record.minutes_late}</span> : 0}
+                                                    <TableCell className="text-center font-mono">
+                                                        {formatDecimalHours(record.hours_worked)}
                                                     </TableCell>
-                                                    <TableCell className="text-center">{record.hours_worked}</TableCell>
+                                                    <TableCell className="text-center font-mono text-amber-600">
+                                                        {record.overtime_minutes > 0 ? formatDuration(record.overtime_minutes) : "0:00"}
+                                                    </TableCell>
                                                     <TableCell className="text-right">
                                                         {getStatusBadge(record.status)}
                                                     </TableCell>

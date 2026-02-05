@@ -1005,6 +1005,8 @@ class ReportController extends Controller
                 $record->break_start = null;
                 $record->break_end = null;
                 $record->hours_worked = 0; // Ensure logic consistency
+                $record->break_minutes = 0;
+                $record->overtime_minutes = 0;
             } elseif ($record->time_in && $record->time_out) {
                 // FIXED CALCULATION (Ignore broken DB column)
                 $timeIn = $record->time_in;
@@ -1021,6 +1023,25 @@ class ReportController extends Controller
                 
                 $net = max(0, $diff - $breakMins);
                 $record->hours_worked = round($net / 60, 2);
+                $record->break_minutes = $breakMins;
+
+                // Overtime Calculation (Early relative to Schedule In, Late relative to Schedule Out)
+                if ($record->session && $record->session->schedule) {
+                    $schedule = $record->session->schedule;
+                    $sessionDate = $record->attendance_date->format('Y-m-d');
+                    
+                    $schedIn = Carbon::parse("$sessionDate {$schedule->time_in}");
+                    $schedOut = Carbon::parse("$sessionDate {$schedule->time_out}");
+                    if ($schedule->is_overnight || $schedOut->lt($schedIn)) {
+                        $schedOut->addDay();
+                    }
+
+                    $otIn = $timeIn->lt($schedIn) ? $timeIn->diffInMinutes($schedIn) : 0;
+                    $otOut = $timeOut->gt($schedOut) ? $schedOut->diffInMinutes($timeOut) : 0;
+                    $record->overtime_minutes = $otIn + $otOut;
+                } else {
+                    $record->overtime_minutes = 0;
+                }
             }
             return $record;
         });
@@ -1098,6 +1119,8 @@ class ReportController extends Controller
         $history->transform(function ($record) {
             if ($record->status === 'absent' || $record->status === 'pending') {
                 $record->hours_worked = 0;
+                $record->break_minutes = 0;
+                $record->overtime_minutes = 0;
             } elseif ($record->time_in && $record->time_out) {
                 // Handle midnight crossing correctly (No abs!)
                 $totalMinutes = $record->time_in->diffInMinutes($record->time_out, false);
@@ -1114,6 +1137,25 @@ class ReportController extends Controller
                 
                 $netMinutes = max(0, $totalMinutes - $breakMinutes);
                 $record->hours_worked = round($netMinutes / 60, 2);
+                $record->break_minutes = $breakMinutes;
+
+                // Overtime Calculation
+                if ($record->session && $record->session->schedule) {
+                    $schedule = $record->session->schedule;
+                    $sessionDate = $record->attendance_date->format('Y-m-d');
+                    
+                    $schedIn = Carbon::parse("$sessionDate {$schedule->time_in}");
+                    $schedOut = Carbon::parse("$sessionDate {$schedule->time_out}");
+                    if ($schedule->is_overnight || $schedOut->lt($schedIn)) {
+                        $schedOut->addDay();
+                    }
+
+                    $otIn = $record->time_in->lt($schedIn) ? $record->time_in->diffInMinutes($schedIn) : 0;
+                    $otOut = $record->time_out->gt($schedOut) ? $schedOut->diffInMinutes($record->time_out) : 0;
+                    $record->overtime_minutes = $otIn + $otOut;
+                } else {
+                    $record->overtime_minutes = 0;
+                }
             }
             return $record;
         });

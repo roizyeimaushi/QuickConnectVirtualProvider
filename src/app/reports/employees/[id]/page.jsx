@@ -18,7 +18,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { reportsApi } from "@/lib/api";
-import { formatDateTime, formatTime24, getInitials } from "@/lib/utils";
+import { formatDateTime, formatTime24, getInitials, formatDuration, formatDecimalHours } from "@/lib/utils";
 import { format } from "date-fns";
 import {
     ArrowLeft,
@@ -313,10 +313,18 @@ export default function EmployeeReportDetailPage() {
                                                 </div>
 
                                                 {/* Duration */}
-                                                {record.hours_worked > 0 && (
-                                                    <div className="flex items-center justify-between text-sm pt-2 border-t">
-                                                        <span className="text-muted-foreground">Duration:</span>
-                                                        <span className="font-mono font-medium">{record.hours_worked}h</span>
+                                                {(record.hours_worked > 0 || record.overtime_minutes > 0) && (
+                                                    <div className="space-y-1 pt-2 border-t">
+                                                        <div className="flex items-center justify-between text-sm">
+                                                            <span className="text-muted-foreground">Worked Time:</span>
+                                                            <span className="font-mono font-medium">{formatDecimalHours(record.hours_worked)}</span>
+                                                        </div>
+                                                        <div className="flex items-center justify-between text-sm">
+                                                            <span className="text-muted-foreground">Overtime:</span>
+                                                            <span className="font-mono font-medium text-amber-600">
+                                                                {record.overtime_minutes > 0 ? formatDuration(record.overtime_minutes) : "0:00"}
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>
@@ -332,9 +340,10 @@ export default function EmployeeReportDetailPage() {
                                                 <TableHead>Date</TableHead>
                                                 <TableHead>Schedule</TableHead>
                                                 <TableHead className="text-center">Time In</TableHead>
-                                                <TableHead className="text-center">Break</TableHead>
+                                                <TableHead className="text-center">Break Duration</TableHead>
                                                 <TableHead className="text-center">Time Out</TableHead>
-                                                <TableHead className="text-center">Duration</TableHead>
+                                                <TableHead className="text-center">Worked Time</TableHead>
+                                                <TableHead className="text-center">Overtime</TableHead>
                                                 <TableHead className="text-center">Status</TableHead>
                                             </TableRow>
                                         </TableHeader>
@@ -359,10 +368,15 @@ export default function EmployeeReportDetailPage() {
                                                         </TableCell>
                                                         <TableCell>{record.session?.schedule?.name || "—"}</TableCell>
                                                         <TableCell className="text-center font-mono">{timeIn}</TableCell>
-                                                        <TableCell className="text-center font-mono">{breakTime}</TableCell>
+                                                        <TableCell className="text-center font-mono">
+                                                            {record.break_minutes > 0 ? formatDuration(record.break_minutes) : (breakTime !== "—" ? breakTime : "0:00")}
+                                                        </TableCell>
                                                         <TableCell className="text-center font-mono">{timeOut}</TableCell>
-                                                        <TableCell className="text-center font-mono text-xs text-muted-foreground">
-                                                            {record.hours_worked > 0 ? `${record.hours_worked}h` : "—"}
+                                                        <TableCell className="text-center font-mono">
+                                                            {formatDecimalHours(record.hours_worked)}
+                                                        </TableCell>
+                                                        <TableCell className="text-center font-mono text-amber-600">
+                                                            {record.overtime_minutes > 0 ? formatDuration(record.overtime_minutes) : "0:00"}
                                                         </TableCell>
                                                         <TableCell className="text-center">
                                                             <Badge variant="outline" className={`gap-1 ${config.className}`}>
