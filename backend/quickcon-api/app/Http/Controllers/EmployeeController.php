@@ -11,7 +11,19 @@ class EmployeeController extends Controller
 {
     public function index(Request $request)
     {
-        $query = User::where('role', 'employee');
+        $query = User::where('role', 'employee')
+            ->select('users.*')
+            // Get last attendance date using subquery
+            ->addSelect(['last_attendance_date' => \App\Models\AttendanceRecord::select('attendance_date')
+                ->whereColumn('user_id', 'users.id')
+                ->orderBy('attendance_date', 'desc')
+                ->limit(1)
+            ])
+            ->addSelect(['last_attendance_status' => \App\Models\AttendanceRecord::select('status')
+                ->whereColumn('user_id', 'users.id')
+                ->orderBy('attendance_date', 'desc')
+                ->limit(1)
+            ]);
 
         if ($request->has('search') && $request->search) {
             $search = $request->search;
@@ -28,9 +40,16 @@ class EmployeeController extends Controller
         }
 
         $perPage = $request->get('per_page', 20);
-        
-        // Sort by employee_id ascending (EMP-001, EMP-002, etc.)
-        return response()->json($query->orderBy('employee_id', 'asc')->paginate($perPage));
+        $paginated = $query->orderBy('employee_id', 'asc')->paginate($perPage);
+
+        // Add summary counts to the response
+        $summary = [
+            'total' => User::where('role', 'employee')->count(),
+            'active' => User::where('role', 'employee')->where('status', 'active')->count(),
+            'inactive' => User::where('role', 'employee')->where('status', 'inactive')->count(),
+        ];
+
+        return response()->json(array_merge($paginated->toArray(), ['summary' => $summary]));
     }
 
     public function store(Request $request)

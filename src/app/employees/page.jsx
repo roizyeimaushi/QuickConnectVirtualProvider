@@ -68,6 +68,7 @@ export default function EmployeesPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalRecords, setTotalRecords] = useState(0);
+    const [summary, setSummary] = useState({ total: 0, active: 0, inactive: 0 });
     const perPage = 10;
 
     const router = useRouter();
@@ -94,10 +95,13 @@ export default function EmployeesPage() {
 
             const response = await employeesApi.getAll(params);
 
-            // Handle Pagination
+            // Handle Pagination & Summary
             setEmployees(response.data || []);
             setTotalPages(response.last_page || 1);
             setTotalRecords(response.total || 0);
+            if (response.summary) {
+                setSummary(response.summary);
+            }
 
         } catch (error) {
             // Only show error toast on initial load, not during polling
@@ -214,7 +218,6 @@ export default function EmployeesPage() {
                     </Button>
                 </div>
 
-                {/* Stats Cards */}
                 <div className="grid gap-4 md:grid-cols-3">
                     <Card>
                         <CardContent className="flex items-center gap-4 p-6">
@@ -222,7 +225,7 @@ export default function EmployeesPage() {
                                 <Users className="h-6 w-6 text-primary" />
                             </div>
                             <div>
-                                <p className="text-2xl font-bold">{employees.length}</p>
+                                <p className="text-2xl font-bold">{summary.total}</p>
                                 <p className="text-sm text-muted-foreground">Total Employees</p>
                             </div>
                         </CardContent>
@@ -233,9 +236,7 @@ export default function EmployeesPage() {
                                 <UserCheck className="h-6 w-6 text-emerald-600" />
                             </div>
                             <div>
-                                <p className="text-2xl font-bold">
-                                    {employees.filter((e) => e.status === "active").length}
-                                </p>
+                                <p className="text-2xl font-bold">{summary.active}</p>
                                 <p className="text-sm text-muted-foreground">Active</p>
                             </div>
                         </CardContent>
@@ -247,9 +248,7 @@ export default function EmployeesPage() {
                                     <UserX className="h-6 w-6 text-amber-600" />
                                 </div>
                                 <div>
-                                    <p className="text-2xl font-bold">
-                                        {employees.filter((e) => e.status === "inactive").length}
-                                    </p>
+                                    <p className="text-2xl font-bold">{summary.inactive}</p>
                                     <p className="text-sm text-muted-foreground">Inactive</p>
                                 </div>
                             </CardContent>
@@ -331,7 +330,7 @@ export default function EmployeesPage() {
                                                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                                         <DropdownMenuItem onClick={() => router.push(`/employees/edit/${employee.id}`)}>
                                                             <Pencil className="mr-2 h-4 w-4" />
-                                                            Edit
+                                                            Edit Employee
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem onClick={() => handleToggleStatus(employee)}>
                                                             {employee.status === "active" ? (
@@ -352,7 +351,7 @@ export default function EmployeesPage() {
                                                             onClick={() => setDeleteDialog({ open: true, employee })}
                                                         >
                                                             <Trash2 className="mr-2 h-4 w-4" />
-                                                            Delete
+                                                            Delete (Admin)
                                                         </DropdownMenuItem>
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
@@ -377,6 +376,20 @@ export default function EmployeesPage() {
                                                         {employee.status}
                                                     </Badge>
                                                 </div>
+                                                <div className="col-span-2 bg-muted/50 rounded p-2 flex items-center justify-between">
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground">Last Attendance</p>
+                                                        <p className="font-medium">{employee.last_attendance_date ? formatDate(employee.last_attendance_date, "MMM d, yyyy") : "Never"}</p>
+                                                    </div>
+                                                    {employee.last_attendance_status && (
+                                                        <Badge variant="outline" className={`text-[10px] h-4 py-0 ${employee.last_attendance_status === 'present' ? 'text-emerald-600 border-emerald-200' :
+                                                                employee.last_attendance_status === 'late' ? 'text-amber-600 border-amber-200' :
+                                                                    'text-red-600 border-red-200'
+                                                            }`}>
+                                                            {employee.last_attendance_status}
+                                                        </Badge>
+                                                    )}
+                                                </div>
                                             </div>
 
                                             {/* Email */}
@@ -397,6 +410,7 @@ export default function EmployeesPage() {
                                                 <TableHead className="text-center">Employee ID</TableHead>
                                                 <TableHead className="text-center">Position</TableHead>
                                                 <TableHead className="text-center">Status</TableHead>
+                                                <TableHead className="text-center">Last Attendance</TableHead>
                                                 <TableHead className="w-[70px] text-center">Actions</TableHead>
                                             </TableRow>
                                         </TableHeader>
@@ -440,20 +454,35 @@ export default function EmployeesPage() {
                                                         </Badge>
                                                     </TableCell>
                                                     <TableCell className="text-center">
+                                                        {employee.last_attendance_date ? (
+                                                            <div className="flex flex-col items-center">
+                                                                <span className="text-xs font-medium">{formatDate(employee.last_attendance_date, "MMM d, yyyy")}</span>
+                                                                <Badge variant="outline" className={`mt-1 text-[10px] h-4 py-0 ${employee.last_attendance_status === 'present' ? 'text-emerald-600 border-emerald-200' :
+                                                                    employee.last_attendance_status === 'late' ? 'text-amber-600 border-amber-200' :
+                                                                        'text-red-600 border-red-200'
+                                                                    }`}>
+                                                                    {employee.last_attendance_status}
+                                                                </Badge>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-xs text-muted-foreground italic">Never</span>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell className="text-center">
                                                         <DropdownMenu>
                                                             <DropdownMenuTrigger asChild>
-                                                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted">
                                                                     <MoreHorizontal className="h-4 w-4" />
                                                                     <span className="sr-only">Open menu</span>
                                                                 </Button>
                                                             </DropdownMenuTrigger>
-                                                            <DropdownMenuContent align="end">
+                                                            <DropdownMenuContent align="end" className="w-[180px]">
                                                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                                                 <DropdownMenuItem
                                                                     onClick={() => router.push(`/employees/edit/${employee.id}`)}
                                                                 >
                                                                     <Pencil className="mr-2 h-4 w-4" />
-                                                                    Edit
+                                                                    Edit Employee
                                                                 </DropdownMenuItem>
                                                                 <DropdownMenuItem onClick={() => handleToggleStatus(employee)}>
                                                                     {employee.status === "active" ? (
@@ -468,13 +497,17 @@ export default function EmployeesPage() {
                                                                         </>
                                                                     )}
                                                                 </DropdownMenuItem>
+                                                                <DropdownMenuItem onClick={() => toast({ title: "Coming Soon", description: "Password reset feature will be available shortly." })}>
+                                                                    <Clock className="mr-2 h-4 w-4" />
+                                                                    Reset Password
+                                                                </DropdownMenuItem>
                                                                 <DropdownMenuSeparator />
                                                                 <DropdownMenuItem
                                                                     className="text-destructive focus:text-destructive"
                                                                     onClick={() => setDeleteDialog({ open: true, employee })}
                                                                 >
                                                                     <Trash2 className="mr-2 h-4 w-4" />
-                                                                    Delete
+                                                                    Delete (Admin)
                                                                 </DropdownMenuItem>
                                                             </DropdownMenuContent>
                                                         </DropdownMenu>
