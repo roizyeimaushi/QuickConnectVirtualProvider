@@ -41,11 +41,7 @@ function StatCard({ title, value, description, icon: Icon, trend, loading }) {
             </CardHeader>
             <CardContent>
                 <div className="text-3xl font-bold font-mono">
-                    {loading ? (
-                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground/50" />
-                    ) : (
-                        value
-                    )}
+                    {value}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                     {trend && (
@@ -62,25 +58,6 @@ function StatCard({ title, value, description, icon: Icon, trend, loading }) {
 }
 
 function AttendanceOverviewCard({ data, loading }) {
-    if (loading) {
-        return (
-            <Card className="col-span-full lg:col-span-2">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <CalendarCheck className="h-5 w-5 text-primary" />
-                        Today's Attendance Overview
-                    </CardTitle>
-                    <CardDescription>
-                        Real-time attendance statistics for {formatDate(getCurrentDate())}
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-col items-center justify-center py-20 animate-pulse">
-                    <Loader2 className="h-12 w-12 text-primary/20 animate-spin mb-4" />
-                    <p className="text-sm text-muted-foreground">Calculating attendance stats...</p>
-                </CardContent>
-            </Card>
-        );
-    }
 
     const presentRate = data?.presentRate || 0;
     const lateRate = data?.lateRate || 0;
@@ -199,25 +176,6 @@ function QuickActionsCard() {
 }
 
 function ActiveSessionCard({ session, loading }) {
-    if (loading) {
-        return (
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Clock className="h-5 w-5 text-muted-foreground" />
-                        Active Session
-                    </CardTitle>
-                    <CardDescription>Current attendance session status</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex flex-col items-center justify-center py-10 text-center animate-pulse">
-                        <Loader2 className="h-10 w-10 text-primary/20 animate-spin mb-4" />
-                        <p className="text-sm text-muted-foreground">Checking session status...</p>
-                    </div>
-                </CardContent>
-            </Card>
-        );
-    }
 
     if (!session) {
         return (
@@ -386,58 +344,60 @@ export default function AdminDashboard() {
 
     return (
         <DashboardLayout title="Admin Dashboard">
-            <div className="space-y-6 animate-fade-in">
-                {/* Welcome Section */}
-                <div className="flex flex-col space-y-0">
-                    <h1 className="text-3xl font-bold tracking-tight">
-                        Welcome back, {user?.first_name || "Admin"}
-                    </h1>
-                    <p className="text-muted-foreground text-sm">
-                        Here's what's happening with your workforce today.
-                    </p>
+            {loading ? (
+                <div className="flex-1 flex items-center justify-center min-h-[400px]">
+                    {/* Empty space or a single subtle loader could go here, but per user request we just want the fade in once ready */}
                 </div>
+            ) : (
+                <div className="space-y-6 animate-fade-in">
+                    {/* Welcome Section */}
+                    <div className="flex flex-col space-y-0">
+                        <h1 className="text-3xl font-bold tracking-tight">
+                            Welcome back, {user?.first_name || "Admin"}
+                        </h1>
+                        <p className="text-muted-foreground text-sm">
+                            Here's what's happening with your workforce today.
+                        </p>
+                    </div>
 
-                {/* Stats Grid */}
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <StatCard
-                        title="Total Employees"
-                        value={stats?.totalEmployees || 0}
-                        description="Registered employees"
-                        icon={Users}
-                        loading={loading}
-                    />
-                    <StatCard
-                        title="Present Today"
-                        value={stats?.activeToday || 0}
-                        description="Timed in on time"
-                        icon={CheckCircle2}
-                        loading={loading}
-                    />
-                    <StatCard
-                        title="Late Today"
-                        value={stats?.lateToday || 0}
-                        description="Arrived after schedule"
-                        icon={Timer}
-                        loading={loading}
-                    />
-                    <StatCard
-                        title={stats?.pendingToday > 0 ? "Pending Check-in" : "Absent Today"}
-                        value={stats?.pendingToday > 0 ? stats.pendingToday : (stats?.absentToday || 0)}
-                        description={stats?.pendingToday > 0 ? "Not yet timed in" : "Did not report"}
-                        icon={stats?.pendingToday > 0 ? Clock : AlertTriangle}
-                        loading={loading}
-                    />
-                </div>
+                    {/* Stats Grid */}
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                        <StatCard
+                            title="Total Employees"
+                            value={stats?.totalEmployees || 0}
+                            description="Registered employees"
+                            icon={Users}
+                        />
+                        <StatCard
+                            title="Present Today"
+                            value={stats?.activeToday || 0}
+                            description="Timed in on time"
+                            icon={CheckCircle2}
+                        />
+                        <StatCard
+                            title="Late Today"
+                            value={stats?.lateToday || 0}
+                            description="Arrived after schedule"
+                            icon={Timer}
+                        />
+                        <StatCard
+                            title={stats?.pendingToday > 0 ? "Pending Check-in" : "Absent Today"}
+                            value={stats?.pendingToday > 0 ? stats.pendingToday : (stats?.absentToday || 0)}
+                            description={stats?.pendingToday > 0 ? "Not yet timed in" : "Did not report"}
+                            icon={stats?.pendingToday > 0 ? Clock : AlertTriangle}
+                        />
+                    </div>
 
-                {/* Main Content Grid */}
-                <div className="grid gap-4 lg:grid-cols-3">
-                    <AttendanceOverviewCard data={stats} loading={loading} />
-                    <div className="space-y-4">
-                        <ActiveSessionCard session={stats?.activeSession} loading={loading} />
-                        <QuickActionsCard />
+                    {/* Main Content Grid */}
+                    <div className="grid gap-4 lg:grid-cols-3">
+                        <AttendanceOverviewCard data={stats} />
+                        <div className="space-y-4">
+                            <ActiveSessionCard session={stats?.activeSession} />
+                            <QuickActionsCard />
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
         </DashboardLayout>
     );
 }
