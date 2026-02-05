@@ -314,18 +314,6 @@ class BreakController extends Controller
                 'error_code' => 'ALREADY_ON_BREAK'
             ], 400);
         }
-        
-        // Check if already active
-        $activeBreak = EmployeeBreak::where('attendance_id', $attendance->id)
-            ->whereNull('break_end')
-            ->first();
-            
-        if ($activeBreak) {
-             return response()->json([
-                'message' => 'You are already on break.',
-                'error_code' => 'ALREADY_ON_BREAK'
-            ], 400);
-        }
 
         // ============================================================
         // STEP 3: Start break (Wrapped in Transaction for Race Safety)

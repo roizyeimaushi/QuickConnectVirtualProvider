@@ -57,9 +57,12 @@ class AttendanceRecordController extends Controller
             'updated_at' => now(),
         ]);
 
+        // Sanitize reason to prevent XSS in audit logs
+        $sanitizedReason = strip_tags($validated['reason']);
+
         AuditLog::log(
             'create_attendance',
-            "Admin {$request->user()->first_name} created manual record ({$record->status}) for user #{$record->user_id}. Reason: {$validated['reason']}",
+            "Admin {$request->user()->first_name} created manual record ({$record->status}) for user #{$record->user_id}. Reason: {$sanitizedReason}",
             AuditLog::STATUS_SUCCESS,
             $request->user()->id,
             'AttendanceRecord',
@@ -1173,9 +1176,12 @@ class AttendanceRecordController extends Controller
 
         $attendanceRecord->save();
 
+        // Sanitize reason to prevent XSS in audit logs
+        $sanitizedReason = strip_tags($request->reason);
+
         AuditLog::log(
             'update_attendance',
-            "Admin {$request->user()->first_name} updated record: " . implode(', ', $changes) . ". Reason: {$request->reason}",
+            "Admin {$request->user()->first_name} updated record: " . implode(', ', $changes) . ". Reason: {$sanitizedReason}",
             AuditLog::STATUS_SUCCESS,
             $request->user()->id,
             'AttendanceRecord',
