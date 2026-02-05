@@ -904,13 +904,29 @@ class ReportController extends Controller
             ->orderBy('attendance_date', 'desc')
             ->paginate($perPage);
 
-        // Transform collection to hide ghost data
+        // Transform collection to hide ghost data and FIX HOURS
         $paginator->getCollection()->transform(function ($record) {
             // Hide break times for pending/absent records to prevent confusion
             if (in_array($record->status, ['pending', 'absent', 'excused'])) {
                 $record->break_start = null;
                 $record->break_end = null;
                 $record->hours_worked = 0; // Ensure logic consistency
+            } elseif ($record->time_in && $record->time_out) {
+                // FIXED CALCULATION (Ignore broken DB column)
+                $timeIn = $record->time_in;
+                $timeOut = $record->time_out;
+                
+                $diff = $timeIn->diffInMinutes($timeOut, false);
+                if ($diff < 0) $diff += 1440;
+                
+                $breakMins = $record->breaks()->sum('duration_minutes');
+                if ($breakMins == 0 && $record->break_start && $record->break_end) {
+                    $bDiff = $record->break_start->diffInMinutes($record->break_end, false);
+                    $breakMins = $bDiff < 0 ? $bDiff + 1440 : $bDiff;
+                }
+                
+                $net = max(0, $diff - $breakMins);
+                $record->hours_worked = round($net / 60, 2);
             }
             return $record;
         });
@@ -986,16 +1002,20 @@ class ReportController extends Controller
         
         // 3. Recalculate hours_worked for each record (fix for overnight shifts)
         $history->transform(function ($record) {
-            if ($record->time_in && $record->time_out) {
-                // Recalculate using absolute difference for overnight shifts
-                $totalMinutes = abs($record->time_in->diffInMinutes($record->time_out));
+            if ($record->status === 'absent' || $record->status === 'pending') {
+                $record->hours_worked = 0;
+            } elseif ($record->time_in && $record->time_out) {
+                // Handle midnight crossing correctly (No abs!)
+                $totalMinutes = $record->time_in->diffInMinutes($record->time_out, false);
+                if ($totalMinutes < 0) $totalMinutes += 1440;
                 
-                // Subtract break time from EmployeeBreak table
+                // Subtract break time from EmployeeBreak table (SSOT)
                 $breakMinutes = $record->breaks()->sum('duration_minutes');
                 
-                // Fallback to legacy break columns
+                // Fallback to legacy break columns (Handle midnight crossing)
                 if ($breakMinutes == 0 && $record->break_start && $record->break_end) {
-                    $breakMinutes = abs($record->break_start->diffInMinutes($record->break_end));
+                    $bDiff = $record->break_start->diffInMinutes($record->break_end, false);
+                    $breakMinutes = $bDiff < 0 ? $bDiff + 1440 : $bDiff;
                 }
                 
                 $netMinutes = max(0, $totalMinutes - $breakMinutes);
