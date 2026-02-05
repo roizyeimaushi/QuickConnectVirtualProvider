@@ -12,8 +12,12 @@ class AttendanceSessionController extends Controller
 {
     public function index(Request $request)
     {
+        // Rule 1 & 3: Ensure session statuses are current
+        $this->syncSessionStatuses();
+
         $query = AttendanceSession::with(['schedule', 'creator'])
             ->withCount(['records as confirmed_count' => function ($query) {
+                // Meaning of Confirmed: Actually timed in
                 $query->whereNotNull('time_in');
             }])
             ->withCount('records as total_employees_count');
@@ -56,23 +60,39 @@ class AttendanceSessionController extends Controller
             ], 422);
         }
 
+        // Rule 3: Only the current day should be Active by default
+        $boundary = (int) (\App\Models\Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
+        $sessionDate = Carbon::parse($validated['date'])->startOfDay();
+        $targetToday = (Carbon::now()->hour < $boundary ? Carbon::yesterday() : Carbon::today())->startOfDay();
+        
+        $initialStatus = $sessionDate->equalTo($targetToday) ? 'active' : 'pending';
+
         $session = AttendanceSession::create([
             'schedule_id' => $validated['schedule_id'],
             'date' => $validated['date'],
-            'status' => 'active',
+            'status' => $initialStatus,
             'opened_at' => now(),
             'created_by' => auth()->id(),
         ]);
 
-        if (!empty($validated['employee_ids'])) {
-            $employeeIds = array_unique($validated['employee_ids']); // Prevent duplicates
+        if (empty($validated['employee_ids'])) {
+            // Fix the 0/0 error: Default to all active employees
+            $employeeIds = \App\Models\User::where('role', 'employee')
+                ->where('status', 'active')
+                ->pluck('id')
+                ->toArray();
+        } else {
+            $employeeIds = array_unique($validated['employee_ids']);
+        }
+
+        if (!empty($employeeIds)) {
             $records = [];
-            $sessionDate = $session->date->toDateString(); // Get session date for attendance_date
+            $sessionDate = $session->date->toDateString();
             foreach ($employeeIds as $userId) {
                 $records[] = [
                     'session_id' => $session->id,
                     'user_id' => $userId,
-                    'attendance_date' => $sessionDate, // REQUIRED: Date-scoped attendance
+                    'attendance_date' => $sessionDate,
                     'status' => 'pending', 
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -287,6 +307,8 @@ class AttendanceSessionController extends Controller
 
     public function getActive()
     {
+        $this->syncSessionStatuses();
+        
         $sessions = AttendanceSession::with(['schedule', 'creator'])
                                      ->where('status', 'active')
                                      ->orderBy('date', 'desc')
@@ -297,6 +319,8 @@ class AttendanceSessionController extends Controller
 
     public function getToday()
     {
+        $this->syncSessionStatuses();
+
         // Customizable Shift Boundary (Default 14:00)
         $boundary = (int) (\App\Models\Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
         
@@ -318,5 +342,55 @@ class AttendanceSessionController extends Controller
                                   ->where('status', 'locked');
 
         return response()->json($query->orderBy('locked_at', 'desc')->paginate(20));
+    }
+
+    /**
+     * Rule 1 & 3: Automated Lifecycle Management
+     * Synchronizes Active/Pending/Completed states based on wall-clock time and schedules.
+     */
+    private function syncSessionStatuses()
+    {
+        $now = Carbon::now();
+        $boundary = (int) (\App\Models\Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
+        $today = ($now->hour < $boundary ? Carbon::yesterday() : Carbon::today())->startOfDay();
+
+        // 1. Auto-Activate: Pending sessions whose date has arrived
+        AttendanceSession::where('status', 'pending')
+            ->where('date', '<=', $today)
+            ->update(['status' => 'active']);
+
+        // 2. Auto-Complete: Overdue active sessions
+        $activeSessions = AttendanceSession::where('status', 'active')
+            ->where('date', '<=', $today)
+            ->with('schedule')
+            ->get();
+
+        foreach ($activeSessions as $session) {
+            if (!$session->schedule) {
+                // If it's old (more than 24h), just close it
+                if ($session->date->addDay()->isPast()) $session->update(['status' => 'completed']);
+                continue;
+            }
+
+            $schedule = $session->schedule;
+            $sessionDate = $session->date->format('Y-m-d');
+            
+            // Shift End Calculation
+            $shiftStart = Carbon::parse("$sessionDate {$schedule->time_in}");
+            $shiftEnd = Carbon::parse("$sessionDate {$schedule->time_out}");
+            
+            // Handle overnight shifts
+            if ($shiftEnd->lt($shiftStart)) {
+                $shiftEnd->addDay();
+            }
+
+            // Margin: 30 minutes grace period
+            $shiftEnd->addMinutes(30);
+
+            if ($now->gt($shiftEnd)) {
+                $session->update(['status' => 'completed']);
+                event(new SessionUpdated($session, 'completed'));
+            }
+        }
     }
 }

@@ -180,23 +180,18 @@ export default function AttendanceSessionsPage() {
     const statusConfig = {
         active: {
             label: "Active",
-            color: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400",
-            icon: CheckCircle2,
-        },
-        pending: {
-            label: "Pending",
-            color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+            color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200",
             icon: Timer,
-        },
-        locked: {
-            label: "Locked",
-            color: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
-            icon: Lock,
         },
         completed: {
             label: "Completed",
-            color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+            color: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200",
             icon: CheckCircle2,
+        },
+        locked: {
+            label: "Locked",
+            color: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200",
+            icon: Lock,
         },
     };
 
@@ -249,17 +244,19 @@ export default function AttendanceSessionsPage() {
                                 </div>
                                 <div className="text-center">
                                     <p className="text-2xl font-bold text-muted-foreground">
-                                        {activeSession.total_employees - activeSession.confirmed_count}
+                                        {Math.max(0, activeSession.total_employees - activeSession.confirmed_count)}
                                     </p>
                                     <p className="text-xs text-muted-foreground">Pending</p>
                                 </div>
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => setLockDialog({ open: true, session: activeSession })}
+                                    asChild
                                 >
-                                    <Lock className="mr-2 h-4 w-4" />
-                                    Lock Session
+                                    <Link href={`/attendance/sessions/${activeSession.id}`}>
+                                        <Users className="mr-2 h-4 w-4" />
+                                        Monitior
+                                    </Link>
                                 </Button>
                             </div>
                         </CardContent>
@@ -492,46 +489,50 @@ export default function AttendanceSessionsPage() {
                                                             </Badge>
                                                         </TableCell>
                                                         <TableCell className="text-center">
-                                                            <DropdownMenu>
-                                                                <DropdownMenuTrigger asChild>
-                                                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                                        <MoreHorizontal className="h-4 w-4" />
-                                                                    </Button>
-                                                                </DropdownMenuTrigger>
-                                                                <DropdownMenuContent align="end">
-                                                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                                    <DropdownMenuItem asChild>
-                                                                        <Link href={`/attendance/sessions/${session.id}`}>
-                                                                            <Users className="mr-2 h-4 w-4" />
-                                                                            View Details
-                                                                        </Link>
-                                                                    </DropdownMenuItem>
-                                                                    {session.status === "active" && (
-                                                                        <DropdownMenuItem
-                                                                            onClick={() => setLockDialog({ open: true, session })}
-                                                                        >
-                                                                            <Lock className="mr-2 h-4 w-4" />
-                                                                            Lock Session
-                                                                        </DropdownMenuItem>
-                                                                    )}
-                                                                    {session.status === "locked" && (
-                                                                        <DropdownMenuItem
-                                                                            onClick={() => setUnlockDialog({ open: true, session })}
-                                                                        >
-                                                                            <Unlock className="mr-2 h-4 w-4" />
-                                                                            Unlock Session
-                                                                        </DropdownMenuItem>
-                                                                    )}
-                                                                    <DropdownMenuSeparator />
-                                                                    <DropdownMenuItem
-                                                                        className="text-destructive focus:text-destructive"
-                                                                        onClick={() => setDeleteDialog({ open: true, session })}
+                                                            <div className="flex items-center justify-center gap-1">
+                                                                <Button asChild variant="ghost" size="sm">
+                                                                    <Link href={`/attendance/sessions/${session.id}`}>
+                                                                        View
+                                                                    </Link>
+                                                                </Button>
+
+                                                                {session.status === "completed" && (
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="sm"
+                                                                        className="text-primary"
+                                                                        onClick={() => setLockDialog({ open: true, session })}
                                                                     >
-                                                                        <Trash2 className="mr-2 h-4 w-4" />
-                                                                        Delete Session
-                                                                    </DropdownMenuItem>
-                                                                </DropdownMenuContent>
-                                                            </DropdownMenu>
+                                                                        Lock
+                                                                    </Button>
+                                                                )}
+
+                                                                {session.status === "locked" && (
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="sm"
+                                                                        className="text-muted-foreground"
+                                                                        onClick={() => setUnlockDialog({ open: true, session })}
+                                                                    >
+                                                                        Unlock
+                                                                    </Button>
+                                                                )}
+
+                                                                <DropdownMenu>
+                                                                    <DropdownMenuTrigger asChild>
+                                                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                                            <MoreHorizontal className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </DropdownMenuTrigger>
+                                                                    <DropdownMenuContent align="end">
+                                                                        <DropdownMenuLabel>Other Actions</DropdownMenuLabel>
+                                                                        <DropdownMenuItem onClick={() => setDeleteDialog({ open: true, session })} className="text-destructive">
+                                                                            <Trash2 className="mr-2 h-4 w-4" />
+                                                                            Delete
+                                                                        </DropdownMenuItem>
+                                                                    </DropdownMenuContent>
+                                                                </DropdownMenu>
+                                                            </div>
                                                         </TableCell>
                                                     </TableRow>
                                                 );
