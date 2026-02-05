@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { employeesApi } from "@/lib/api";
 import { useAuth } from "@/components/providers/auth-provider";
 import { getInitials } from "@/lib/utils";
+import { PageLoader } from "@/components/ui/fullscreen-loader";
 import {
     Search,
     Download,
@@ -97,7 +98,7 @@ export default function EmployeeReportsPage() {
 
                 {/* Employee Cards */}
                 {loading ? (
-                    null
+                    <PageLoader />
                 ) : filteredEmployees.length === 0 ? (
                     <Card>
                         <CardContent className="py-12 text-center">

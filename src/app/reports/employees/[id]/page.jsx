@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/table";
 import { reportsApi } from "@/lib/api";
 import { formatDateTime, formatTime24, getInitials } from "@/lib/utils";
+import { PageLoader } from "@/components/ui/fullscreen-loader";
 import { format } from "date-fns";
 import {
     ArrowLeft,
@@ -163,8 +164,14 @@ export default function EmployeeReportDetailPage() {
         }
     };
 
-    // If loading and no data yet, simply return null to avoid flash or errors
-    if (initialLoad && !data) return null;
+    // If loading and no data yet, show a nice centered spinner (Not Full Screen)
+    if (initialLoad && !data) {
+        return (
+            <DashboardLayout title="Loading Report...">
+                <PageLoader />
+            </DashboardLayout>
+        );
+    }
 
     return (
         <DashboardLayout title={`${employee.first_name || 'Employee'}'s Report`}>
