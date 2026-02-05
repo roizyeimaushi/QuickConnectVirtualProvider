@@ -154,7 +154,29 @@ class AttendanceRecordController extends Controller
 
         $perPage = $request->get('per_page', 50);
 
-        return response()->json($query->orderBy('created_at', 'desc')->paginate($perPage));
+        $paginator = $query->orderBy('attendance_date', 'desc')->paginate($perPage);
+
+        // FIX HOURS ON-THE-FLY for main list
+        $paginator->getCollection()->transform(function ($record) {
+            if ($record->time_in && $record->time_out && !in_array($record->status, ['pending', 'absent'])) {
+                $timeIn = $record->time_in;
+                $timeOut = $record->time_out;
+                
+                $diff = $timeIn->diffInMinutes($timeOut, false);
+                if ($diff < 0) $diff += 1440;
+                
+                $breakMins = $record->breaks()->sum('duration_minutes');
+                if ($breakMins == 0 && $record->break_start && $record->break_end) {
+                    $bDiff = $record->break_start->diffInMinutes($record->break_end, false);
+                    $breakMins = $bDiff < 0 ? $bDiff + 1440 : $bDiff;
+                }
+                
+                $record->hours_worked = round(max(0, $diff - $breakMins) / 60, 2);
+            }
+            return $record;
+        });
+
+        return response()->json($paginator);
     }
 
     /**
@@ -162,9 +184,27 @@ class AttendanceRecordController extends Controller
      */
     public function show(AttendanceRecord $attendanceRecord)
     {
-        return response()->json($attendanceRecord->load(['session.schedule', 'user' => function ($q) {
+        $attendanceRecord->load(['session.schedule', 'user' => function ($q) {
             $q->withTrashed();
-        }]));
+        }]);
+
+        // Fix hours on the fly for single view
+        if ($attendanceRecord->time_in && $attendanceRecord->time_out && !in_array($attendanceRecord->status, ['pending', 'absent'])) {
+             $timeIn = $attendanceRecord->time_in;
+             $timeOut = $attendanceRecord->time_out;
+             $diff = $timeIn->diffInMinutes($timeOut, false);
+             if ($diff < 0) $diff += 1440;
+
+             $breakMins = $attendanceRecord->breaks()->sum('duration_minutes');
+             if ($breakMins == 0 && $attendanceRecord->break_start && $attendanceRecord->break_end) {
+                 $bDiff = $attendanceRecord->break_start->diffInMinutes($attendanceRecord->break_end, false);
+                 $breakMins = $bDiff < 0 ? $bDiff + 1440 : $bDiff;
+             }
+
+             $attendanceRecord->hours_worked = round(max(0, $diff - $breakMins) / 60, 2);
+        }
+
+        return response()->json($attendanceRecord);
     }
 
     /**
