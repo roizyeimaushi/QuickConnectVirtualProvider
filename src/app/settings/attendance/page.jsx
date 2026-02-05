@@ -41,6 +41,7 @@ export default function AttendanceSettingsPage() {
                 allow_multi_checkin: settings.allow_multi_checkin === "1" || settings.allow_multi_checkin === true,
                 prevent_duplicate: settings.prevent_duplicate !== false && settings.prevent_duplicate !== "0",
                 auto_checkout: settings.auto_checkout === "1" || settings.auto_checkout === true,
+                weekend_checkin: settings.weekend_checkin === "1" || settings.weekend_checkin === true,
 
                 // --- SECTION 3: Break Rules ---
                 max_breaks: settings.max_breaks || "1",
@@ -68,6 +69,7 @@ export default function AttendanceSettingsPage() {
                 allow_multi_checkin: false,
                 prevent_duplicate: true,
                 auto_checkout: true,
+                weekend_checkin: true,
                 max_breaks: "1",
                 max_break_duration: "60",
                 auto_end_break: true,
@@ -214,6 +216,16 @@ export default function AttendanceSettingsPage() {
                                             <Switch
                                                 checked={formData.auto_checkout || false}
                                                 onCheckedChange={(val) => handleChange("auto_checkout", val)}
+                                            />
+                                        </div>
+                                        <div className="flex items-center justify-between border-t pt-4">
+                                            <Label className="flex flex-col">
+                                                <span>Weekend Support</span>
+                                                <span className="font-normal text-muted-foreground text-xs">Enable attendance sessions and shifts on Sat/Sun.</span>
+                                            </Label>
+                                            <Switch
+                                                checked={formData.weekend_checkin || false}
+                                                onCheckedChange={(val) => handleChange("weekend_checkin", val)}
                                             />
                                         </div>
                                     </div>
