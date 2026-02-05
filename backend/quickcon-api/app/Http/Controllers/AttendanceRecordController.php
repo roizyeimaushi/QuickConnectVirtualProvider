@@ -245,9 +245,9 @@ class AttendanceRecordController extends Controller
         $shiftStart = Carbon::parse($sessionDate . ' ' . $scheduleTimeIn);
         
         // Define Windows Relative to Shift Start
-        // Mimic legacy logic: 23:00 Start -> 18:00 Open (-5h), 01:30 Close (+2.5h)
+        // Mimic legacy logic: 23:00 Start -> 18:00 Open (-5h), 01:00 Close (+2h)
         $windowStart = $shiftStart->copy()->subHours(5);
-        $windowClose = $shiftStart->copy()->addHours(2)->addMinutes(30);
+        $windowClose = $shiftStart->copy()->addHours(2);
         
         // Grace Period
         $gracePeriodEnd = $shiftStart->copy()->addMinutes($globalGracePeriod);

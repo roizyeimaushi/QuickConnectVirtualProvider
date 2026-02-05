@@ -82,16 +82,12 @@ class ReportController extends Controller
             
             $isSessionActive = $todaySession && $todaySession->status === 'active';
 
-            if ($isSessionActive) {
-                // Session is open -> Everyone remaining is PENDING
-                $autoAbsent = 0;
-                $pendingToday = $remainingCount;
-            } elseif (Carbon::now()->gt($windowClose)) {
-                // Window Closed AND No Active Session -> Everyone remaining is ABSENT
+            if (Carbon::now()->gt($windowClose)) {
+                // Cutoff reached (01:00 AM Next Day) -> Everyone remaining is ABSENT
                 $autoAbsent = $remainingCount;
                 $pendingToday = 0;
             } else {
-                // Window still valid -> Everyone remaining is PENDING
+                // Before cutoff -> Everyone remaining is PENDING (waiting for work to start or in progress)
                 $autoAbsent = 0;
                 $pendingToday = $remainingCount;
             }
@@ -704,7 +700,9 @@ class ReportController extends Controller
         
         $unaccounted = max(0, $totalEmployees - $recordsCount);
         
-        $isPast = Carbon::parse($date)->lt(Carbon::today());
+        // Official Absent Rule logic for current day
+        $cutoffTime = Carbon::parse($date)->addDay()->setTime(1, 0, 0);
+        $isPast = Carbon::now()->gt($cutoffTime);
         
         $finalAbsent = $explicitAbsent + ($isPast ? $unaccounted : 0);
         $finalPending = $explicitPending + (!$isPast ? $unaccounted : 0);
