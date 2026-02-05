@@ -39,7 +39,7 @@ export default function AttendanceSettingsPage() {
                 grace_period: settings.grace_period || "15",
                 late_threshold: settings.late_threshold || "30",
                 allow_multi_checkin: settings.allow_multi_checkin === "1" || settings.allow_multi_checkin === true,
-                prevent_duplicate: settings.prevent_duplicate !== false && settings.prevent_duplicate !== "0",
+                prevent_duplicate_checkin: settings.prevent_duplicate_checkin !== false && settings.prevent_duplicate_checkin !== "0",
                 auto_checkout: settings.auto_checkout === "1" || settings.auto_checkout === true,
                 weekend_checkin: settings.weekend_checkin === "1" || settings.weekend_checkin === true,
 
@@ -204,8 +204,8 @@ export default function AttendanceSettingsPage() {
                                                 <span className="font-normal text-muted-foreground text-xs">Blocks accidental double clicks or duplicate entries.</span>
                                             </Label>
                                             <Switch
-                                                checked={formData.prevent_duplicate || false}
-                                                onCheckedChange={(val) => handleChange("prevent_duplicate", val)}
+                                                checked={formData.prevent_duplicate_checkin || false}
+                                                onCheckedChange={(val) => handleChange("prevent_duplicate_checkin", val)}
                                             />
                                         </div>
                                         <div className="flex items-center justify-between">
