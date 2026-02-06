@@ -26,13 +26,13 @@ import {
 } from "@/components/ui/sidebar";
 import { useSettingsContext } from "@/components/providers/settings-provider";
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-    DialogDescription,
-} from "@/components/ui/dialog";
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
@@ -211,8 +211,8 @@ export function AppSidebar() {
             <SidebarFooter className="p-3 border-t border-white/5">
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <Dialog>
-                            <DialogTrigger asChild>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
                                 <SidebarMenuButton
                                     size="lg"
                                     className="data-[state=open]:bg-white/5 rounded-lg transition-all p-2 h-12"
@@ -242,77 +242,72 @@ export function AppSidebar() {
                                     </div>
                                     <ChevronRight className="ml-auto size-3.5 text-white/20 group-data-[collapsible=icon]:hidden shrink-0" />
                                 </SidebarMenuButton>
-                            </DialogTrigger>
-                            <DialogContent className="w-[calc(100%-2rem)] sm:max-w-sm rounded-2xl shadow-2xl border-white/10 p-0 bg-[#0a1f16] text-white overflow-hidden animate-zoom-in">
-                                <div className="p-6">
-                                    <DialogHeader className="text-left mb-6">
-                                        <div className="flex items-center gap-4 mb-4">
-                                            <Avatar className="h-14 w-14 rounded-full border-2 border-emerald-500/20 shadow-lg">
-                                                <AvatarImage src={user?.avatar} alt={user?.first_name} />
-                                                <AvatarFallback className="rounded-full bg-emerald-950 text-emerald-400 text-xl font-bold">
-                                                    {getInitials(user?.first_name, user?.last_name)}
-                                                </AvatarFallback>
-                                            </Avatar>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                                className="w-64 rounded-xl shadow-2xl border-white/10 p-2 bg-[#0a1f16] text-white"
+                                side="right"
+                                align="end"
+                                sideOffset={8}
+                            >
+                                <DropdownMenuLabel className="px-3 py-3 font-normal text-white/90">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <Avatar className="h-10 w-10 rounded-full border border-emerald-500/20 shadow-lg shrink-0">
+                                            <AvatarImage src={user?.avatar} alt={user?.first_name} />
+                                            <AvatarFallback className="rounded-full bg-emerald-950 text-emerald-400 text-sm font-bold">
+                                                {getInitials(user?.first_name, user?.last_name)}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-sm font-bold text-white truncate">
+                                                {user?.first_name} {user?.last_name}
+                                            </span>
+                                            <span className="text-[10px] text-emerald-500/70 font-bold uppercase tracking-widest">
+                                                {isAdmin ? "Administrator" : "Staff Member"}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="bg-white/5 rounded-lg p-2 border border-white/5 mt-2">
+                                        <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest mb-0.5">Contact</p>
+                                        <p className="text-[11px] font-medium text-white/60 truncate">{user?.email}</p>
+                                    </div>
+                                </DropdownMenuLabel>
+                                <DropdownMenuSeparator className="bg-white/5" />
+                                <DropdownMenuItem
+                                    className="cursor-pointer rounded-lg py-3 focus:bg-white/5 focus:text-white text-white/70 hover:bg-white/5"
+                                    asChild
+                                >
+                                    <Link href={isAdmin ? "/dashboard/admin/profile" : "/dashboard/employee/profile"}>
+                                        <User className="mr-3 h-4 w-4 text-emerald-500" />
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-semibold">Profile Overview</span>
+                                            <span className="text-[10px] text-white/30">View your details</span>
+                                        </div>
+                                    </Link>
+                                </DropdownMenuItem>
+                                {isAdmin && (
+                                    <DropdownMenuItem
+                                        className="cursor-pointer rounded-lg py-3 focus:bg-white/5 focus:text-white text-white/70 hover:bg-white/5"
+                                        asChild
+                                    >
+                                        <Link href="/settings/general">
+                                            <Settings className="mr-3 h-4 w-4 text-emerald-500" />
                                             <div className="flex flex-col">
-                                                <DialogTitle className="text-lg font-bold text-white">
-                                                    {user?.first_name} {user?.last_name}
-                                                </DialogTitle>
-                                                <DialogDescription className="text-emerald-500/80 font-medium text-xs uppercase tracking-widest">
-                                                    {isAdmin ? "Administrator" : "Staff Personnel"}
-                                                </DialogDescription>
+                                                <span className="text-sm font-semibold">System Settings</span>
+                                                <span className="text-[10px] text-white/30">Admin preferences</span>
                                             </div>
-                                        </div>
-
-                                        <div className="bg-white/5 rounded-xl p-4 border border-white/5">
-                                            <p className="text-[10px] font-bold text-emerald-500/60 uppercase tracking-widest mb-1.5">Authenticated As</p>
-                                            <p className="text-sm font-medium text-white/90 break-all">{user?.email}</p>
-                                        </div>
-                                    </DialogHeader>
-
-                                    <div className="space-y-2 mt-4">
-                                        <Link
-                                            href={isAdmin ? "/dashboard/admin/profile" : "/dashboard/employee/profile"}
-                                            className="flex items-center w-full p-4 rounded-xl transition-all hover:bg-white/5 group border border-transparent hover:border-white/5"
-                                        >
-                                            <div className="h-10 w-10 rounded-lg bg-emerald-500/10 flex items-center justify-center mr-4 shrink-0 group-hover:bg-emerald-500/20 transition-colors">
-                                                <User className="h-5 w-5 text-emerald-500" />
-                                            </div>
-                                            <div className="flex-1 text-left">
-                                                <p className="font-semibold text-sm">Profile Overview</p>
-                                                <p className="text-[11px] text-white/40">Manage your personal information</p>
-                                            </div>
-                                            <ChevronRight className="h-4 w-4 text-white/20" />
                                         </Link>
-
-                                        {isAdmin && (
-                                            <Link
-                                                href="/settings/general"
-                                                className="flex items-center w-full p-4 rounded-xl transition-all hover:bg-white/5 group border border-transparent hover:border-white/5"
-                                            >
-                                                <div className="h-10 w-10 rounded-lg bg-emerald-500/10 flex items-center justify-center mr-4 shrink-0 group-hover:bg-emerald-500/20 transition-colors">
-                                                    <Settings className="h-5 w-5 text-emerald-500" />
-                                                </div>
-                                                <div className="flex-1 text-left">
-                                                    <p className="font-semibold text-sm">System Settings</p>
-                                                    <p className="text-[11px] text-white/40">Configure application preferences</p>
-                                                </div>
-                                                <ChevronRight className="h-4 w-4 text-white/20" />
-                                            </Link>
-                                        )}
-                                    </div>
-
-                                    <div className="mt-8 border-t border-white/5 pt-6">
-                                        <button
-                                            onClick={logout}
-                                            className="flex items-center justify-center w-full gap-3 p-4 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-all font-bold text-sm shadow-sm"
-                                        >
-                                            <LogOut className="h-4 w-4" />
-                                            Log Out Securely
-                                        </button>
-                                    </div>
-                                </div>
-                            </DialogContent>
-                        </Dialog>
+                                    </DropdownMenuItem>
+                                )}
+                                <DropdownMenuSeparator className="bg-white/5" />
+                                <DropdownMenuItem
+                                    className="cursor-pointer text-red-400 focus:text-red-400 focus:bg-red-500/10 rounded-lg py-3 mt-1"
+                                    onClick={logout}
+                                >
+                                    <LogOut className="mr-3 h-4 w-4" />
+                                    <span className="text-sm font-bold">Log Out Securely</span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarFooter>
