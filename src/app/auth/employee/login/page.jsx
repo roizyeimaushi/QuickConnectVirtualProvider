@@ -122,8 +122,8 @@ export default function EmployeeLoginPage() {
             {/* Layout - Responsive: side-by-side on desktop, stacked on mobile */}
             <div className="min-h-screen w-full flex flex-col md:flex-row bg-[#f8f8ff]">
 
-                {/* Left Side (Desktop) / Top Side (Mobile) - Image */}
-                <div className="w-full md:w-1/2 h-[35vh] sm:h-[40vh] md:h-screen relative overflow-hidden flex-shrink-0">
+                {/* Left Side (Desktop) - Welcome Banner (Hidden on Mobile) */}
+                <div className="hidden md:block md:w-1/2 h-screen relative overflow-hidden flex-shrink-0">
                     <img
                         src="/employee-login-side.png"
                         alt="Welcome"
