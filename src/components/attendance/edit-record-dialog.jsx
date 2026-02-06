@@ -44,12 +44,26 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
     const [totals, setTotals] = useState({ hours: 0, overtime: 0, autoStatus: "pending" });
     const [isManual, setIsManual] = useState(false);
 
-    // Get normalized employee info
-    const employee = record?.user || record?.employee || {};
-    const employeeName = employee.name || (employee.first_name ? `${employee.first_name} ${employee.last_name}` : "Unknown User");
-    const employeeId = employee.employee_id || record?.employee_id || "N/A";
-    const employeeAvatar = employee.avatar;
-    const initials = employee.first_name ? employee.first_name.charAt(0) : (employee.name?.charAt(0) || "U");
+    // Get normalized employee info - be extremely thorough to avoid N/A
+    const employee = record?.user || record?.employee || record || {};
+
+    // Name normalization
+    const employeeName =
+        employee.name ||
+        (employee.first_name ? `${employee.first_name}${employee.last_name ? ' ' + employee.last_name : ''}` : null) ||
+        record?.employee?.name ||
+        "Unknown User";
+
+    // ID normalization - try every possible property name for employee ID
+    const employeeId =
+        employee.employee_id ||
+        record?.employee_id ||
+        record?.user?.employee_id ||
+        employee.id ||
+        "N/A";
+
+    const employeeAvatar = employee.avatar || record?.user?.avatar;
+    const initials = employee.first_name ? employee.first_name.charAt(0) : (employeeName.charAt(0) || "U");
 
     // CRITICAL FIX: Reset form when record changes
     useEffect(() => {

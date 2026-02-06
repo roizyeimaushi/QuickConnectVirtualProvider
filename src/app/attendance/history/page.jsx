@@ -185,6 +185,7 @@ export default function AttendanceHistoryPage() {
                     name: record.user.name || `${record.user.first_name} ${record.user.last_name}`,
                     avatar: record.user.avatar,
                     position: record.user.position,
+                    employee_id: record.user.employee_id,
                 } : null,
                 date: record.attendance_date || record.session?.date || record.created_at,
                 time_in: record.time_in,
