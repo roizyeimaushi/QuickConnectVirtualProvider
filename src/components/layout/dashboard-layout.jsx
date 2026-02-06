@@ -101,7 +101,7 @@ export function AppSidebar() {
     const logoUrl = getLogoUrl(settings?.system_logo);
 
     return (
-        <Sidebar collapsible={hideSidebar ? "offcanvas" : "icon"} className="shadow-2xl">
+        <Sidebar collapsible="none" className="shadow-2xl">
             <SidebarHeader className="p-5 pb-2">
                 <SidebarMenu>
                     <SidebarMenuItem>
@@ -300,7 +300,7 @@ export function DashboardHeader({ title, children }) {
     return (
         <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b bg-background/80 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-6 transition-all">
             <div className="flex items-center gap-4">
-                <SidebarTrigger className="h-9 w-9 border shadow-sm rounded-lg hover:bg-muted" />
+                <SidebarTrigger className="h-9 w-9 border shadow-sm rounded-lg hover:bg-muted md:hidden" />
                 <Separator orientation="vertical" className="h-6 hidden sm:block" />
                 <Breadcrumb className="hidden md:block">
                     <BreadcrumbList>

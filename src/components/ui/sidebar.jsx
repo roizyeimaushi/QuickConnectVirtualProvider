@@ -213,22 +213,6 @@ const Sidebar = React.forwardRef(
   ) => {
     const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
 
-    if (collapsible === "none") {
-      return (
-        <div
-          className={cn(
-            "flex h-full w-[--sidebar-width] flex-col text-sidebar-foreground",
-            className
-          )}
-          style={{ backgroundColor: 'var(--sidebar)' }}
-          ref={ref}
-          {...props}
-        >
-          {children}
-        </div>
-      )
-    }
-
     if (isMobile) {
       return (
         <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
@@ -249,6 +233,46 @@ const Sidebar = React.forwardRef(
             <div className="flex h-full w-full flex-col">{children}</div>
           </SheetContent>
         </Sheet>
+      )
+    }
+
+    if (collapsible === "none") {
+      return (
+        <div
+          ref={ref}
+          className="group peer hidden md:flex shrink-0 text-sidebar-foreground"
+          data-state="expanded"
+          data-collapsible="none"
+          data-variant={variant}
+          data-side={side}
+        >
+          {/* Spacer div to push content over */}
+          <div
+            className="relative h-svh bg-transparent shrink-0 transition-none"
+            style={{
+              width: "var(--sidebar-width)"
+            }}
+          />
+          {/* Fixed sidebar container */}
+          <div
+            className={cn(
+              "fixed inset-y-0 z-50 hidden h-svh md:flex overflow-hidden transition-none",
+              side === "left"
+                ? "left-0"
+                : "right-0",
+              "w-[--sidebar-width] bg-sidebar border-none",
+              className
+            )}
+            {...props}
+          >
+            <div
+              data-sidebar="sidebar"
+              className="flex h-full w-full flex-col bg-sidebar"
+            >
+              {children}
+            </div>
+          </div>
+        </div>
       )
     }
 
