@@ -303,7 +303,7 @@ function TodayStatusCard({ user, session, record, breakStatus, loading, constrai
                     {/* BREAK BUTTON */}
                     <div className="col-span-1">
                         <ActionButton
-                            title={isBreakActive ? "Break In Progress" : "Break Time"}
+                            title={isBreakActive ? "On Break" : "Break"}
                             icon={Coffee}
                             variant="amber"
                             href="/attendance/break"
@@ -602,10 +602,18 @@ export default function EmployeeDashboardPage() {
                                 <p className="text-xs text-muted-foreground">View your information</p>
                             </Link>
 
+                            <Link href="/attendance/break" className="block p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Coffee className="h-5 w-5 text-amber-500" />
+                                    <span className="font-semibold">Break</span>
+                                </div>
+                                <p className="text-xs text-muted-foreground">Start or end your break</p>
+                            </Link>
+
                             <Link href="/attendance/history" className="block p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                                 <div className="flex items-center gap-2 mb-2">
                                     <History className="h-5 w-5 text-blue-500" />
-                                    <span className="font-semibold">History</span>
+                                    <span className="font-semibold">Attendance History</span>
                                 </div>
                                 <p className="text-xs text-muted-foreground">View past records</p>
                             </Link>

@@ -179,9 +179,9 @@ class BreakController extends Controller
                   $mealUsed = in_array('Meal', $usedTypes);
             }
         } else {
-             // ALWAYS AVAILABLE (Unlimited Breaks)
+             // ALWAYS AVAILABLE (Single Fixed Break)
              $canStartBreak = true;
-             $breakMessage = "Select a break type to start.";
+             $breakMessage = "Click below to start your fixed break.";
              $breakReason = 'available';
         }
 
@@ -235,12 +235,9 @@ class BreakController extends Controller
         $today = Carbon::today()->toDateString();
         $currentTime = $this->getCurrentTime();
 
-        // Validate break type
-        $request->validate([
-            'type' => 'required|in:Coffee,Meal',
-        ]);
-        $type = $request->input('type');
-        $segmentLimit = ($type === 'Coffee') ? 30 : 60; // Coffee = 30 mins, Meal = 60 mins
+        // Default to 'Fixed' type for the new 1.5h policy
+        $type = $request->input('type', 'Fixed');
+        $segmentLimit = 90; // Fixed 1.5 hours (1 hour 30 minutes)
 
         // ============================================================
         // STEP 1: Verify Attendance (Anchor to ACTIVE Session)

@@ -186,6 +186,10 @@ export function getNavigationItems(user) {
                             url: "/attendance/confirm",
                         },
                         {
+                            title: "Break",
+                            url: "/attendance/break",
+                        },
+                        {
                             title: "Time Out",
                             url: "/attendance/check-out",
                         },

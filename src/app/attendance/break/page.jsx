@@ -215,16 +215,17 @@ export default function BreakPage() {
                     <CardHeader className="text-center pb-2">
                         <PauseCircle className="w-7 h-7 mx-auto text-primary mb-4" />
                         <CardTitle className="text-2xl">
-                            {isOnBreak ? "On Break" : "Break Type"}
+                            {isOnBreak ? "On Break" : "Break"}
                         </CardTitle>
                         <CardDescription>
-                            {isOnBreak ? "Time Remaining:" : "Select an option to start"}
+                            {isOnBreak ? "Time Remaining:" : "Start your break below"}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6 pt-6">
                         {loading ? (
                             <div className="space-y-4">
                                 <Button disabled className="w-full h-16 text-lg">
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                     Loading...
                                 </Button>
                             </div>
@@ -244,34 +245,19 @@ export default function BreakPage() {
                             </div>
                         ) : (
                             <div className="space-y-4">
-                                {/* Coffee Break Card */}
+                                {/* Fixed Break Card */}
                                 <BreakTypeCard
-                                    type="Coffee"
-                                    label="Coffee Break"
-                                    duration="30 min"
-                                    icon={<Coffee className="h-4 w-4" />}
-                                    isUsed={breakStatus?.coffee_used}
-                                    isActive={isOnBreak && breakStatus?.current_break?.break_type === 'Coffee'}
+                                    type="Fixed"
+                                    label="Fixed Break"
+                                    duration="1 hour 30 minutes"
+                                    icon={<Timer className="h-6 w-6" />}
+                                    isUsed={false} // Allow starting if not currently on break, backend handles limits
+                                    isActive={isOnBreak}
                                     isDisabled={!canStartBreak || !!submittingType}
                                     timeLeft={timeLeft}
-                                    onStart={() => handleStartBreak('Coffee')}
+                                    onStart={() => handleStartBreak('Fixed')}
                                     onEnd={handleEndBreak}
-                                    isLoading={submittingType === 'Coffee' || (submittingType === 'End' && isOnBreak && breakStatus?.current_break?.break_type === 'Coffee')}
-                                />
-
-                                {/* Meal Break Card */}
-                                <BreakTypeCard
-                                    type="Meal"
-                                    label="Meal Break"
-                                    duration="1 hour"
-                                    icon={<Timer className="h-4 w-4" />}
-                                    isUsed={breakStatus?.meal_used}
-                                    isActive={isOnBreak && breakStatus?.current_break?.break_type === 'Meal'}
-                                    isDisabled={!canStartBreak || !!submittingType}
-                                    timeLeft={timeLeft}
-                                    onStart={() => handleStartBreak('Meal')}
-                                    onEnd={handleEndBreak}
-                                    isLoading={submittingType === 'Meal' || (submittingType === 'End' && isOnBreak && breakStatus?.current_break?.break_type === 'Meal')}
+                                    isLoading={submittingType === 'Fixed' || submittingType === 'End'}
                                 />
 
                                 {breakMessage && !isOnBreak && (

@@ -394,10 +394,7 @@ export default function AttendanceHistoryPage() {
                                                         <p className="text-xs text-muted-foreground">Time Out</p>
                                                         <p className="font-mono font-medium">{formatTime24(record.time_out) || '--:--'}</p>
                                                     </div>
-                                                    <div className="bg-amber-50 dark:bg-amber-900/20 rounded p-2 text-center">
-                                                        <p className="text-xs text-amber-600 dark:text-amber-400">Break In</p>
-                                                        <p className="font-mono font-medium text-amber-700 dark:text-amber-300">{formatTime24(record.break_start) || '--:--'}</p>
-                                                    </div>
+
                                                     <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded p-2 text-center">
                                                         <p className="text-xs text-emerald-600 dark:text-emerald-400">Break Out</p>
                                                         <p className="font-mono font-medium text-emerald-700 dark:text-emerald-300">{formatTime24(record.break_end) || '--:--'}</p>
@@ -463,8 +460,7 @@ export default function AttendanceHistoryPage() {
                                                 <TableHead>Shift Date</TableHead>
                                                 <TableHead className="text-center">Schedule</TableHead>
                                                 <TableHead className="text-center">Time In</TableHead>
-                                                <TableHead className="text-center">Break Start</TableHead>
-                                                <TableHead className="text-center">Break End</TableHead>
+
                                                 <TableHead className="text-center">Time Out</TableHead>
                                                 <TableHead className="text-center">Hours</TableHead>
                                                 <TableHead className="text-center">Status</TableHead>
@@ -503,12 +499,7 @@ export default function AttendanceHistoryPage() {
                                                         <TableCell className="font-mono text-center">
                                                             {formatTime24(record.time_in) || '--:--'}
                                                         </TableCell>
-                                                        <TableCell className="font-mono text-center">
-                                                            {formatTime24(record.break_start) || '--:--'}
-                                                        </TableCell>
-                                                        <TableCell className="font-mono text-center">
-                                                            {formatTime24(record.break_end) || '--:--'}
-                                                        </TableCell>
+
                                                         <TableCell className="font-mono text-center">
                                                             {formatTime24(record.time_out) || '--:--'}
                                                         </TableCell>
