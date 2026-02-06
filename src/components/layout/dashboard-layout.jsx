@@ -34,6 +34,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import {
     Breadcrumb,
@@ -81,7 +82,7 @@ const iconMap = {
 };
 
 export function AppSidebar() {
-    const { user, logout, isAdmin } = useAuth();
+    const { user, logout, isAdmin, loading } = useAuth();
     const { settings } = useSettingsContext();
     const pathname = usePathname();
     const navItems = getNavigationItems(user);
@@ -111,14 +112,14 @@ export function AppSidebar() {
                                     <img
                                         src={logoUrl}
                                         alt="Logo"
-                                        className="h-8 w-auto object-contain filter brightness-0 invert"
+                                        className="h-8 w-auto object-contain"
                                         onError={(e) => {
                                             e.currentTarget.src = "/quickconnect-logo.png";
                                             e.currentTarget.onerror = null;
                                         }}
                                     />
                                 </div>
-                                <div className="flex flex-col items-start group-data-[collapsible=icon]:hidden">
+                                <div className="flex flex-col items-start group-data-[collapsible=icon]:hidden transition-all duration-300">
                                     <span className="font-bold text-[16px] text-white tracking-tight leading-none">
                                         {settings?.company_name || "QuickConn Virtual"}
                                     </span>
@@ -216,21 +217,30 @@ export function AppSidebar() {
                                     size="lg"
                                     className="data-[state=open]:bg-white/5 rounded-lg transition-all p-2 h-12"
                                 >
-                                    <Avatar className="h-8 w-8 rounded-full border border-white/10">
+                                    <Avatar className="h-8 w-8 rounded-full border border-white/10 shrink-0">
                                         <AvatarImage src={user?.avatar} alt={user?.first_name} />
                                         <AvatarFallback className="rounded-full bg-white/10 text-white text-xs font-bold">
-                                            {getInitials(user?.first_name, user?.last_name)}
+                                            {loading ? "?" : getInitials(user?.first_name, user?.last_name)}
                                         </AvatarFallback>
                                     </Avatar>
-                                    <div className="grid flex-1 text-left text-sm leading-tight ml-2.5 group-data-[collapsible=icon]:hidden">
-                                        <span className="truncate font-bold text-white text-[13px]">
-                                            {isAdmin ? "Admin User" : "Staff Member"}
-                                        </span>
-                                        <span className="truncate text-[11px] text-white/40 font-medium">
-                                            {user?.first_name} {user?.last_name}
-                                        </span>
+                                    <div className="grid flex-1 text-left text-sm leading-tight ml-2.5 group-data-[collapsible=icon]:hidden overflow-hidden">
+                                        {loading ? (
+                                            <>
+                                                <Skeleton className="h-3 w-20 mb-1.5 bg-white/10" />
+                                                <Skeleton className="h-2 w-24 bg-white/5" />
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span className="truncate font-bold text-white text-[13px]">
+                                                    {isAdmin ? "Admin User" : "Staff Member"}
+                                                </span>
+                                                <span className="truncate text-[11px] text-white/40 font-medium">
+                                                    {user?.first_name} {user?.last_name}
+                                                </span>
+                                            </>
+                                        )}
                                     </div>
-                                    <ChevronRight className="ml-auto size-3.5 text-white/20 group-data-[collapsible=icon]:hidden" />
+                                    <ChevronRight className="ml-auto size-3.5 text-white/20 group-data-[collapsible=icon]:hidden shrink-0" />
                                 </SidebarMenuButton>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent
@@ -348,11 +358,6 @@ export function DashboardLayout({ children, title }) {
                             <div className="flex-1 p-4 sm:p-6 lg:p-10 animate-fade-in">
                                 {children}
                             </div>
-
-                            {/* Dashboard Footer */}
-                            <footer className="p-4 sm:p-6 border-t border-border/5 bg-background/50 text-[10px] sm:text-xs text-muted-foreground/60 flex items-center justify-between">
-                                <p>© 2026 QuickConnect Virtual Management. All rights reserved.</p>
-                            </footer>
                         </div>
                     </main>
                 </SidebarInset>

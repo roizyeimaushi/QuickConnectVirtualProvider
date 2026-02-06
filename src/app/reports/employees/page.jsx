@@ -101,22 +101,22 @@ export default function EmployeeReportsPage() {
                 {loading ? (
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {[...Array(6)].map((_, i) => (
-                            <Card key={i} className="h-48">
+                            <Card key={i} className="flex flex-col">
                                 <CardHeader className="pb-4">
                                     <div className="flex items-center gap-3">
                                         <Skeleton className="h-12 w-12 rounded-full" />
                                         <div className="space-y-2">
-                                            <Skeleton className="h-4 w-32" />
-                                            <Skeleton className="h-3 w-20" />
+                                            <Skeleton className="h-5 w-32" />
+                                            <Skeleton className="h-4 w-20" />
                                         </div>
                                     </div>
                                 </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="space-y-2">
-                                        <Skeleton className="h-3 w-full" />
-                                        <Skeleton className="h-3 w-2/3" />
+                                <CardContent className="space-y-6 flex-1">
+                                    <div className="space-y-3">
+                                        <Skeleton className="h-4 w-full" />
+                                        <Skeleton className="h-4 w-2/3" />
                                     </div>
-                                    <Skeleton className="h-9 w-full" />
+                                    <Skeleton className="h-10 w-full rounded-md mt-auto" />
                                 </CardContent>
                             </Card>
                         ))}

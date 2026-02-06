@@ -203,5 +203,6 @@ export function getNavigationItems(user) {
         },
     ];
 
+    if (!user) return [];
     return isAdmin(user) ? adminNav : employeeNav;
 }

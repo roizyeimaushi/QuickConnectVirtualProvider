@@ -375,11 +375,21 @@ class ReportController extends Controller
             ->get()
             ->keyBy('user_id');
 
-        // Merge employees with their records or mark as pending
-        $mergedData = $allEmployees->map(function($employee) use ($existingRecords) {
+        // Determine if we should include "missing" employees (those without records)
+        $reportDate = \Carbon\Carbon::parse($date)->startOfDay();
+        $today = \Carbon\Carbon::today()->startOfDay();
+        $hasSession = \App\Models\AttendanceSession::whereDate('date', $date)->exists();
+        
+        // We only show "Pending" or "Absent" (missing) employees if:
+        // 1. It is today (we are waiting for them)
+        // 2. It is in the past AND a session was explicitly created for that day
+        $includeMissing = $reportDate->equalTo($today) || ($reportDate->lessThan($today) && $hasSession);
+
+        // Merge employees with their records or mark as pending/absent
+        $mergedData = $allEmployees->map(function($employee) use ($existingRecords, $includeMissing, $reportDate, $today) {
             if ($existingRecords->has($employee->id)) {
                 $record = $existingRecords->get($employee->id);
-                $u = $record->user ?? $employee; // Fallback to current employee object if record's user relation is null
+                $u = $record->user ?? $employee;
                 return [
                     'id' => $record->id,
                     'user_id' => $record->user_id,
@@ -395,7 +405,9 @@ class ReportController extends Controller
                     'overtime' => $record->overtime_minutes ? "{$record->overtime_minutes}m" : null,
                     'status' => $record->status,
                 ];
-            } else {
+            } elseif ($includeMissing) {
+                // If it's in the past and a session existed, they are technically absent if no record exists
+                $status = $reportDate->lessThan($today) ? 'absent' : 'pending';
                 return [
                     'id' => 'p-' . $employee->id,
                     'user_id' => $employee->id,
@@ -409,10 +421,11 @@ class ReportController extends Controller
                     'hours' => 0,
                     'late_duration' => null,
                     'overtime' => null,
-                    'status' => 'pending',
+                    'status' => $status,
                 ];
             }
-        });
+            return null;
+        })->filter()->values();
 
         // Filter by search if provided
         if ($request->has('search')) {
@@ -423,14 +436,13 @@ class ReportController extends Controller
             });
         }
 
-        // Calculate summary metrics
-        $records = $existingRecords->values();
+        // Calculate summary metrics based on the merged data
         $summary = [
-            'total' => $totalEmployees,
-            'present' => $records->whereIn('status', ['present', 'left_early'])->count(),
-            'late' => $records->where('status', 'late')->count(),
-            'absent' => $records->where('status', 'absent')->count(),
-            'pending' => max(0, $totalEmployees - $records->count()),
+            'total' => $mergedData->count(),
+            'present' => $mergedData->whereIn('status', ['present', 'left_early'])->count(),
+            'late' => $mergedData->where('status', 'late')->count(),
+            'absent' => $mergedData->where('status', 'absent')->count(),
+            'pending' => $mergedData->where('status', 'pending')->count(),
         ];
 
         // Manual Pagination for the merged collection

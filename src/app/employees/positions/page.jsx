@@ -260,7 +260,7 @@ export default function PositionsPage() {
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                                            className="text-destructive hover:text-destructive hover:bg-destructive/10 transition-colors"
                                             onClick={() => handleDeleteClick(index)}
                                         >
                                             <Trash2 className="h-4 w-4" />

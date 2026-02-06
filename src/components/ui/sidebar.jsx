@@ -287,7 +287,7 @@ const Sidebar = React.forwardRef(
       >
         {/* Spacer div to push content over */}
         <div
-          className="relative h-svh bg-transparent shrink-0"
+          className="relative h-svh bg-transparent shrink-0 transition-all duration-300 ease-in-out"
           style={{
             width: state === "collapsed"
               ? (collapsible === "icon" ? 'var(--sidebar-width-icon)' : '0px')
@@ -297,7 +297,7 @@ const Sidebar = React.forwardRef(
         {/* Fixed sidebar container */}
         <div
           className={cn(
-            "fixed inset-y-0 z-50 hidden h-svh md:flex overflow-hidden",
+            "fixed inset-y-0 z-50 hidden h-svh md:flex overflow-hidden transition-all duration-300 ease-in-out",
             side === "left"
               ? "left-0"
               : "right-0",

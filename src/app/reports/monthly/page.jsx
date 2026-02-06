@@ -22,6 +22,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { reportsApi } from "@/lib/api";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
     Calendar,
     Download,
@@ -29,6 +30,8 @@ import {
     TrendingUp,
     Clock,
     CheckCircle2,
+    ChevronLeft,
+    ChevronRight,
 } from "lucide-react";
 
 const months = [
@@ -124,7 +127,7 @@ export default function MonthlyReportsPage() {
                         </CardHeader>
                         <CardContent>
                             {loading ? (
-                                null
+                                <Skeleton className="h-8 w-12" />
                             ) : (
                                 <div className="text-2xl font-bold">{report.working_days}</div>
                             )}
@@ -137,7 +140,7 @@ export default function MonthlyReportsPage() {
                         </CardHeader>
                         <CardContent>
                             {loading ? (
-                                null
+                                <Skeleton className="h-8 w-16" />
                             ) : (
                                 <div className="text-2xl font-bold text-green-600">{avgAttendance}%</div>
                             )}
@@ -150,7 +153,7 @@ export default function MonthlyReportsPage() {
                         </CardHeader>
                         <CardContent>
                             {loading ? (
-                                null
+                                <Skeleton className="h-8 w-12" />
                             ) : (
                                 <div className="text-2xl font-bold">{report.total_employees}</div>
                             )}
@@ -162,7 +165,11 @@ export default function MonthlyReportsPage() {
                             <Clock className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-lg font-bold">{months[parseInt(month) - 1]} {year}</div>
+                            {loading ? (
+                                <Skeleton className="h-8 w-32" />
+                            ) : (
+                                <div className="text-lg font-bold">{months[parseInt(month) - 1]} {year}</div>
+                            )}
                         </CardContent>
                     </Card>
                 </div>
@@ -180,7 +187,58 @@ export default function MonthlyReportsPage() {
                     </CardHeader>
                     <CardContent>
                         {loading ? (
-                            null
+                            <div className="space-y-4">
+                                <div className="hidden md:block">
+                                    <div className="border rounded-md">
+                                        <div className="bg-muted/30 p-4 border-b">
+                                            <div className="grid grid-cols-6 gap-4">
+                                                {[...Array(6)].map((_, i) => (
+                                                    <Skeleton key={i} className="h-4 w-full" />
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="p-0">
+                                            {[...Array(6)].map((_, i) => (
+                                                <div key={i} className="p-4 border-b last:border-0">
+                                                    <div className="grid grid-cols-6 gap-4 items-center">
+                                                        <Skeleton className="h-4 w-24" />
+                                                        <Skeleton className="h-4 w-32" />
+                                                        <Skeleton className="h-6 w-12 mx-auto" />
+                                                        <Skeleton className="h-6 w-12 mx-auto" />
+                                                        <Skeleton className="h-6 w-12 mx-auto" />
+                                                        <div className="flex items-center gap-2">
+                                                            <Skeleton className="h-2 w-20" />
+                                                            <Skeleton className="h-4 w-8" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="md:hidden space-y-3">
+                                    {[...Array(3)].map((_, i) => (
+                                        <div key={i} className="border rounded-lg p-4 space-y-3">
+                                            <div className="flex justify-between">
+                                                <div className="space-y-2">
+                                                    <Skeleton className="h-4 w-32" />
+                                                    <Skeleton className="h-3 w-20" />
+                                                </div>
+                                                <div className="space-y-2 text-right">
+                                                    <Skeleton className="h-6 w-12 ml-auto" />
+                                                    <Skeleton className="h-3 w-16 ml-auto" />
+                                                </div>
+                                            </div>
+                                            <Skeleton className="h-2 w-full" />
+                                            <div className="grid grid-cols-3 gap-2">
+                                                <Skeleton className="h-12 w-full" />
+                                                <Skeleton className="h-12 w-full" />
+                                                <Skeleton className="h-12 w-full" />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         ) : report.summary.length === 0 ? (
                             <div className="text-center py-8 text-muted-foreground">
                                 No attendance data found for this period

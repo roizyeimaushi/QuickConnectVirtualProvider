@@ -249,9 +249,74 @@ export default function SessionDetailsPage() {
     if (loading && !session) {
         return (
             <DashboardLayout title="Loading Session...">
-                <div className="flex flex-col items-center justify-center py-24 text-center space-y-4">
-                    <div className="h-12 w-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
-                    <p className="text-muted-foreground animate-pulse">Fetching session details...</p>
+                <div className="space-y-6 animate-fade-in p-4">
+                    {/* Header Skeleton */}
+                    <div className="flex items-center gap-4">
+                        <Skeleton className="h-10 w-10 rounded-full" />
+                        <div className="space-y-2">
+                            <Skeleton className="h-8 w-64" />
+                            <Skeleton className="h-4 w-48" />
+                        </div>
+                        <Skeleton className="ml-auto h-9 w-32 rounded-full" />
+                    </div>
+
+                    <div className="grid gap-6 md:grid-cols-2">
+                        <Card>
+                            <CardHeader><Skeleton className="h-5 w-40" /></CardHeader>
+                            <CardContent className="grid grid-cols-2 gap-4">
+                                {[...Array(4)].map((_, i) => (
+                                    <div key={i} className="space-y-2">
+                                        <Skeleton className="h-3 w-16" />
+                                        <Skeleton className="h-5 w-32" />
+                                    </div>
+                                ))}
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader><Skeleton className="h-5 w-48" /></CardHeader>
+                            <CardContent className="grid grid-cols-2 gap-4">
+                                {[...Array(3)].map((_, i) => (
+                                    <div key={i} className="space-y-2">
+                                        <Skeleton className="h-3 w-20" />
+                                        <Skeleton className="h-5 w-24" />
+                                    </div>
+                                ))}
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <Card>
+                        <CardHeader>
+                            <Skeleton className="h-6 w-48 mb-2" />
+                            <Skeleton className="h-4 w-64" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="border rounded-md">
+                                <div className="p-4 border-b bg-muted/30">
+                                    <div className="grid grid-cols-6 gap-4">
+                                        {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-4 w-full" />)}
+                                    </div>
+                                </div>
+                                <div className="p-0">
+                                    {[...Array(5)].map((_, i) => (
+                                        <div key={i} className="p-4 border-b last:border-0">
+                                            <div className="grid grid-cols-6 gap-4 items-center">
+                                                <div className="flex items-center gap-3">
+                                                    <Skeleton className="h-9 w-9 rounded-full" />
+                                                    <Skeleton className="h-4 w-24" />
+                                                </div>
+                                                <Skeleton className="h-4 w-full" />
+                                                <Skeleton className="h-4 w-full" />
+                                                <Skeleton className="h-4 w-full" />
+                                                <Skeleton className="h-6 w-16 mx-auto" />
+                                                <Skeleton className="h-8 w-24 ml-auto" />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
             </DashboardLayout>
         );

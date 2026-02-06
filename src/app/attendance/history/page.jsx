@@ -286,8 +286,66 @@ export default function AttendanceHistoryPage() {
                                 <CardTitle>Attendance Records</CardTitle>
                             </div>
                             <div className="flex flex-col sm:flex-row flex-wrap items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
-                                <Skeleton className="h-10 w-full sm:w-[140px]" />
-                                <Skeleton className="h-10 w-full sm:w-[260px]" />
+                                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                    <SelectTrigger className="w-full sm:w-[140px] h-9">
+                                        <div className="flex items-center gap-2">
+                                            <Filter className="h-4 w-4 text-muted-foreground" />
+                                            <SelectValue placeholder="Status" />
+                                        </div>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All Statuses</SelectItem>
+                                        <SelectItem value="present">Present</SelectItem>
+                                        <SelectItem value="late">Late</SelectItem>
+                                        <SelectItem value="absent">Absent</SelectItem>
+                                        <SelectItem value="pending">Pending</SelectItem>
+                                    </SelectContent>
+                                </Select>
+
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="w-full sm:w-auto h-9 justify-start text-left font-normal"
+                                        >
+                                            <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
+                                            {dateRange?.from ? (
+                                                dateRange.to ? (
+                                                    <>
+                                                        {format(dateRange.from, "LLL dd")} -{" "}
+                                                        {format(dateRange.to, "LLL dd")}
+                                                    </>
+                                                ) : (
+                                                    format(dateRange.from, "LLL dd, yyyy")
+                                                )
+                                            ) : (
+                                                <span>Filter by Date</span>
+                                            )}
+                                            <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="end">
+                                        <Calendar
+                                            initialFocus
+                                            mode="range"
+                                            defaultMonth={dateRange?.from}
+                                            selected={dateRange}
+                                            onSelect={setDateRange}
+                                            numberOfMonths={1}
+                                        />
+                                        <div className="p-3 border-t flex justify-end">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => setDateRange({ from: null, to: null })}
+                                                className="text-xs"
+                                            >
+                                                Clear Selection
+                                            </Button>
+                                        </div>
+                                    </PopoverContent>
+                                </Popover>
                             </div>
                         </div>
                     </CardHeader>
