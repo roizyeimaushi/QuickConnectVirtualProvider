@@ -124,13 +124,10 @@
 .login-container {
   display: flex;
   flex-direction: column;
-  min-height: auto;
-  /* Natural overflow on mobile */
+  min-height: 100vh;
+  /* Fixed: Background covers full screen */
   width: 100%;
   background: #f8f8ff;
-  padding-top: 5vh;
-  /* Push content to top of mobile screen */
-  padding-bottom: 5vh;
 }
 
 .left-section,
@@ -146,15 +143,17 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-start !important;
-  /* Top align on mobile */
+  /* Keep content at top */
+  padding-top: 40px;
+  padding-bottom: 40px;
 }
 
-/* Responsive Logo Class */
+/* Responsive Logo Class - "Just Exactly Only" Size */
 .login-logo {
-  width: 160px !important;
-  /* Larger on mobile */
+  width: 120px !important;
+  /* Optimized mobile size */
   height: auto !important;
-  margin-bottom: 32px !important;
+  margin-bottom: 24px !important;
   object-fit: contain;
 }
 
