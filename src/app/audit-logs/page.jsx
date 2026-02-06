@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
     Table,
     TableBody,
@@ -302,7 +303,21 @@ export default function AuditLogsPage() {
                 </div>
 
                 {/* Stats */}
-                {loading ? null : (
+                {loading && logs.length === 0 ? (
+                    <div className="grid gap-4 md:grid-cols-4">
+                        {[...Array(4)].map((_, i) => (
+                            <Card key={i}>
+                                <CardContent className="flex items-center gap-4 p-6">
+                                    <Skeleton className="h-12 w-12 rounded-lg" />
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-8 w-16" />
+                                        <Skeleton className="h-4 w-24" />
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                ) : (
                     <div className="grid gap-4 md:grid-cols-4">
                         <Card>
                             <CardContent className="flex items-center gap-4 p-6">
@@ -419,7 +434,40 @@ export default function AuditLogsPage() {
                                 </div>
                             </CardHeader>
                             <CardContent>
-                                {loading ? null : filteredLogs.length === 0 ? (
+                                {loading && logs.length === 0 ? (
+                                    <div className="space-y-4">
+                                        <div className="hidden md:block">
+                                            <div className="border rounded-md">
+                                                <div className="p-0">
+                                                    {[...Array(10)].map((_, i) => (
+                                                        <div key={i} className="p-4 border-b last:border-0">
+                                                            <div className="grid grid-cols-6 gap-4 items-center">
+                                                                <Skeleton className="h-4 w-full" />
+                                                                <Skeleton className="h-4 w-full" />
+                                                                <Skeleton className="h-6 w-16 mx-auto" />
+                                                                <Skeleton className="h-8 w-24 mx-auto" />
+                                                                <Skeleton className="h-4 w-24 mx-auto" />
+                                                                <Skeleton className="h-4 w-32 mx-auto" />
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="md:hidden space-y-3">
+                                            {[...Array(3)].map((_, i) => (
+                                                <div key={i} className="border rounded-lg p-4 space-y-3">
+                                                    <div className="flex justify-between">
+                                                        <Skeleton className="h-4 w-32" />
+                                                        <Skeleton className="h-6 w-16" />
+                                                    </div>
+                                                    <Skeleton className="h-10 w-full" />
+                                                    <Skeleton className="h-8 w-full" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : filteredLogs.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center py-12 text-center">
                                         <FileText className="h-12 w-12 text-muted-foreground mb-4" />
                                         <h3 className="text-lg font-semibold">No logs found</h3>

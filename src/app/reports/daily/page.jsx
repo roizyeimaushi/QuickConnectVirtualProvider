@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import {
     Table,
@@ -265,53 +266,69 @@ export default function DailyReportsPage() {
                 </div>
 
                 {/* Summary Cards */}
-                <div className="grid gap-4 md:grid-cols-5">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Total Records</CardTitle>
-                            <Users className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{report?.summary?.total ?? 0}</div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Present</CardTitle>
-                            <CheckCircle2 className="h-4 w-4 text-green-500" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-green-600">{report?.summary?.present ?? 0}</div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Late</CardTitle>
-                            <AlertTriangle className="h-4 w-4 text-amber-500" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-amber-600">{report?.summary?.late ?? 0}</div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Absent</CardTitle>
-                            <XCircle className="h-4 w-4 text-red-500" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-red-600">{report.summary.absent}</div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Pending</CardTitle>
-                            <Clock className="h-4 w-4 text-blue-500" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-blue-600">{report?.summary?.pending ?? 0}</div>
-                        </CardContent>
-                    </Card>
-                </div>
+                {initialLoad ? (
+                    <div className="grid gap-4 md:grid-cols-5">
+                        {[...Array(5)].map((_, i) => (
+                            <Card key={i}>
+                                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                                    <Skeleton className="h-4 w-20" />
+                                    <Skeleton className="h-4 w-4 rounded-full" />
+                                </CardHeader>
+                                <CardContent>
+                                    <Skeleton className="h-8 w-12" />
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="grid gap-4 md:grid-cols-5">
+                        <Card>
+                            <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+                                <div className="p-2 rounded-full bg-primary/10 mb-2">
+                                    <Users className="h-5 w-5 text-primary" />
+                                </div>
+                                <p className="text-sm font-medium text-muted-foreground">Total Records</p>
+                                <p className="text-2xl font-bold">{report?.summary?.total ?? 0}</p>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+                                <div className="p-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30 mb-2">
+                                    <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                                </div>
+                                <p className="text-sm font-medium text-muted-foreground">Present</p>
+                                <p className="text-2xl font-bold text-emerald-600">{report?.summary?.present ?? 0}</p>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+                                <div className="p-2 rounded-full bg-amber-100 dark:bg-amber-900/30 mb-2">
+                                    <AlertTriangle className="h-5 w-5 text-amber-600" />
+                                </div>
+                                <p className="text-sm font-medium text-muted-foreground">Late</p>
+                                <p className="text-2xl font-bold text-amber-600">{report?.summary?.late ?? 0}</p>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+                                <div className="p-2 rounded-full bg-red-100 dark:bg-red-900/30 mb-2">
+                                    <XCircle className="h-5 w-5 text-red-600" />
+                                </div>
+                                <p className="text-sm font-medium text-muted-foreground">Absent</p>
+                                <p className="text-2xl font-bold text-red-600">{report.summary.absent}</p>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+                                <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-900/30 mb-2">
+                                    <Clock className="h-5 w-5 text-blue-600" />
+                                </div>
+                                <p className="text-sm font-medium text-muted-foreground">Pending</p>
+                                <p className="text-2xl font-bold text-blue-600">{report?.summary?.pending ?? 0}</p>
+                            </CardContent>
+                        </Card>
+                    </div>
+                )}
 
                 {/* Charts Area */}
                 {(report?.summary?.total ?? 0) > 0 && (
@@ -390,7 +407,48 @@ export default function DailyReportsPage() {
                     </CardHeader>
                     <CardContent>
                         {initialLoad ? (
-                            null
+                            <div className="space-y-4">
+                                <div className="hidden md:block">
+                                    <div className="border rounded-md">
+                                        <div className="p-0">
+                                            {[...Array(10)].map((_, i) => (
+                                                <div key={i} className="p-4 border-b last:border-0">
+                                                    <div className="grid grid-cols-11 gap-4 items-center">
+                                                        <Skeleton className="h-4 w-full" />
+                                                        <Skeleton className="h-4 w-full" />
+                                                        <Skeleton className="h-4 w-full" />
+                                                        <Skeleton className="h-4 w-full" />
+                                                        <Skeleton className="h-4 w-full" />
+                                                        <Skeleton className="h-4 w-full" />
+                                                        <Skeleton className="h-4 w-full" />
+                                                        <Skeleton className="h-4 w-full" />
+                                                        <Skeleton className="h-4 w-full" />
+                                                        <Skeleton className="h-4 w-full" />
+                                                        <Skeleton className="h-6 w-16 mx-auto" />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="md:hidden space-y-3">
+                                    {[...Array(3)].map((_, i) => (
+                                        <div key={i} className="border rounded-lg p-4 space-y-3">
+                                            <div className="flex justify-between">
+                                                <Skeleton className="h-4 w-32" />
+                                                <Skeleton className="h-6 w-16" />
+                                            </div>
+                                            <Skeleton className="h-10 w-full" />
+                                            <div className="grid grid-cols-4 gap-2">
+                                                <Skeleton className="h-10 w-full" />
+                                                <Skeleton className="h-10 w-full" />
+                                                <Skeleton className="h-10 w-full" />
+                                                <Skeleton className="h-10 w-full" />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         ) : recordsList.length === 0 ? (
                             <div className="text-center py-8 text-muted-foreground">
                                 No attendance records found for this date

@@ -599,8 +599,72 @@ export default function EmployeeDashboardPage() {
     if (loading) {
         return (
             <DashboardLayout title="Employee Dashboard">
-                <div className="flex items-center justify-center h-[50vh]">
-                    {/* Minimal loading state keeping layout visible */}
+                <div className="space-y-6 animate-fade-in">
+                    {/* Welcome Skeleton */}
+                    <div className="space-y-2">
+                        <Skeleton className="h-8 w-64" />
+                        <Skeleton className="h-4 w-48" />
+                    </div>
+
+                    {/* Status Card Skeleton */}
+                    <Card className="col-span-full border-none shadow-lg overflow-hidden">
+                        <div className="bg-slate-500/10 p-6 md:p-8">
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                <div className="space-y-3 w-full md:w-auto">
+                                    <Skeleton className="h-8 w-40 bg-muted/50" />
+                                    <div className="flex gap-2">
+                                        <Skeleton className="h-6 w-24 bg-muted/30" />
+                                        <Skeleton className="h-6 w-20 bg-muted/30" />
+                                    </div>
+                                </div>
+                                <div className="text-left md:text-right space-y-2 w-full md:w-auto">
+                                    <Skeleton className="h-4 w-36 bg-muted/30 ml-0 md:ml-auto" />
+                                    <Skeleton className="h-12 w-48 bg-muted/30 ml-0 md:ml-auto" />
+                                </div>
+                            </div>
+                        </div>
+                        <CardContent className="p-8">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {[...Array(3)].map((_, i) => (
+                                    <Skeleton key={i} className="h-40 w-full rounded-xl" />
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Bottom Cards Skeleton */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <Card className="col-span-1">
+                            <CardHeader>
+                                <Skeleton className="h-5 w-40" />
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex justify-between">
+                                    <Skeleton className="h-4 w-24" />
+                                    <Skeleton className="h-4 w-12" />
+                                </div>
+                                <Skeleton className="h-2 w-full" />
+                                <div className="grid grid-cols-3 gap-2 py-4">
+                                    {[...Array(3)].map((_, i) => (
+                                        <div key={i} className="space-y-2">
+                                            <Skeleton className="h-6 w-10 mx-auto" />
+                                            <Skeleton className="h-3 w-12 mx-auto" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
+                        <Card className="col-span-1 lg:col-span-2">
+                            <CardHeader>
+                                <Skeleton className="h-5 w-32" />
+                            </CardHeader>
+                            <CardContent className="grid grid-cols-2 gap-4">
+                                {[...Array(3)].map((_, i) => (
+                                    <Skeleton key={i} className="h-24 w-full rounded-xl" />
+                                ))}
+                            </CardContent>
+                        </Card>
+                    </div>
                 </div>
             </DashboardLayout>
         );

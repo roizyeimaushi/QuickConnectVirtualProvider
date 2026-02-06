@@ -262,7 +262,21 @@ export default function AttendanceHistoryPage() {
                 </div>
 
                 {/* Summary Stats */}
-                <StatsSummary totalRecords={totalRecords} />
+                {loading && records.length === 0 ? (
+                    <div className="grid gap-4 md:grid-cols-4">
+                        <Card>
+                            <CardContent className="flex items-center gap-4 p-4">
+                                <Skeleton className="h-10 w-10 rounded-lg" />
+                                <div className="space-y-2">
+                                    <Skeleton className="h-8 w-12" />
+                                    <Skeleton className="h-3 w-24" />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                ) : (
+                    <StatsSummary totalRecords={totalRecords} />
+                )}
 
                 {/* Records Table */}
                 <Card>
@@ -272,59 +286,8 @@ export default function AttendanceHistoryPage() {
                                 <CardTitle>Attendance Records</CardTitle>
                             </div>
                             <div className="flex flex-col sm:flex-row flex-wrap items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
-                                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                    <SelectTrigger className="w-full sm:w-[140px]">
-                                        <Filter className="mr-2 h-4 w-4" />
-                                        <SelectValue placeholder="Filter" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All Status</SelectItem>
-                                        <SelectItem value="present">Present</SelectItem>
-                                        <SelectItem value="late">Late</SelectItem>
-                                        <SelectItem value="absent">Absent</SelectItem>
-                                        <SelectItem value="pending">Pending</SelectItem>
-                                        <SelectItem value="excused">Excused</SelectItem>
-                                        <SelectItem value="left_early">Left Early</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button variant="outline" className="w-full sm:w-[260px] h-10 px-3 justify-between text-left font-normal">
-                                            <div className="flex items-center truncate">
-                                                <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0" />
-                                                {dateRange?.from ? (
-                                                    dateRange?.to && dateRange.from.getTime() !== dateRange.to.getTime() ? (
-                                                        <span className="truncate">
-                                                            {format(dateRange.from, "LLL dd, y")} -{" "}
-                                                            {format(dateRange.to, "LLL dd, y")}
-                                                        </span>
-                                                    ) : (
-                                                        <span className="truncate">{format(dateRange.from, "LLL dd, yyyy")}</span>
-                                                    )
-                                                ) : (
-                                                    <span className="text-muted-foreground">Pick a date</span>
-                                                )}
-                                            </div>
-                                            <ChevronDown className="ml-2 h-4 w-4 opacity-50 flex-shrink-0" />
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent
-                                        className="w-auto p-0"
-                                        align="center"
-                                        side="bottom"
-                                        avoidCollisions={true}
-                                    >
-                                        <Calendar
-                                            initialFocus
-                                            mode="range"
-                                            defaultMonth={dateRange?.from}
-                                            selected={dateRange}
-                                            onSelect={setDateRange}
-                                            numberOfMonths={1}
-                                            className="rounded-md border p-3"
-                                        />
-                                    </PopoverContent>
-                                </Popover>
+                                <Skeleton className="h-10 w-full sm:w-[140px]" />
+                                <Skeleton className="h-10 w-full sm:w-[260px]" />
                             </div>
                         </div>
                     </CardHeader>
@@ -335,7 +298,7 @@ export default function AttendanceHistoryPage() {
                                 <div className="hidden md:block">
                                     <div className="border rounded-md">
                                         <div className="p-0">
-                                            {[...Array(6)].map((_, i) => (
+                                            {[...Array(8)].map((_, i) => (
                                                 <div key={i} className="p-4 border-b last:border-0">
                                                     <div className="grid grid-cols-7 gap-4 items-center">
                                                         <Skeleton className="h-4 w-full" />
@@ -355,15 +318,21 @@ export default function AttendanceHistoryPage() {
                                 <div className="md:hidden space-y-3">
                                     {[...Array(3)].map((_, i) => (
                                         <div key={i} className="border rounded-lg p-4 space-y-3">
-                                            <div className="flex justify-between">
-                                                <Skeleton className="h-4 w-32" />
+                                            <div className="flex justify-between items-center">
+                                                <div className="flex items-center gap-3">
+                                                    <Skeleton className="h-10 w-10 rounded-full" />
+                                                    <div className="space-y-2">
+                                                        <Skeleton className="h-4 w-24" />
+                                                        <Skeleton className="h-3 w-20" />
+                                                    </div>
+                                                </div>
                                                 <Skeleton className="h-6 w-16 rounded-full" />
                                             </div>
                                             <div className="grid grid-cols-2 gap-2">
-                                                <Skeleton className="h-10 w-full" />
-                                                <Skeleton className="h-10 w-full" />
+                                                <Skeleton className="h-10 w-full rounded-md" />
+                                                <Skeleton className="h-10 w-full rounded-md" />
                                             </div>
-                                            <Skeleton className="h-8 w-full" />
+                                            <Skeleton className="h-10 w-full rounded-md" />
                                         </div>
                                     ))}
                                 </div>

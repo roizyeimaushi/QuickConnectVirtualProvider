@@ -222,41 +222,57 @@ export default function EmployeesPage() {
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-3">
-                    <Card>
-                        <CardContent className="flex items-center gap-4 p-6">
-                            <div className="p-3 rounded-lg bg-primary/10">
-                                <Users className="h-6 w-6 text-primary" />
-                            </div>
-                            <div>
-                                <p className="text-2xl font-bold">{summary.total}</p>
-                                <p className="text-sm text-muted-foreground">Total Employees</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardContent className="flex items-center gap-4 p-6">
-                            <div className="p-3 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
-                                <UserCheck className="h-6 w-6 text-emerald-600" />
-                            </div>
-                            <div>
-                                <p className="text-2xl font-bold">{summary.active}</p>
-                                <p className="text-sm text-muted-foreground">Active</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Link href="/employees/deactivated">
-                        <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
-                            <CardContent className="flex items-center gap-4 p-6">
-                                <div className="p-3 rounded-lg bg-amber-100 dark:bg-amber-900/30">
-                                    <UserX className="h-6 w-6 text-amber-600" />
-                                </div>
-                                <div>
-                                    <p className="text-2xl font-bold">{summary.inactive}</p>
-                                    <p className="text-sm text-muted-foreground">Inactive</p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </Link>
+                    {loading && employees.length === 0 ? (
+                        [...Array(3)].map((_, i) => (
+                            <Card key={i}>
+                                <CardContent className="flex items-center gap-4 p-6">
+                                    <Skeleton className="h-12 w-12 rounded-lg" />
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-8 w-12" />
+                                        <Skeleton className="h-4 w-24" />
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))
+                    ) : (
+                        <>
+                            <Card>
+                                <CardContent className="flex items-center gap-4 p-6">
+                                    <div className="p-3 rounded-lg bg-primary/10">
+                                        <Users className="h-6 w-6 text-primary" />
+                                    </div>
+                                    <div>
+                                        <p className="text-2xl font-bold">{summary.total}</p>
+                                        <p className="text-sm text-muted-foreground">Total Employees</p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardContent className="flex items-center gap-4 p-6">
+                                    <div className="p-3 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                                        <UserCheck className="h-6 w-6 text-emerald-600" />
+                                    </div>
+                                    <div>
+                                        <p className="text-2xl font-bold">{summary.active}</p>
+                                        <p className="text-sm text-muted-foreground">Active</p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                            <Link href="/employees/deactivated">
+                                <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+                                    <CardContent className="flex items-center gap-4 p-6">
+                                        <div className="p-3 rounded-lg bg-amber-100 dark:bg-amber-900/30">
+                                            <UserX className="h-6 w-6 text-amber-600" />
+                                        </div>
+                                        <div>
+                                            <p className="text-2xl font-bold">{summary.inactive}</p>
+                                            <p className="text-sm text-muted-foreground">Inactive</p>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </Link>
+                        </>
+                    )}
                 </div>
 
                 {/* Table Card */}

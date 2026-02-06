@@ -344,13 +344,9 @@ export function DashboardLayout({ children, title }) {
                                 {children}
                             </div>
 
-                            {/* Dashboard Footer / Status Bar */}
+                            {/* Dashboard Footer */}
                             <footer className="p-4 sm:p-6 border-t border-border/5 bg-background/50 text-[10px] sm:text-xs text-muted-foreground/60 flex items-center justify-between">
                                 <p>© 2026 QuickConnect Virtual Management. All rights reserved.</p>
-                                <div className="flex items-center gap-4 hidden sm:flex">
-                                    <span>System Status: <span className="text-emerald-500 font-bold">Online</span></span>
-                                    <span>Version 1.2.0</span>
-                                </div>
                             </footer>
                         </div>
                     </main>

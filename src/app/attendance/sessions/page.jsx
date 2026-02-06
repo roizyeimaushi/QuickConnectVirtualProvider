@@ -6,6 +6,7 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { LockSessionDialog } from "@/components/attendance/lock-session-dialog";
 
 import {
@@ -225,8 +226,23 @@ export default function AttendanceSessionsPage() {
                 </div>
 
                 {/* Active Session Card */}
-                {loading ? (
-                    null
+                {loading && sessions.length === 0 ? (
+                    <Card className="animate-fade-in">
+                        <CardContent className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-6">
+                            <div className="flex items-center gap-4">
+                                <Skeleton className="h-12 w-12 rounded-lg" />
+                                <div className="space-y-2">
+                                    <Skeleton className="h-5 w-32" />
+                                    <Skeleton className="h-4 w-48" />
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-6">
+                                <Skeleton className="h-10 w-16" />
+                                <Skeleton className="h-10 w-16" />
+                                <Skeleton className="h-9 w-24" />
+                            </div>
+                        </CardContent>
+                    </Card>
                 ) : activeSession ? (
                     <Card className="border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/50 dark:bg-emerald-950/20 animate-fade-in">
                         <CardContent className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-6">
@@ -272,8 +288,20 @@ export default function AttendanceSessionsPage() {
                 ) : null}
 
                 {/* Stats Cards */}
-                {loading ? (
-                    null
+                {loading && sessions.length === 0 ? (
+                    <div className="grid gap-4 md:grid-cols-3">
+                        {[...Array(3)].map((_, i) => (
+                            <Card key={i}>
+                                <CardContent className="flex items-center gap-4 p-6">
+                                    <Skeleton className="h-12 w-12 rounded-lg" />
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-8 w-16" />
+                                        <Skeleton className="h-4 w-24" />
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
                 ) : (
                     <div className="grid gap-4 md:grid-cols-3 animate-fade-in stagger-1">
                         <Card>
@@ -323,7 +351,40 @@ export default function AttendanceSessionsPage() {
                         <CardDescription>All past and current attendance sessions.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {loading ? null : sessions.length === 0 ? (
+                        {loading && sessions.length === 0 ? (
+                            <div className="space-y-4">
+                                <div className="hidden md:block">
+                                    <div className="border rounded-md">
+                                        <div className="p-0">
+                                            {[...Array(5)].map((_, i) => (
+                                                <div key={i} className="p-4 border-b last:border-0">
+                                                    <div className="grid grid-cols-6 gap-4 items-center">
+                                                        <Skeleton className="h-4 w-full" />
+                                                        <Skeleton className="h-4 w-full" />
+                                                        <Skeleton className="h-4 w-full" />
+                                                        <Skeleton className="h-4 w-full" />
+                                                        <Skeleton className="h-6 w-16 mx-auto" />
+                                                        <Skeleton className="h-8 w-8 rounded-md mx-auto" />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="md:hidden space-y-3">
+                                    {[...Array(3)].map((_, i) => (
+                                        <div key={i} className="border rounded-lg p-4 space-y-3">
+                                            <div className="flex justify-between">
+                                                <Skeleton className="h-4 w-32" />
+                                                <Skeleton className="h-6 w-16" />
+                                            </div>
+                                            <Skeleton className="h-10 w-full" />
+                                            <Skeleton className="h-8 w-full" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : sessions.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-12 text-center">
                                 <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
                                 <h3 className="text-lg font-semibold">No sessions yet</h3>

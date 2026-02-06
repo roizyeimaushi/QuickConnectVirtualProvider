@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { employeesApi } from "@/lib/api";
 import { useAuth } from "@/components/providers/auth-provider";
@@ -99,8 +100,25 @@ export default function EmployeeReportsPage() {
                 {/* Employee Cards */}
                 {loading ? (
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {[1, 2, 3, 4, 5, 6].map(i => (
-                            <div key={i} className="h-48 bg-slate-50 dark:bg-slate-900 border rounded-xl animate-pulse" />
+                        {[...Array(6)].map((_, i) => (
+                            <Card key={i} className="h-48">
+                                <CardHeader className="pb-4">
+                                    <div className="flex items-center gap-3">
+                                        <Skeleton className="h-12 w-12 rounded-full" />
+                                        <div className="space-y-2">
+                                            <Skeleton className="h-4 w-32" />
+                                            <Skeleton className="h-3 w-20" />
+                                        </div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-3 w-full" />
+                                        <Skeleton className="h-3 w-2/3" />
+                                    </div>
+                                    <Skeleton className="h-9 w-full" />
+                                </CardContent>
+                            </Card>
                         ))}
                     </div>
                 ) : filteredEmployees.length === 0 ? (
