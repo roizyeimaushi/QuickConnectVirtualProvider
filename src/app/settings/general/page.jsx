@@ -18,6 +18,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSettings } from "@/hooks/use-settings";
 import { settingsApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { getLogoUrl } from "@/lib/constants";
 
 export default function GeneralSettingsPage() {
     const { settings, loading, saving, updateSettings, setLocalSettings } = useSettings();
@@ -27,7 +28,7 @@ export default function GeneralSettingsPage() {
         language: "en",
         date_format: "ymd",
         time_format: "24h",
-        system_logo: "/logo.png"
+        system_logo: ""
     });
     const [uploading, setUploading] = useState(false);
     const { toast } = useToast();
@@ -49,7 +50,7 @@ export default function GeneralSettingsPage() {
                 time_format: (settings.time_format === "24-hour" ? "24h" :
                     settings.time_format === "12-hour" ? "12h" :
                         settings.time_format) || "24h",
-                system_logo: settings.system_logo || "/logo.png",
+                system_logo: settings.system_logo || "",
             });
         }
     }, [settings]);
@@ -114,9 +115,9 @@ export default function GeneralSettingsPage() {
                     <div className="space-y-2">
                         <Label>System Logo</Label>
                         <div className="flex items-center gap-4">
-                            <Avatar className="h-16 w-16">
-                                <AvatarImage src={formData.system_logo} />
-                                <AvatarFallback>QC</AvatarFallback>
+                            <Avatar className="h-16 w-16 bg-white border shadow-sm">
+                                <AvatarImage src={getLogoUrl(formData.system_logo)} />
+                                <AvatarFallback className="bg-emerald-50 text-emerald-600 font-bold">QC</AvatarFallback>
                             </Avatar>
                             <div className="relative">
                                 <input

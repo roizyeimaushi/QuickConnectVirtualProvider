@@ -20,7 +20,7 @@ import {
     SelectValue
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Lock } from "lucide-react";
+import { Lock, Loader2 } from "lucide-react";
 
 export function LockSessionDialog({ session, open, onOpenChange, onConfirm }) {
     const [loading, setLoading] = useState(false);
@@ -127,7 +127,7 @@ export function LockSessionDialog({ session, open, onOpenChange, onConfirm }) {
                             disabled={loading}
                             className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white font-semibold py-6 sm:py-2 order-1 sm:order-2"
                         >
-                            {loading ? "Locking..." : "Finalize & Lock Session"}
+                            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Finalize & Lock Session"}
                         </Button>
                         <Button
                             type="button"

@@ -225,8 +225,7 @@ export default function BreakPage() {
                         {loading ? (
                             <div className="space-y-4">
                                 <Button disabled className="w-full h-16 text-lg">
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Loading...
+                                    <Loader2 className="h-6 w-6 animate-spin" />
                                 </Button>
                             </div>
                         ) : isWeekend ? (

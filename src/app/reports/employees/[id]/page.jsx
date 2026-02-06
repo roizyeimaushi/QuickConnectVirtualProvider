@@ -20,6 +20,7 @@ import {
 import { reportsApi } from "@/lib/api";
 import { formatDateTime, formatTime24, getInitials, formatDuration, formatDecimalHours } from "@/lib/utils";
 import { format } from "date-fns";
+import * as XLSX from "xlsx";
 import {
     ArrowLeft,
     Download,
@@ -145,29 +146,50 @@ export default function EmployeeReportDetailPage() {
     const handleExport = async () => {
         try {
             toast({
-                title: "Exporting...",
-                description: "Preparing your report download.",
+                title: "Preparing Export...",
+                description: "Gathering all attendance records.",
             });
 
-            const blob = await reportsApi.exportToExcel({
-                employee_id: employee.id,
-                start_date: format(new Date(new Date().getFullYear(), 0, 1), 'yyyy-MM-dd'),
-                end_date: format(new Date(), 'yyyy-MM-dd'),
-                includePresent: true,
-                includeLate: true,
-                includeAbsent: true,
-                includeTimes: true,
-                includeBreaks: true,
+            // Fetch all records (up to 5000) for this employee
+            const response = await reportsApi.getEmployeeReport(params.id, { per_page: 5000, page: 1 });
+            const allRecords = response.records?.data || (Array.isArray(response.records) ? response.records : []);
+
+            if (allRecords.length === 0) {
+                toast({
+                    title: "No records to export",
+                    description: "This employee has no attendance history.",
+                    variant: "destructive",
+                });
+                return;
+            }
+
+            const headers = ["Date", "Schedule", "Time In", "Time Out", "Hours worked", "Overtime", "Status"];
+            const rowData = allRecords.map(r => {
+                const dateStr = r.session?.date ? format(new Date(r.session.date), "MMM d, yyyy") : "—";
+                return [
+                    dateStr,
+                    r.session?.schedule?.name || "—",
+                    r.time_in ? formatTime24(r.time_in) : "—",
+                    r.time_out ? formatTime24(r.time_out) : "—",
+                    formatDecimalHours(r.hours_worked),
+                    r.overtime_minutes > 0 ? formatDuration(r.overtime_minutes) : "0:00",
+                    r.status
+                ];
             });
 
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `Report_${employee.first_name}_${employee.last_name}_${format(new Date(), 'yyyyMMdd')}.xlsx`;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
+            const title = [`Attendance Report: ${employee.first_name} ${employee.last_name} (${employee.employee_id})`];
+            const info = [`Position: ${employee.position} | Department: ${employee.department || "—"}`];
+            const wsData = [title, info, [], headers, ...rowData];
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+            // Column widths
+            ws['!cols'] = [
+                { wch: 15 }, { wch: 20 }, { wch: 12 }, { wch: 12 }, { wch: 15 }, { wch: 12 }, { wch: 12 }
+            ];
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Attendance History");
+            XLSX.writeFile(wb, `Report_${employee.first_name}_${employee.last_name}_${format(new Date(), 'yyyyMMdd')}.xlsx`);
 
             toast({
                 title: "Success",

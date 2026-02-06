@@ -260,17 +260,11 @@ export default function AttendanceSessionsPage() {
                                 </div>
                             </div>
                             <div className="flex items-center gap-6">
-                                <div className="text-center">
-                                    <p className="text-2xl font-bold text-emerald-600">
-                                        {activeSession.confirmed_count}
+                                <div className="text-center px-4">
+                                    <p className="text-3xl font-bold text-emerald-600">
+                                        {activeSession.confirmed_count} / {activeSession.total_employees}
                                     </p>
-                                    <p className="text-xs text-muted-foreground">Confirmed</p>
-                                </div>
-                                <div className="text-center">
-                                    <p className="text-2xl font-bold text-muted-foreground">
-                                        {Math.max(0, activeSession.total_employees - activeSession.confirmed_count)}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">Pending</p>
+                                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Attendance</p>
                                 </div>
                                 <Button
                                     variant="outline"

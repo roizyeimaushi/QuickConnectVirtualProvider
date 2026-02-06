@@ -249,7 +249,7 @@ function ScheduleStatsCard({ sessions }) {
                             <span className="font-medium">{s.schedule?.name || "Shift"}</span>
                         </div>
                         <span className="text-muted-foreground">
-                            {s.confirmed_count}/{s.total_count} checked in
+                            {s.confirmed_count}/{s.total_count}
                         </span>
                     </div>
                 ))}

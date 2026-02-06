@@ -845,6 +845,7 @@ class AttendanceRecordController extends Controller
         $attendanceRecord->save(); // Save time_out immediately to prevent race conditions
         
         // Calculate gross minutes (handle overnight shifts)
+        $timeIn = Carbon::parse($attendanceRecord->time_in);
         $grossMinutes = $timeIn->diffInMinutes($now, false);
         if ($grossMinutes < 0) {
             $grossMinutes += 1440;

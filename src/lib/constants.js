@@ -75,6 +75,10 @@ export const getLogoUrl = (settingsLogo) => {
     // Handle Laravel storage paths - only if we have a valid backend root
     const backendRoot = API_BASE_URL.replace("/api", "").replace(/\/$/, "");
     if (backendRoot && backendRoot !== "" && backendRoot !== "/") {
+        // If it's a root-relative path (starts with /) but NOT /storage, it's a local frontend asset
+        if (settingsLogo.startsWith("/") && !settingsLogo.startsWith("/storage")) {
+            return settingsLogo;
+        }
         return `${backendRoot}/storage/${settingsLogo.replace(/^\/?storage\//, "")}`;
     }
 
@@ -93,6 +97,11 @@ export const getAvatarUrl = (avatarPath) => {
     // Handle Laravel storage paths
     const backendRoot = API_BASE_URL.replace("/api", "").replace(/\/$/, "");
     if (backendRoot && backendRoot !== "" && backendRoot !== "/") {
+        // If it's a root-relative path (starts with /) but NOT /storage, it's a local frontend asset
+        if (avatarPath.startsWith("/") && !avatarPath.startsWith("/storage")) {
+            return avatarPath;
+        }
+
         // Remove 'storage/' prefix if it's already there to avoid duplication
         const cleanPath = avatarPath.replace(/^\/?storage\//, "");
         return `${backendRoot}/storage/${cleanPath}`;

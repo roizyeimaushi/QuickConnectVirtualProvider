@@ -221,30 +221,37 @@ export default function DailyReportsPage() {
                                     const allRecords = paginator?.data ? paginator.data : (Array.isArray(response.records) ? response.records : []);
                                     const rows = (Array.isArray(allRecords) ? allRecords : []).filter(r => r && typeof r === 'object');
 
-                                    const headers = ["ID", "Name", "Schedule", "In", "Break S", "Break E", "Out", "Hrs", "Late", "OT", "Status"];
+                                    const headers = ["ID", "Name", "Department", "Type", "Schedule", "In", "Break S", "Break E", "Out", "Hrs", "Late", "OT", "Status"];
                                     const rowData = rows.map(r => [
                                         r.employee_id,
                                         r.name,
-                                        r.schedule || "",
-                                        r.time_in || "",
-                                        r.break_start || "",
-                                        r.break_end || "",
-                                        r.time_out || "",
-                                        r.hours || "",
-                                        r.late_duration || "",
-                                        r.overtime || "",
+                                        r.department || "—",
+                                        r.employee_type || "—",
+                                        r.schedule || "—",
+                                        r.time_in || "—",
+                                        r.break_start || "—",
+                                        r.break_end || "—",
+                                        r.time_out || "—",
+                                        r.hours || "0",
+                                        r.late_duration || "—",
+                                        r.overtime || "—",
                                         r.status
                                     ]);
 
-                                    const wsData = [headers, ...rowData];
+                                    const title = [`Daily Attendance Report - ${format(date, "PPPP")}`];
+                                    const wsData = [title, [], headers, ...rowData];
                                     const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+                                    // Set column widths
                                     ws['!cols'] = [
-                                        { wch: 12 }, { wch: 20 }, { wch: 15 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
+                                        { wch: 12 }, { wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 15 },
+                                        { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 8 },
+                                        { wch: 10 }, { wch: 10 }, { wch: 12 }
                                     ];
 
                                     const wb = XLSX.utils.book_new();
-                                    XLSX.utils.book_append_sheet(wb, ws, "Attendance Report");
-                                    XLSX.writeFile(wb, `attendance-report-${dateStr}.xlsx`);
+                                    XLSX.utils.book_append_sheet(wb, ws, "Attendance");
+                                    XLSX.writeFile(wb, `Attendance_Report_${dateStr}.xlsx`);
 
                                     toast({
                                         title: "Export successful",
@@ -606,29 +613,7 @@ export default function DailyReportsPage() {
                     </CardContent>
                 </Card>
 
-                {/* Important Notes */}
-                <div className="grid gap-4 md:grid-cols-2">
-                    <div className="text-xs text-muted-foreground bg-muted/30 rounded-lg p-4 border flex items-start gap-3">
-                        <CheckCircle2 className="h-4 w-4 mt-0.5 flex-shrink-0 text-primary" />
-                        <div>
-                            <p className="font-semibold text-foreground">Night Shift Rule</p>
-                            <p>
-                                Records are anchored to the <strong>Shift Start Date</strong>.
-                                If a shift starts at 23:00 on Feb 4 and ends at 07:00 on Feb 5, it is logged under Feb 4.
-                            </p>
-                        </div>
-                    </div>
-                    <div className="text-xs text-muted-foreground bg-muted/30 rounded-lg p-4 border flex items-start gap-3">
-                        <Clock className="h-4 w-4 mt-0.5 flex-shrink-0 text-primary" />
-                        <div>
-                            <p className="font-semibold text-foreground">Hours Calculation</p>
-                            <p>
-                                <strong>Hours Worked</strong> = (Time Out - Time In) - Total Break Duration.
-                                Calculations automatically account for cross-day (overnight) sessions.
-                            </p>
-                        </div>
-                    </div>
-                </div>
+
             </div>
         </DashboardLayout>
     );

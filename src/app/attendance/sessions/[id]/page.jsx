@@ -9,6 +9,7 @@ import { attendanceApi, sessionsApi } from "@/lib/api";
 import { formatTime24, formatDate } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -417,7 +418,7 @@ export default function SessionDetailsPage() {
                                     <div className="flex items-center gap-2 text-sm">
                                         <CheckCircle2 className="h-4 w-4 text-primary" />
                                         <span className="font-semibold">
-                                            {session.records?.filter(r => r.time_in).length || 0} / {session.total_employees_count || session.records?.length || 0} Present
+                                            {session.records?.filter(r => r.time_in).length || 0} / {session.total_employees_count || session.records?.length || 0}
                                         </span>
                                     </div>
                                 </div>
