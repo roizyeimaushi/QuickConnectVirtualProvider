@@ -102,16 +102,16 @@ export function AppSidebar() {
 
     return (
         <Sidebar collapsible={hideSidebar ? "offcanvas" : "icon"} className="border-r border-white/5 shadow-2xl transition-all duration-300">
-            <SidebarHeader className="p-6">
+            <SidebarHeader className="p-5 pb-2">
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild className="hover:bg-transparent transition-all">
-                            <Link href={isAdmin ? "/dashboard/admin" : "/dashboard/employee"} className="flex items-center gap-3">
-                                <div className="flex items-center justify-center rounded-lg overflow-hidden">
+                            <Link href={isAdmin ? "/dashboard/admin" : "/dashboard/employee"} className="flex items-center gap-2.5">
+                                <div className="flex items-center justify-center overflow-hidden">
                                     <img
                                         src={logoUrl}
                                         alt="Logo"
-                                        className="h-8 w-auto object-contain filter brightness-0 invert"
+                                        className="h-7 w-auto object-contain filter brightness-0 invert"
                                         onError={(e) => {
                                             e.currentTarget.src = "/quickconnect-logo.png";
                                             e.currentTarget.onerror = null;
@@ -119,9 +119,8 @@ export function AppSidebar() {
                                     />
                                 </div>
                                 <div className="flex flex-col items-start group-data-[collapsible=icon]:hidden">
-                                    <span className="font-black text-lg text-white tracking-tight">
-                                        {settings?.company_name || "QuickConn"}
-                                        <span className="text-emerald-500 font-medium ml-1">Virtual</span>
+                                    <span className="font-bold text-[17px] text-white tracking-tight leading-none">
+                                        {settings?.company_name || "QuickConn Virtual"}
                                     </span>
                                 </div>
                             </Link>
@@ -132,12 +131,12 @@ export function AppSidebar() {
 
             <SidebarContent className="px-3">
                 {navItems.map((group) => (
-                    <SidebarGroup key={group.label} className="mt-6 first:mt-2">
-                        <SidebarGroupLabel className="text-[11px] font-black uppercase tracking-[0.15em] text-white/40 px-3 mb-3">
+                    <SidebarGroup key={group.label} className="mt-5 first:mt-2">
+                        <SidebarGroupLabel className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/30 px-3 mb-2">
                             {group.label}
                         </SidebarGroupLabel>
                         <SidebarGroupContent>
-                            <SidebarMenu className="gap-1">
+                            <SidebarMenu className="gap-0.5">
                                 {group.items.map((item) => {
                                     const Icon = iconMap[item.icon] || LayoutDashboard;
                                     const isActive = item.url
@@ -157,24 +156,24 @@ export function AppSidebar() {
                                                     <CollapsibleTrigger asChild>
                                                         <SidebarMenuButton
                                                             tooltip={item.title}
-                                                            className={`h-11 px-3 rounded-lg transition-all duration-200 ${shouldBeOpen ? 'bg-white/5' : 'hover:bg-white/5'}`}
+                                                            className={`h-10 px-3 rounded-lg transition-all duration-150 ${shouldBeOpen ? 'bg-white/5' : 'hover:bg-white/5 group/btn'}`}
                                                         >
-                                                            <Icon className={`size-4.5 ${isActive ? 'text-emerald-400' : 'text-white/70'}`} />
-                                                            <span className="font-semibold text-white/90 text-[13.5px]">{item.title}</span>
-                                                            <ChevronRight className="ml-auto size-3.5 text-white/30 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                                                            <Icon className={`size-4 ${isActive ? 'text-emerald-400' : 'text-white/60 group-hover/btn:text-white'}`} />
+                                                            <span className="font-medium text-white/80 text-[13px]">{item.title}</span>
+                                                            <ChevronRight className="ml-auto size-3 text-white/20 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                                                         </SidebarMenuButton>
                                                     </CollapsibleTrigger>
                                                     <CollapsibleContent className="animate-collapsible-down">
-                                                        <SidebarMenuSub className="border-l border-white/10 ml-5 pl-2 mt-1 gap-1">
+                                                        <SidebarMenuSub className="border-l border-white/5 ml-5 pl-2 mt-0.5 gap-0.5">
                                                             {item.items.map((subItem) => (
                                                                 <SidebarMenuSubItem key={subItem.title}>
                                                                     <SidebarMenuSubButton
                                                                         asChild
                                                                         isActive={pathname === subItem.url}
-                                                                        className={`rounded-md h-9 px-3 transition-all duration-200 ${pathname === subItem.url ? 'bg-emerald-600/20 text-emerald-400 font-bold' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+                                                                        className={`rounded-md h-9 px-3 transition-all duration-150 ${pathname === subItem.url ? 'bg-emerald-500/10 text-emerald-400 font-bold' : 'text-white/50 hover:text-white hover:bg-white/5'}`}
                                                                     >
                                                                         <Link href={subItem.url}>
-                                                                            <span className="text-[13px]">{subItem.title}</span>
+                                                                            <span className="text-[12.5px]">{subItem.title}</span>
                                                                         </Link>
                                                                     </SidebarMenuSubButton>
                                                                 </SidebarMenuSubItem>
@@ -192,11 +191,11 @@ export function AppSidebar() {
                                                 asChild
                                                 isActive={isActive}
                                                 tooltip={item.title}
-                                                className={`h-11 px-3 rounded-lg transition-all duration-200 ${isActive ? 'bg-emerald-600/20 text-emerald-400 font-bold' : 'hover:bg-white/5 text-white/70 hover:text-white'}`}
+                                                className={`h-10 px-3 rounded-lg transition-all duration-150 ${isActive ? 'bg-emerald-500/15 text-emerald-400 font-bold' : 'hover:bg-white/5 text-white/60 hover:text-white group/btn'}`}
                                             >
                                                 <Link href={item.url}>
-                                                    <Icon className="size-4.5" />
-                                                    <span className="text-[13.5px]">{item.title}</span>
+                                                    <Icon className={`size-4 ${isActive ? 'text-emerald-400' : 'text-white/60 group-hover/btn:text-white'}`} />
+                                                    <span className="text-[13px] font-medium">{item.title}</span>
                                                 </Link>
                                             </SidebarMenuButton>
                                         </SidebarMenuItem>
@@ -208,30 +207,30 @@ export function AppSidebar() {
                 ))}
             </SidebarContent>
 
-            <SidebarFooter className="p-3 border-t border-white/5">
+            <SidebarFooter className="p-3 border-t border-white/5 bg-black/10">
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <SidebarMenuButton
                                     size="lg"
-                                    className="data-[state=open]:bg-white/5 rounded-xl transition-all duration-200 p-2"
+                                    className="data-[state=open]:bg-white/5 rounded-lg transition-all duration-200 p-2 h-12"
                                 >
-                                    <Avatar className="h-9 w-9 rounded-lg border border-white/10 ring-2 ring-emerald-500/20">
+                                    <Avatar className="h-8 w-8 rounded-md border border-white/10">
                                         <AvatarImage src={user?.avatar} alt={user?.first_name} />
-                                        <AvatarFallback className="rounded-lg bg-emerald-500/20 text-emerald-400 font-black">
+                                        <AvatarFallback className="rounded-md bg-emerald-500/10 text-emerald-400 text-xs font-bold">
                                             {getInitials(user?.first_name, user?.last_name)}
                                         </AvatarFallback>
                                     </Avatar>
-                                    <div className="grid flex-1 text-left text-sm leading-tight ml-3 group-data-[collapsible=icon]:hidden">
-                                        <span className="truncate font-black text-white">
+                                    <div className="grid flex-1 text-left text-sm leading-tight ml-2.5 group-data-[collapsible=icon]:hidden">
+                                        <span className="truncate font-bold text-white text-[13px]">
                                             {isAdmin ? "Admin User" : "Staff Member"}
                                         </span>
-                                        <span className="truncate text-[11px] text-white/50 font-medium">
+                                        <span className="truncate text-[11px] text-white/40 font-medium">
                                             {user?.first_name} {user?.last_name}
                                         </span>
                                     </div>
-                                    <ChevronRight className="ml-auto size-4 text-white/20" />
+                                    <ChevronRight className="ml-auto size-3.5 text-white/20" />
                                 </SidebarMenuButton>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent
@@ -240,23 +239,23 @@ export function AppSidebar() {
                                 align="end"
                                 sideOffset={8}
                             >
-                                <DropdownMenuLabel className="px-3 py-4 font-normal">
+                                <DropdownMenuLabel className="px-3 py-4 font-normal text-white/90">
                                     <div className="flex flex-col gap-1">
-                                        <p className="text-[10px] font-black text-emerald-500/70 uppercase tracking-widest mb-1">Session Identity</p>
+                                        <p className="text-[9px] font-bold text-emerald-500/70 uppercase tracking-widest mb-1">Authenticated As</p>
                                         <p className="text-sm font-bold truncate">{user?.email}</p>
                                     </div>
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator className="bg-white/5" />
-                                <DropdownMenuItem className="cursor-pointer rounded-lg py-3 focus:bg-white/5 focus:text-white" asChild>
+                                <DropdownMenuItem className="cursor-pointer rounded-lg py-3 focus:bg-white/5 focus:text-white text-white/70" asChild>
                                     <Link href={isAdmin ? "/dashboard/admin/profile" : "/dashboard/employee/profile"}>
-                                        <User className="mr-3 h-4 w-4 text-emerald-400" />
+                                        <User className="mr-3 h-4 w-4 text-emerald-500" />
                                         Profile Overview
                                     </Link>
                                 </DropdownMenuItem>
                                 {isAdmin && (
-                                    <DropdownMenuItem className="cursor-pointer rounded-lg py-3 focus:bg-white/5 focus:text-white" asChild>
+                                    <DropdownMenuItem className="cursor-pointer rounded-lg py-3 focus:bg-white/5 focus:text-white text-white/70" asChild>
                                         <Link href="/settings/general">
-                                            <Settings className="mr-3 h-4 w-4 text-emerald-400" />
+                                            <Settings className="mr-3 h-4 w-4 text-emerald-500" />
                                             System Settings
                                         </Link>
                                     </DropdownMenuItem>
