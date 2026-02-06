@@ -173,22 +173,28 @@
     position: relative !important;
   }
 
-  .left-section+.right-section {
-    flex: 0 0 50% !important;
-    /* Strict 50% width */
-    max-width: 50% !important;
+  /* Ensure all login screens center on desktop */
+  .right-section {
     justify-content: center !important;
-    border-left: 1px solid rgba(0, 0, 0, 0.05);
-    /* Subtle intentional divider */
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
   }
 
-  /* Counteract visual weight of left-side image by nudging form */
-  .left-section+.right-section .w-full.max-w-md {
+  .left-section+.right-section {
+    flex: 0 0 50% !important;
+    min-width: 0 !important;
+    max-width: 50% !important;
+    border-left: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  /* Nudge for visual balance in split view */
+  .left-section+.right-section .max-w-md,
+  .left-section+.right-section form.w-full {
     transform: translateX(-15px);
   }
 
   .login-logo {
-    width: 200px !important;
+    width: 180px !important;
     /* Desktop scale */
   }
 
