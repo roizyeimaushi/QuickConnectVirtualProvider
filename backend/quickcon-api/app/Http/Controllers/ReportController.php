@@ -133,12 +133,15 @@ class ReportController extends Controller
         $user = $request->user();
         $now = Carbon::now();
 
-        // 1. Boundary & Logic Today
+        // 1. Sync statuses for all current sessions to ensure availability
+        $this->syncAllSessionStatuses();
+
+        // 2. Boundary & Logic Today
         $boundary = (int) (Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
         $today = $now->hour < $boundary ? Carbon::yesterday()->toDateString() : Carbon::today()->toDateString();
         $realToday = Carbon::today()->toDateString();
 
-        // 2. DETECT SESSION (Prioritizing Individual Assignment)
+        // 3. DETECT SESSION (Prioritizing Individual Assignment)
         $todaySession = null;
 
         // A. If an active record exists, that's the absolute truth
@@ -154,20 +157,20 @@ class ReportController extends Controller
             $today = $activeRecord->attendance_date->toDateString();
             $todaySession = $activeRecord->session;
         } else {
-            // B. Try to find a session where the user has a pending record (Pre-assigned)
+            // B. Try to find a session (Active, Locked, OR Pending if it belongs to today)
             $todaySession = AttendanceSession::whereDate('date', $today)
-                ->whereIn('status', ['active', 'locked'])
+                ->whereIn('status', ['active', 'locked', 'pending'])
                 ->whereHas('records', function($q) use ($user) {
                     $q->where('user_id', $user->id);
                 })
                 ->with('schedule')
                 ->first();
 
-            // C. Fallback to any active session for the date (Global/Dynamic)
+            // C. Fallback to any active/pending session for the date (Global/Dynamic)
             if (!$todaySession) {
                 $todaySession = AttendanceSession::with('schedule')
                     ->whereDate('date', $today)
-                    ->whereIn('status', ['active', 'locked'])
+                    ->whereIn('status', ['active', 'locked', 'pending'])
                     ->first();
             }
 

@@ -1380,12 +1380,18 @@ class AttendanceRecordController extends Controller
     public function getTodayStatus(Request $request)
     {
         $user = $request->user();
+        
+        // 1. Sync statuses for today's sessions to ensure they reflect current time
+        $this->syncAllSessionStatuses();
+
         $today = $this->getToday();
 
-        // Find today's active session
+        // 2. Find the most relevant session for today
+        // Priority: Active > Pending (if within time window)
         $session = AttendanceSession::with('schedule')
-                                    ->where('status', 'active')
                                     ->whereDate('date', $today)
+                                    ->whereIn('status', ['active', 'pending'])
+                                    ->orderByRaw("CASE WHEN status = 'active' THEN 1 ELSE 2 END")
                                     ->first();
 
         // FALLBACK: Check yesterday's active session (for overnight shifts)
@@ -1508,5 +1514,56 @@ class AttendanceRecordController extends Controller
             'can_check_out' => $record->time_in && !$record->time_out && !$isOnBreak,
             'attendance_date' => $today
         ]);
+    }
+
+    /**
+     * Internal utility to sync session statuses based on current time.
+     * Ensures sessions transition from Pending to Active to Completed automatically.
+     */
+    private function syncAllSessionStatuses()
+    {
+        $now = Carbon::now();
+        $boundary = (int) (Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
+        $today = ($now->hour < $boundary ? Carbon::yesterday() : Carbon::today())->startOfDay();
+
+        // Sync non-locked sessions for today or earlier
+        $sessions = AttendanceSession::whereIn('status', ['pending', 'active'])
+            ->where('date', '<=', $today)
+            ->with('schedule')
+            ->get();
+
+        foreach ($sessions as $session) {
+            if (!$session->schedule) {
+                if ($session->status === 'active' && $session->date->addDay()->isPast()) {
+                    $session->update(['status' => 'completed']);
+                }
+                continue;
+            }
+
+            $schedule = $session->schedule;
+            $sessionDate = $session->date->format('Y-m-d');
+            
+            $shiftStart = Carbon::parse("$sessionDate {$schedule->time_in}");
+            $shiftEnd = Carbon::parse("$sessionDate {$schedule->time_out}");
+            
+            if ($shiftEnd->lt($shiftStart)) {
+                $shiftEnd->addDay();
+            }
+
+            $oldStatus = $session->status;
+            $newStatus = $oldStatus;
+
+            if ($now->lt($shiftStart)) {
+                $newStatus = 'pending';
+            } elseif ($now->gte($shiftStart) && $now->lte($shiftEnd)) {
+                $newStatus = 'active';
+            } else {
+                $newStatus = 'completed';
+            }
+
+            if ($newStatus !== $oldStatus) {
+                $session->update(['status' => $newStatus]);
+            }
+        }
     }
 }
