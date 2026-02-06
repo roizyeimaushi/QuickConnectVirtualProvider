@@ -198,7 +198,7 @@ export default function AttendanceSessionsPage() {
             icon: Lock,
         },
         pending: {
-            label: "Upcoming",
+            label: "Pending",
             color: "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200",
             icon: Calendar,
         },

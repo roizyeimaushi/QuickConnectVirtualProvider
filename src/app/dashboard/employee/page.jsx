@@ -105,10 +105,10 @@ function TodayStatusCard({ user, session, record, breakStatus, loading, constrai
     const canCheckOut = hasCheckedIn && !hasCheckedOut;
 
     // Status Text Map
-    let statusText = "ABSENT"; // Default
-    let statusColor = "text-red-600 bg-red-100";
-    let headerColor = "bg-primary"; // Default header color
-    let StatusIcon = AlertCircle;
+    let statusText = "PENDING"; // Default to pending instead of absent
+    let statusColor = "text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400";
+    let headerColor = "bg-blue-600";
+    let StatusIcon = Clock;
 
     // Weekend - No work scheduled
     if (isWeekend) {

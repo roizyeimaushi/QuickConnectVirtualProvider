@@ -62,7 +62,7 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
     // Auto-calculate totals and status
     useEffect(() => {
         if (!formData.time_in) {
-            setTotals({ hours: 0, overtime: 0, autoStatus: formData.status === 'excused' ? 'excused' : 'absent' });
+            setTotals({ hours: 0, overtime: 0, autoStatus: formData.status === 'excused' ? 'excused' : 'pending' });
             return;
         }
 
