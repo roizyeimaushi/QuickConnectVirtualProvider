@@ -132,7 +132,7 @@ export function AppSidebar() {
             <SidebarContent className="px-3">
                 {navItems.map((group) => (
                     <SidebarGroup key={group.label} className="mt-6 first:mt-2">
-                        <SidebarGroupLabel className="text-[11px] font-bold text-white/30 px-3 mb-2">
+                        <SidebarGroupLabel className="text-[11px] font-bold text-sidebar-foreground px-3 mb-2">
                             {group.label}
                         </SidebarGroupLabel>
                         <SidebarGroupContent>
@@ -158,19 +158,19 @@ export function AppSidebar() {
                                                             tooltip={item.title}
                                                             className={`h-10 px-3 rounded-lg transition-all duration-150 ${shouldBeOpen ? 'bg-white/5' : 'hover:bg-white/5 group/btn'}`}
                                                         >
-                                                            <Icon className={`size-4 ${isActive || isSubItemActive ? 'text-white' : 'text-white/60 group-hover/btn:text-white'}`} />
-                                                            <span className={`font-medium text-[13px] ${isActive || isSubItemActive ? 'text-white' : 'text-white/80'}`}>{item.title}</span>
+                                                            <Icon className={`size-4 ${isActive || isSubItemActive ? 'text-white' : 'text-emerald-500/80 group-hover/btn:text-white'}`} />
+                                                            <span className={`font-medium text-[13px] ${isActive || isSubItemActive ? 'text-white' : 'text-sidebar-foreground'}`}>{item.title}</span>
                                                             <ChevronRight className="ml-auto size-3.5 text-white/40 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                                                         </SidebarMenuButton>
                                                     </CollapsibleTrigger>
                                                     <CollapsibleContent className="animate-collapsible-down">
-                                                        <SidebarMenuSub className="border-l border-white/5 ml-5 pl-2 mt-0.5 gap-0.5">
+                                                        <SidebarMenuSub className="ml-5 pl-2 mt-0.5 gap-0.5 border-none">
                                                             {item.items.map((subItem) => (
                                                                 <SidebarMenuSubItem key={subItem.title}>
                                                                     <SidebarMenuSubButton
                                                                         asChild
                                                                         isActive={pathname === subItem.url}
-                                                                        className={`rounded-md h-9 px-3 transition-all duration-150 ${pathname === subItem.url ? 'bg-white/10 text-white font-bold' : 'text-white/50 hover:text-white hover:bg-white/5'}`}
+                                                                        className={`rounded-md h-9 px-3 transition-all duration-150 ${pathname === subItem.url ? 'text-white font-bold' : 'text-sidebar-foreground hover:text-white hover:bg-white/5'}`}
                                                                     >
                                                                         <Link href={subItem.url}>
                                                                             <span className="text-[12.5px]">{subItem.title}</span>
@@ -191,10 +191,10 @@ export function AppSidebar() {
                                                 asChild
                                                 isActive={isActive}
                                                 tooltip={item.title}
-                                                className={`h-10 px-3 rounded-lg transition-all duration-150 ${isActive ? 'bg-white/10 text-white font-bold' : 'hover:bg-white/5 text-white/60 hover:text-white group/btn'}`}
+                                                className={`h-10 px-3 rounded-lg transition-all duration-150 ${isActive ? 'text-white font-bold' : 'hover:bg-white/5 text-sidebar-foreground hover:text-white group/btn'}`}
                                             >
                                                 <Link href={item.url}>
-                                                    <Icon className={`size-4 ${isActive ? 'text-white' : 'text-white/60 group-hover/btn:text-white'}`} />
+                                                    <Icon className={`size-4 ${isActive ? 'text-white' : 'text-emerald-500/80 group-hover/btn:text-white'}`} />
                                                     <span className="text-[13px] font-medium">{item.title}</span>
                                                 </Link>
                                             </SidebarMenuButton>

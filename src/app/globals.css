@@ -106,14 +106,14 @@
   --chart-4: #f59e0b;
   --chart-5: #ef4444;
 
-  /* Sidebar - Dark forest green */
-  --sidebar: #0a1f16;
-  --sidebar-foreground: #e8f5ec;
+  /* Sidebar - Classic Forest Green */
+  --sidebar: #1a3328;
+  --sidebar-foreground: #8ba898;
   --sidebar-primary: #3da36e;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #162420;
-  --sidebar-accent-foreground: #e8f5ec;
-  --sidebar-border: #142a20;
+  --sidebar-accent: #2a4d3a;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #2a4d3a;
   --sidebar-ring: #3da36e;
 }
 
