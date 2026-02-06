@@ -270,9 +270,9 @@ export default function SessionDetailsPage() {
 
     return (
         <DashboardLayout title="Session Details">
-            <div className="space-y-6 animate-fade-in">
+            <div className="space-y-6">
                 {/* Header */}
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 animate-fade-in">
                     <Button variant="ghost" size="icon" asChild>
                         <Link href="/attendance/sessions">
                             <ArrowLeft className="h-4 w-4" />
@@ -301,7 +301,7 @@ export default function SessionDetailsPage() {
                     </div>
                 </div>
 
-                <div className="grid gap-6 md:grid-cols-2">
+                <div className="grid gap-6 md:grid-cols-2 animate-fade-in stagger-1">
                     {/* Session Info Card */}
                     <Card>
                         <CardHeader>
@@ -349,12 +349,17 @@ export default function SessionDetailsPage() {
 
                     {/* Context Card */}
                     <Card className={`overflow-hidden border-2 transition-all ${session.status === 'locked'
-                        ? (session.session_type === 'Emergency' ? 'border-amber-200 bg-amber-50/20' : 'border-emerald-100 bg-emerald-50/10')
+                        ? (session.session_type === 'Remote/WFH' ? 'border-blue-200 bg-blue-50/20' :
+                            session.session_type === 'Special' ? 'border-purple-200 bg-purple-50/20' :
+                                session.session_type === 'Excused' ? 'border-amber-200 bg-amber-50/20' :
+                                    'border-emerald-100 bg-emerald-50/10')
                         : 'border-slate-100'
                         }`}>
-                        <CardHeader className={`${session.session_type === 'Emergency' ? 'bg-amber-100/50' :
-                            session.session_type === 'Holiday' ? 'bg-blue-100/50' :
-                                session.status === 'locked' ? 'bg-emerald-50' : 'bg-slate-50'
+                        <CardHeader className={`${session.session_type === 'Remote/WFH' ? 'bg-blue-100/50' :
+                            session.session_type === 'Special' ? 'bg-purple-100/50' :
+                                session.session_type === 'Excused' ? 'bg-amber-100/50' :
+                                    session.session_type === 'Overtime' ? 'bg-orange-100/50' :
+                                        session.status === 'locked' ? 'bg-emerald-50' : 'bg-slate-50'
                             } py-3`}>
                             <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center justify-between">
                                 <div className="flex items-center gap-2">
@@ -363,12 +368,14 @@ export default function SessionDetailsPage() {
                                 </div>
                                 {session.status === 'locked' && (
                                     <Badge variant="outline" className={`
-                                        ${session.session_type === 'Emergency' ? 'border-amber-500 bg-amber-500 text-white' :
-                                            session.session_type === 'Holiday' ? 'border-blue-500 bg-blue-500 text-white' :
-                                                'border-slate-800 bg-slate-800 text-white'}
-                                        text-[10px] px-2 py-0 h-5
+                                        ${session.session_type === 'Remote/WFH' ? 'border-blue-500 bg-blue-500' :
+                                            session.session_type === 'Special' ? 'border-purple-500 bg-purple-500' :
+                                                session.session_type === 'Excused' ? 'border-amber-500 bg-amber-500' :
+                                                    session.session_type === 'Overtime' ? 'border-orange-500 bg-orange-500' :
+                                                        'border-slate-800 bg-slate-800'}
+                                        text-white text-[10px] px-2 py-0 h-5
                                     `}>
-                                        {session.session_type} Day
+                                        {session.session_type}
                                     </Badge>
                                 )}
                             </CardTitle>
@@ -425,7 +432,7 @@ export default function SessionDetailsPage() {
                 </div>
 
                 {/* Attendance Records Table */}
-                <Card>
+                <Card className="animate-fade-in stagger-2">
                     <CardHeader>
                         <CardTitle>Attendance Records</CardTitle>
                         <CardDescription>
@@ -442,14 +449,15 @@ export default function SessionDetailsPage() {
                                             {/* Header: Employee + Status */}
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                                                    <Avatar className="h-10 w-10 flex-shrink-0">
+                                                    <Avatar className="h-11 w-11 border border-primary/10 shadow-sm">
                                                         <AvatarImage src={record.user?.avatar} />
-                                                        <AvatarFallback>
+                                                        <AvatarFallback className="bg-primary/5 text-primary text-xs font-bold">
                                                             {record.user?.first_name ? record.user.first_name.charAt(0) : (record.user?.name?.charAt(0) || "U")}
+                                                            {record.user?.last_name ? record.user.last_name.charAt(0) : ""}
                                                         </AvatarFallback>
                                                     </Avatar>
                                                     <div className="min-w-0">
-                                                        <p className="font-medium truncate">
+                                                        <p className="font-bold text-slate-900 dark:text-slate-100 truncate">
                                                             {record.user?.first_name ? `${record.user.first_name} ${record.user.last_name}` : (record.user?.name || "Unknown User")}
                                                         </p>
                                                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -555,13 +563,14 @@ export default function SessionDetailsPage() {
                                                 <TableRow key={record.id}>
                                                     <TableCell>
                                                         <div className="flex items-center gap-3">
-                                                            <Avatar className="h-8 w-8">
+                                                            <Avatar className="h-9 w-9 border border-primary/10">
                                                                 <AvatarImage src={record.user?.avatar} />
-                                                                <AvatarFallback>
+                                                                <AvatarFallback className="bg-primary/5 text-primary text-xs font-bold">
                                                                     {record.user?.first_name ? record.user.first_name.charAt(0) : (record.user?.name?.charAt(0) || "U")}
+                                                                    {record.user?.last_name ? record.user.last_name.charAt(0) : ""}
                                                                 </AvatarFallback>
                                                             </Avatar>
-                                                            <div className="text-sm font-medium">
+                                                            <div className="text-sm font-semibold text-slate-900 dark:text-slate-100 italic-not-really">
                                                                 {record.user?.first_name ? `${record.user.first_name} ${record.user.last_name}` : (record.user?.name || "Unknown User")}
                                                             </div>
                                                         </div>

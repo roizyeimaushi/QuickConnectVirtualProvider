@@ -245,8 +245,8 @@ class AttendanceSessionController extends Controller
             $oldStatus = $attendanceSession->status;
             
             // Standardize session type to known types for internal consistency
-            $rawType = $validated['session_type'] ?? 'Normal';
-            $sessionType = in_array($rawType, ['Normal', 'Emergency', 'Holiday', 'Maintenance']) ? $rawType : 'Normal';
+            $rawType = $validated['session_type'] ?? 'Regular';
+            $sessionType = in_array($rawType, ['Regular', 'Special', 'Overtime', 'Remote/WFH', 'Excused']) ? $rawType : 'Regular';
 
             $attendanceSession->update([
                 'status' => 'locked',

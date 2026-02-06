@@ -207,9 +207,9 @@ export default function AttendanceSessionsPage() {
 
     return (
         <DashboardLayout title="Attendance Sessions">
-            <div className="space-y-6 animate-fade-in">
+            <div className="space-y-6">
                 {/* Header */}
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between animate-fade-in">
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight">Attendance Sessions</h1>
                         <p className="text-muted-foreground">
@@ -228,7 +228,7 @@ export default function AttendanceSessionsPage() {
                 {loading ? (
                     null
                 ) : activeSession ? (
-                    <Card className="border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/50 dark:bg-emerald-950/20">
+                    <Card className="border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/50 dark:bg-emerald-950/20 animate-fade-in">
                         <CardContent className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-6">
                             <div className="flex items-center gap-4">
                                 <div className="p-3 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
@@ -275,7 +275,7 @@ export default function AttendanceSessionsPage() {
                 {loading ? (
                     null
                 ) : (
-                    <div className="grid gap-4 md:grid-cols-3">
+                    <div className="grid gap-4 md:grid-cols-3 animate-fade-in stagger-1">
                         <Card>
                             <CardContent className="flex items-center gap-4 p-6">
                                 <div className="p-3 rounded-lg bg-primary/10">
@@ -317,7 +317,7 @@ export default function AttendanceSessionsPage() {
                 )}
 
                 {/* Sessions Table */}
-                <Card>
+                <Card className="animate-fade-in stagger-2">
                     <CardHeader>
                         <CardTitle>Session History</CardTitle>
                         <CardDescription>All past and current attendance sessions.</CardDescription>

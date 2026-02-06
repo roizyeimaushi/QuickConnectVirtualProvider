@@ -25,6 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
     const { toast } = useToast();
@@ -36,7 +37,7 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
         break_start: record?.break_start ? format(new Date(record.break_start), "yyyy-MM-dd'T'HH:mm") : "",
         break_end: record?.break_end ? format(new Date(record.break_end), "yyyy-MM-dd'T'HH:mm") : "",
         excuse_reason: record?.excuse_reason || "",
-        correction_type: "Missing time-in",
+        correction_type: "Time In Correction",
         reason: "",
     });
 
@@ -52,7 +53,7 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                 break_start: record.break_start ? format(new Date(record.break_start), "yyyy-MM-dd'T'HH:mm") : "",
                 break_end: record.break_end ? format(new Date(record.break_end), "yyyy-MM-dd'T'HH:mm") : "",
                 excuse_reason: record.excuse_reason || "",
-                correction_type: "Missing time-in",
+                correction_type: "Time In Correction",
                 reason: "",
             });
         }
@@ -147,9 +148,9 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-lg w-full max-h-[90vh] overflow-y-auto">
-                <DialogHeader className="border-b pb-4">
-                    <DialogTitle className="text-xl">Edit Attendance Record</DialogTitle>
-                    <DialogDescription>
+                <DialogHeader className="border-b pb-4 text-left">
+                    <DialogTitle className="text-xl sm:text-2xl font-bold tracking-tight">Edit Attendance Record</DialogTitle>
+                    <DialogDescription className="text-xs sm:text-sm">
                         Professional correction tool for employee attendance.
                     </DialogDescription>
                 </DialogHeader>
@@ -158,12 +159,26 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                     {/* Header: Status and Employee */}
                     <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border">
                         <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary">
-                                {record?.user?.name?.charAt(0) || "U"}
-                            </div>
-                            <div>
-                                <p className="font-bold">{record?.user?.name || "Employee"}</p>
-                                <p className="text-xs text-muted-foreground">{record?.attendance_date ? format(new Date(record.attendance_date), "MMMM d, yyyy") : ""}</p>
+                            <Avatar className="h-12 w-12 sm:h-14 sm:w-14 border-2 border-primary/20 shadow-sm">
+                                <AvatarImage src={record?.user?.avatar} alt={record?.user?.first_name || "Employee"} />
+                                <AvatarFallback className="bg-primary/10 text-primary font-bold text-lg">
+                                    {record?.user?.first_name ? record.user.first_name.charAt(0) : (record?.user?.name?.charAt(0) || "U")}
+                                    {record?.user?.last_name ? record.user.last_name.charAt(0) : ""}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div className="flex flex-col min-w-0">
+                                <p className="font-bold text-base sm:text-lg leading-tight truncate">
+                                    {record?.user?.first_name ? `${record.user.first_name} ${record.user.last_name}` : (record?.user?.name || "Unknown User")}
+                                </p>
+                                <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider font-semibold flex flex-wrap gap-1 items-center">
+                                    <span className="bg-primary/10 px-1.5 py-0.5 rounded text-primary">
+                                        ID: {record?.user?.employee_id || "N/A"}
+                                    </span>
+                                    <span className="hidden sm:inline-block opacity-40">•</span>
+                                    <span className="opacity-80">
+                                        {record?.attendance_date ? format(new Date(record.attendance_date), "MMM d, yyyy") : ""}
+                                    </span>
+                                </p>
                             </div>
                         </div>
                         <div className="text-right">
@@ -247,20 +262,23 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                                     <SelectValue placeholder="Select type" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="Missing time-in">Missing time-in</SelectItem>
-                                    <SelectItem value="Wrong time-out">Wrong time-out</SelectItem>
-                                    <SelectItem value="Excused day">Mark as Excused</SelectItem>
-                                    <SelectItem value="System error">System Error / Glitch</SelectItem>
+                                    <SelectItem value="Time In Correction">Time In Correction</SelectItem>
+                                    <SelectItem value="Time Out Correction">Time Out Correction</SelectItem>
+                                    <SelectItem value="Break Correction">Break Correction</SelectItem>
+                                    <SelectItem value="Status Correction">Status Correction</SelectItem>
+                                    <SelectItem value="Missed Check-in">Missed Check-in</SelectItem>
+                                    <SelectItem value="Missed Check-out">Missed Check-out</SelectItem>
+                                    <SelectItem value="Others">Others</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                     </div>
 
                     <DialogFooter className="border-t pt-4">
-                        <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="h-11 sm:h-10 order-2 sm:order-1">
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={loading} className="px-8">
+                        <Button type="submit" disabled={loading} className="px-8 h-11 sm:h-10 order-1 sm:order-2">
                             {loading ? "Saving..." : "Apply Correction"}
                         </Button>
                     </DialogFooter>

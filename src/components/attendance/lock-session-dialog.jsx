@@ -26,27 +26,21 @@ export function LockSessionDialog({ session, open, onOpenChange, onConfirm }) {
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         attendance_required: true,
-        session_type: "Normal",
+        session_type: "Regular",
         completion_reason: "",
     });
 
-    const [emergencyType, setEmergencyType] = useState("");
 
     const handleTypeChange = (val) => {
-        const isException = val === 'Emergency' || val === 'Holiday';
+        const isExcusedType = val === 'Excused';
         setFormData({
             ...formData,
             session_type: val,
-            // If it's an emergency or holiday, we usually don't require attendance (excused)
-            attendance_required: isException ? false : true
+            // If it's an excused session, attendance is typically not required (everyone excused)
+            attendance_required: isExcusedType ? false : true
         });
-        if (val !== 'Emergency') setEmergencyType("");
     };
 
-    const handleEmergencySelect = (val) => {
-        setEmergencyType(val);
-        setFormData({ ...formData, completion_reason: val });
-    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -58,18 +52,6 @@ export function LockSessionDialog({ session, open, onOpenChange, onConfirm }) {
         }
     };
 
-    const emergencyScenarios = [
-        "Severe Rainfall / Bagyo",
-        "Flooding",
-        "Typhoon / Hurricane",
-        "Volcanic Eruption",
-        "Earthquake",
-        "Tsunami Warning",
-        "Heavy Snow / Blizzard",
-        "Severe Storm / Thunderstorm",
-        "Strong Wind / Sandstorm",
-        "Landslide / Mudslide"
-    ];
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -97,33 +79,16 @@ export function LockSessionDialog({ session, open, onOpenChange, onConfirm }) {
                                     <SelectValue placeholder="Select type" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="Normal">Normal Day</SelectItem>
-                                    <SelectItem value="Emergency">Emergency / Disaster</SelectItem>
-                                    <SelectItem value="Holiday">Holiday</SelectItem>
-                                    <SelectItem value="Maintenance">System Maintenance</SelectItem>
+                                    <SelectItem value="Regular">Regular</SelectItem>
+                                    <SelectItem value="Special">Special</SelectItem>
+                                    <SelectItem value="Overtime">Overtime</SelectItem>
+                                    <SelectItem value="Remote/WFH">Remote/WFH</SelectItem>
+                                    <SelectItem value="Excused">Excused / Suspended</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
 
-                        {/* Emergency Quick Selection */}
-                        {formData.session_type === 'Emergency' && (
-                            <div className="grid gap-2 animate-in slide-in-from-top-2">
-                                <Label htmlFor="emergency_type">Emergency Category</Label>
-                                <Select
-                                    value={emergencyType}
-                                    onValueChange={handleEmergencySelect}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select scenario..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {emergencyScenarios.map(s => (
-                                            <SelectItem key={s} value={s}>{s}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        )}
+
 
                         {/* Attendance Required Toggle */}
                         <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm bg-muted/30">
@@ -147,10 +112,10 @@ export function LockSessionDialog({ session, open, onOpenChange, onConfirm }) {
 
 
                         {/* Summary/Recommendation */}
-                        {!formData.attendance_required && formData.session_type !== 'Normal' && (
+                        {!formData.attendance_required && formData.session_type !== 'Regular' && (
                             <div className="p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-md">
                                 <p className="text-xs text-amber-800 dark:text-amber-400">
-                                    <strong>Recommendation:</strong> Since attendance is NOT required, all pending employees will be automatically marked as <strong>Excused</strong> with the reason "{formData.completion_reason || 'Disaster/Holiday Suspension'}".
+                                    <strong>Recommendation:</strong> Since attendance is NOT required, all pending employees will be automatically marked as <strong>Excused</strong>.
                                 </p>
                             </div>
                         )}
