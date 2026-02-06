@@ -132,7 +132,6 @@ export default function AdminLoginPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* Functional area */}
             <div className="right-section relative z-10 w-full flex flex-col items-center">
                 {/* Logo */}
                 <div className="flex justify-center flex-shrink-0">
@@ -158,7 +157,7 @@ export default function AdminLoginPage() {
                     </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="w-full space-y-4">
+                <form onSubmit={handleSubmit} className="w-full max-w-[400px] space-y-4">
                     {/* Email Input */}
                     <div className="relative group">
                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-emerald-500 transition-colors">

@@ -145,7 +145,7 @@ export default function EmployeeLoginPage() {
 
                 {/* Right Side (Functional) - Full width on all mobile */}
                 <div className="right-section">
-                    <div className="w-full max-w-md mx-auto p-6">
+                    <div className="w-full max-w-[400px] mx-auto p-6">
                         <div className="login-header-mobile-top text-center mb-8">
                             <h2 className="text-2xl font-extrabold text-slate-800 tracking-tight">
                                 Welcome to <span className="text-[#22c55e]">QuickConn Virtual</span>
@@ -240,9 +240,6 @@ export default function EmployeeLoginPage() {
                             </Button>
                         </form>
 
-                        <p className="mt-8 text-center text-sm text-muted-foreground">
-                            QuickConn Virtual Attendance System
-                        </p>
                     </div>
                 </div>
             </div>

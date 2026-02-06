@@ -150,10 +150,10 @@
 
 /* Responsive Logo Class - "Just Exactly Only" Size */
 .login-logo {
-  width: 120px !important;
-  /* Optimized mobile size */
+  width: 100px !important;
+  /* Mobile size */
   height: auto !important;
-  margin-bottom: 24px !important;
+  margin-bottom: 20px !important;
   object-fit: contain;
 }
 
@@ -194,7 +194,7 @@
   }
 
   .login-logo {
-    width: 180px !important;
+    width: 140px !important;
     /* Desktop scale */
   }
 
