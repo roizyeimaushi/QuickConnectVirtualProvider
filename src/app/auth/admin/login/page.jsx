@@ -133,13 +133,13 @@ export default function AdminLoginPage() {
             </Dialog>
 
             {/* Functional area */}
-            <div className="right-section relative z-10 w-full flex flex-col items-center justify-center p-6">
+            <div className="right-section relative z-10 w-full flex flex-col items-center p-6">
                 {/* Logo */}
-                <div className="flex justify-center mb-8">
+                <div className="flex justify-center flex-shrink-0">
                     <img
                         src={getLogoUrl(settings?.system_logo)}
                         alt="QuickConn Logo"
-                        className="h-20 w-auto object-contain"
+                        className="login-logo"
                         onError={(e) => {
                             e.currentTarget.src = "/quickconnect-logo.png";
                             e.currentTarget.onerror = null;

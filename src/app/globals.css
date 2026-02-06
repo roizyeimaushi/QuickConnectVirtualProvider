@@ -119,14 +119,18 @@
 
 /* 
  * Login Page Responsive Rules
- * Hides decorative sections and top headers on all mobile devices (portrait & landscape)
+ * Hides decorative sections and top headers on all mobile devices
  */
 .login-container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  min-height: auto;
+  /* Natural overflow on mobile */
   width: 100%;
   background: #f8f8ff;
+  padding-top: 5vh;
+  /* Push content to top of mobile screen */
+  padding-bottom: 5vh;
 }
 
 .left-section,
@@ -137,16 +141,29 @@
 .right-section {
   width: 100% !important;
   min-width: 100% !important;
-  flex: 1 1 100% !important;
+  flex: 1 !important;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  align-items: center;
+  justify-content: flex-start !important;
+  /* Top align on mobile */
 }
 
-/* Desktop Only: Show split layout ONLY at 1024px+ */
+/* Responsive Logo Class */
+.login-logo {
+  width: 160px !important;
+  /* Larger on mobile */
+  height: auto !important;
+  margin-bottom: 32px !important;
+  object-fit: contain;
+}
+
+/* Desktop Only: Restore centering and split ONLY at 1024px+ */
 @media (min-width: 1024px) {
   .login-container {
     flex-direction: row !important;
+    min-height: 100vh !important;
+    padding: 0 !important;
   }
 
   .left-section {
@@ -159,6 +176,13 @@
   .left-section+.right-section {
     width: 50% !important;
     min-width: 50% !important;
+    justify-content: center !important;
+    /* Centered on desktop only */
+  }
+
+  .login-logo {
+    width: 200px !important;
+    /* Desktop scale */
   }
 
   .login-header-mobile-top {

@@ -152,11 +152,11 @@ export default function EmployeeLoginPage() {
                             </h2>
                         </div>
 
-                        <div className="flex justify-center mb-6">
+                        <div className="flex justify-center flex-shrink-0">
                             <img
                                 src={getLogoUrl(settings?.system_logo)}
                                 alt="QuickConn Logo"
-                                className="h-auto max-h-16 md:max-h-24 w-auto object-contain"
+                                className="login-logo"
                                 onError={(e) => {
                                     e.currentTarget.src = "/quickconnect-logo.png";
                                     e.currentTarget.onerror = null;
