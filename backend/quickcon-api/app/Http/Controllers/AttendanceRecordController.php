@@ -55,6 +55,7 @@ class AttendanceRecordController extends Controller
             'time_out' => $validated['time_out'] ? Carbon::parse($validated['time_out']) : null,
             'break_start' => $validated['break_start'] ? Carbon::parse($validated['break_start']) : null,
             'break_end' => $validated['break_end'] ? Carbon::parse($validated['break_end']) : null,
+            'notes' => strip_tags($validated['reason']),
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -1190,12 +1191,14 @@ class AttendanceRecordController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $request->validate([
+        try {
+            $request->validate([
             'status' => 'nullable|string|in:present,late,absent,excused,left_early,pending',
             'time_in' => 'nullable|date',
             'time_out' => 'nullable|date',
             'break_start' => 'nullable|date',
             'break_end' => 'nullable|date',
+            'reason' => 'required|string|min:5',
         ]);
 
         $changes = [];
@@ -1282,25 +1285,33 @@ class AttendanceRecordController extends Controller
             $attendanceRecord->hours_worked = round($diffInMinutes / 60, 2);
         }
 
-        $attendanceRecord->save();
+        $attendanceRecord->notes = strip_tags($request->reason);
+            $attendanceRecord->save();
 
-        $correctionType = $request->input('correction_type', 'Manual Adjustment');
+            $correctionType = $request->input('correction_type', 'Manual Adjustment');
 
-        AuditLog::log(
-            'update_attendance',
-            "Admin {$request->user()->name} updated record via [{$correctionType}]: " . implode(', ', $changes),
-            AuditLog::STATUS_SUCCESS,
-            $request->user()->id,
-            'AttendanceRecord',
-            $attendanceRecord->id,
-            null,
-            ['correction_type' => $correctionType]
-        );
+            AuditLog::log(
+                'update_attendance',
+                "Admin {$request->user()->name} updated record via [{$correctionType}]: " . implode(', ', $changes) . ". Reason: " . strip_tags($request->reason),
+                AuditLog::STATUS_SUCCESS,
+                $request->user()->id,
+                'AttendanceRecord',
+                $attendanceRecord->id,
+                null,
+                ['correction_type' => $correctionType]
+            );
 
-        return response()->json([
-            'message' => 'Attendance record updated successfully',
-            'record' => $attendanceRecord->load(['session.schedule', 'user'])
-        ]);
+            return response()->json([
+                'message' => 'Attendance record updated successfully',
+                'record' => $attendanceRecord->load(['session.schedule', 'user'])
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Attendance Update Error: " . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to update record',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function destroy(AttendanceRecord $attendanceRecord)

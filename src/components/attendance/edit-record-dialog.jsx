@@ -249,6 +249,7 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                         <div className="grid gap-2">
                             <Label htmlFor="correction_type">Correction Type</Label>
                             <Select
+                                id="correction_type"
                                 value={formData.correction_type}
                                 onValueChange={(val) => {
                                     setFormData({
@@ -272,13 +273,28 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                                 </SelectContent>
                             </Select>
                         </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="reason" className="text-xs font-bold uppercase text-muted-foreground flex items-center justify-between">
+                                Reason for Correction
+                                <span className="text-[10px] lowercase font-normal text-red-500">Required (min 5 chars)</span>
+                            </Label>
+                            <Textarea
+                                id="reason"
+                                placeholder="Please explain why this correction is being made..."
+                                value={formData.reason}
+                                onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+                                className="resize-none h-20"
+                                required
+                            />
+                        </div>
                     </div>
 
-                    <DialogFooter className="border-t pt-4">
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="h-11 sm:h-10 order-2 sm:order-1">
+                    <DialogFooter className="border-t pt-4 gap-3 sm:gap-2">
+                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="h-11 sm:h-10 order-2 sm:order-1 flex-1 sm:flex-none">
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={loading} className="px-8 h-11 sm:h-10 order-1 sm:order-2">
+                        <Button type="submit" disabled={loading} className="px-8 h-11 sm:h-10 order-1 sm:order-2 flex-1 sm:flex-none">
                             {loading ? "Saving..." : "Apply Correction"}
                         </Button>
                     </DialogFooter>
