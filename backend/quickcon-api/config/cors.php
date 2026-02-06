@@ -14,16 +14,14 @@ return [
 
     'allowed_origins' => array_values(array_filter(array_merge(
         [
-            'https://quickconnectvirtual.vercel.app',
-            'https://virtualquickconnect.vercel.app',
+            'https://quickconnect-frontend.onrender.com', // Updated to Render
             'http://localhost:3000',
         ],
         explode(',', env('CORS_ALLOWED_ORIGINS', ''))
     ))),
 
     'allowed_origins_patterns' => [
-        'https://quickconnectvirtual-*.vercel.app', // Preview deployments only
-        'https://virtualquickconnect-*.vercel.app',
+        'https://quickconnect-frontend-*.onrender.com', // Preview deployments only
     ],
 
     'allowed_headers' => ['*'],

@@ -60,9 +60,9 @@ services:
 
       # Frontend Connection (Update these in Render Dashboard later if domain changes)
       - key: CORS_ALLOWED_ORIGINS
-        value: https://quickconnect-frontend.vercel.app,http://localhost:3000
+        value: https://quickconnect-frontend.onrender.com,http://localhost:3000
       - key: SANCTUM_STATEFUL_DOMAINS
-        value: quickconnect-frontend.vercel.app,localhost:3000
+        value: quickconnect-frontend.onrender.com,localhost:3000
       
       # Logging & Session
       - key: LOG_CHANNEL
