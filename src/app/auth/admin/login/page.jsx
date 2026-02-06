@@ -138,7 +138,7 @@ export default function AdminLoginPage() {
                         <img
                             src={getLogoUrl(settings?.system_logo)}
                             alt="QuickConn Logo"
-                            className="h-20 w-auto object-contain filter brightness-0 invert"
+                            className="h-20 w-auto object-contain"
                             onError={(e) => {
                                 e.currentTarget.src = "/quickconnect-logo.png";
                                 e.currentTarget.onerror = null;
@@ -216,13 +216,6 @@ export default function AdminLoginPage() {
                             {loading ? "Authenticating..." : "Login"}
                         </Button>
                     </form>
-                </div>
-
-                {/* Footer Security Branding */}
-                <div className="absolute bottom-8 text-center opacity-30">
-                    <p className="text-[10px] font-black text-white tracking-[0.2em] uppercase">
-                        QuickConn Security Framework v4.2
-                    </p>
                 </div>
             </div>
         </div>
