@@ -246,12 +246,26 @@ export default function SessionDetailsPage() {
     // Simplified: No more full-page blocking loader.
     // The page will render the layout and header immediately.
 
+    if (loading && !session) {
+        return (
+            <DashboardLayout title="Loading Session...">
+                <div className="flex flex-col items-center justify-center py-24 text-center space-y-4">
+                    <div className="h-12 w-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+                    <p className="text-muted-foreground animate-pulse">Fetching session details...</p>
+                </div>
+            </DashboardLayout>
+        );
+    }
+
     if (!session) {
         return (
             <DashboardLayout title="Session Details">
-                <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
+                <div className="flex flex-col items-center justify-center py-12 text-center space-y-4 animate-fade-in">
                     <AlertCircle className="h-12 w-12 text-destructive" />
                     <h3 className="text-lg font-semibold">Session not found</h3>
+                    <p className="text-muted-foreground text-sm max-w-xs">
+                        This session record might have been removed or you don't have permission to view it.
+                    </p>
                     <Button asChild variant="outline">
                         <Link href="/attendance/sessions">
                             <ArrowLeft className="mr-2 h-4 w-4" />

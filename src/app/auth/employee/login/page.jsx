@@ -123,43 +123,44 @@ export default function EmployeeLoginPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* Full Screen Layout - Responsive: stacked on mobile, side-by-side on larger screens */}
-            <div className="min-h-screen h-screen w-full flex flex-col md:flex-row overflow-hidden">
+            {/* Main Layout Container - Column on mobile, Row on Tablet/Desktop (md and up) */}
+            <div className="min-h-screen w-full flex flex-col md:flex-row bg-[#f8f8ff]">
 
-                {/* Left Side - Full Image with Centered Message Overlay (hidden on mobile) */}
-                <div className="hidden md:block md:w-1/2 h-full relative overflow-hidden">
+                {/* Left/Top Side - Welcome Image & Message */}
+                <div className="w-full md:w-1/2 h-[35vh] sm:h-[40vh] md:h-screen relative overflow-hidden flex-shrink-0">
                     {/* Full Background Image */}
                     <img
                         src="/employee-login-side.png"
-                        alt="Customer Service Representative"
-                        className="absolute inset-0 w-full h-full object-cover object-center"
+                        alt="Join QuickConn Virtual"
+                        className="absolute inset-0 w-full h-full object-cover object-center md:object-[25%_center]"
                     />
 
-                    {/* Dark Overlay for text readability */}
-                    <div className="absolute inset-0 bg-black/40" />
+                    {/* Darker Overlay for text readability on all devices */}
+                    <div className="absolute inset-0 bg-black/45 md:bg-black/40" />
 
-                    {/* Centered Welcome Message Overlay */}
-                    <div className="absolute inset-0 z-10 flex items-center justify-center p-4 sm:p-6 lg:p-8">
-                        <div className="text-center px-4 sm:px-8 lg:px-12">
-                            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-3xl font-bold leading-tight text-white drop-shadow-lg mb-2 sm:mb-4 lg:mb-6">
-                                Welcome to <span className="text-[#22c55e]">QuickConn Virtual</span>
+                    {/* Welcome Message Overlay - Positioned for impact */}
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-6 text-center">
+                        <div className="max-w-md animate-fade-in-up">
+                            <h2 className="text-2xl sm:text-3xl md:text-3xl lg:text-4xl font-extrabold leading-tight text-white drop-shadow-xl mb-3 sm:mb-4">
+                                Welcome to <br className="sm:hidden" />
+                                <span className="text-[#22c55e]">QuickConn Virtual</span>
                             </h2>
-                            <p className="text-white/90 text-xs sm:text-sm md:text-base lg:text-lg leading-relaxed max-w-sm sm:max-w-md mx-auto drop-shadow-md">
+                            <p className="text-white/95 text-sm sm:text-base md:text-base lg:text-lg leading-relaxed drop-shadow-lg font-medium">
                                 Track your attendance, view schedules, and manage your work records in one convenient portal.
                             </p>
                         </div>
                     </div>
                 </div>
 
-                {/* Right Side - Login Form (full width on mobile, half on larger screens) */}
-                <div className="w-full md:w-1/2 h-full flex flex-col justify-center p-6 sm:p-8 md:p-12 lg:p-16 bg-[#f8f8ff]">
-                    <div className="w-full max-w-md mx-auto">
-                        {/* Logo - using max-w to prevent stretching */}
-                        <div className="flex justify-center mb-4 sm:mb-6">
+                {/* Right/Bottom Side - Login Form */}
+                <div className="flex-1 flex flex-col justify-center items-center p-6 sm:p-10 md:p-12 lg:p-16 bg-white md:bg-[#f8f8ff] shadow-2xl md:shadow-none -mt-4 md:mt-0 rounded-t-3xl md:rounded-none z-20">
+                    <div className="w-full max-w-sm sm:max-w-md mx-auto">
+                        {/* Logo */}
+                        <div className="flex justify-center mb-6 sm:mb-8">
                             <img
                                 src={getLogoUrl(settings?.system_logo)}
                                 alt="QuickConn Logo"
-                                className="h-auto max-h-16 md:max-h-24 w-auto max-w-[300px] sm:max-w-[350px] object-contain"
+                                className="h-auto max-h-16 sm:max-h-20 md:max-h-24 w-auto object-contain drop-shadow-sm"
                                 onError={(e) => {
                                     e.currentTarget.src = "/quickconnect-logo.png";
                                     e.currentTarget.onerror = null;
@@ -168,91 +169,92 @@ export default function EmployeeLoginPage() {
                         </div>
 
                         {/* Subtitle */}
-                        <p className="text-muted-foreground text-xs sm:text-sm lg:text-base text-center mb-6 sm:mb-8">
-                            Sign in to access your QuickConn Virtual account
-                        </p>
+                        <div className="text-center mb-8">
+                            <h3 className="text-lg sm:text-xl font-bold text-slate-800 mb-1">Employee Login</h3>
+                            <p className="text-slate-500 text-sm">Sign in to access your work account</p>
+                        </div>
 
-                        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
-                            <div className="space-y-3 sm:space-y-4">
-                                {/* Email Input with Icon */}
-                                <div className="relative">
-                                    <div className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
-                                        <Mail className="h-4 w-4 sm:h-5 sm:w-5" />
+                        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+                            <div className="space-y-4">
+                                {/* Email Field */}
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="email" className="text-xs font-bold text-slate-700 uppercase ml-1">Email Address</Label>
+                                    <div className="relative group">
+                                        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">
+                                            <Mail className="h-5 w-5" />
+                                        </div>
+                                        <input
+                                            id="email"
+                                            type="email"
+                                            placeholder="someone@example.com"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            required
+                                            className="w-full h-12 pl-11 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
+                                        />
                                     </div>
-                                    <input
-                                        id="email"
-                                        type="email"
-                                        placeholder="Enter your email address"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        required
-                                        autoComplete="email"
-                                        className="w-full h-11 sm:h-12 pl-10 sm:pl-12 pr-4 bg-white border border-gray-200 rounded-lg text-sm sm:text-base placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-                                    />
                                 </div>
 
-                                {/* Password Input with Icon */}
-                                <div className="relative">
-                                    <div className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
-                                        <Lock className="h-4 w-4 sm:h-5 sm:w-5" />
+                                {/* Password Field */}
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="password" className="text-xs font-bold text-slate-700 uppercase ml-1">Password</Label>
+                                    <div className="relative group">
+                                        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">
+                                            <Lock className="h-5 w-5" />
+                                        </div>
+                                        <input
+                                            id="password"
+                                            type={showPassword ? "text" : "password"}
+                                            placeholder="••••••••"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            required
+                                            className="w-full h-12 pl-11 pr-12 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-all"
+                                        >
+                                            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                        </button>
                                     </div>
-                                    <input
-                                        id="password"
-                                        type={showPassword ? "text" : "password"}
-                                        placeholder="Enter your password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        required
-                                        autoComplete="current-password"
-                                        className="w-full h-11 sm:h-12 pl-10 sm:pl-12 pr-10 sm:pr-12 bg-white border border-gray-200 rounded-lg text-sm sm:text-base placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                                    >
-                                        {showPassword ? (
-                                            <EyeOff className="h-4 w-4 sm:h-5 sm:w-5" />
-                                        ) : (
-                                            <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
-                                        )}
-                                    </button>
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-2">
+                            <div className="flex items-center justify-between px-1">
+                                <label className="flex items-center space-x-2 cursor-pointer group">
                                     <Checkbox
                                         id="remember"
-                                        className="border-gray-300 h-4 w-4"
+                                        className="rounded-md border-slate-300"
                                         checked={remember}
                                         onCheckedChange={setRemember}
                                     />
-                                    <Label
-                                        htmlFor="remember"
-                                        className="text-xs sm:text-sm text-muted-foreground leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                    >
-                                        Remember me
-                                    </Label>
-                                </div>
+                                    <span className="text-sm text-slate-600 font-medium group-hover:text-slate-900 selection:bg-transparent">Remember me</span>
+                                </label>
+                                <button type="button" className="text-sm font-semibold text-primary hover:underline">
+                                    Forgot Password?
+                                </button>
                             </div>
 
                             <Button
                                 type="submit"
-                                className="w-full h-10 sm:h-11 lg:h-12 text-sm sm:text-base font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                                className="w-full h-13 text-base font-bold rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:translate-y-[-1px] active:translate-y-[0px] transition-all duration-200"
                                 loading={loading}
                                 style={{
-                                    background: 'linear-gradient(135deg, #2e8b57 0%, #236b43 100%)'
+                                    background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)'
                                 }}
                             >
-                                Sign In
+                                Sign In to Portfolio
                             </Button>
                         </form>
 
                         {/* Footer text */}
-                        <p className="mt-6 sm:mt-8 text-center text-xs sm:text-sm text-muted-foreground">
-                            QuickConn Virtual Attendance System
-                        </p>
+                        <div className="mt-10 pt-6 border-t border-slate-100 text-center">
+                            <p className="text-xs sm:text-sm text-slate-400 font-medium tracking-wide">
+                                © 2026 QUICKCONN VIRTUAL PORTAL • SECURE ACCESS
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>

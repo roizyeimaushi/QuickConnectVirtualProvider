@@ -99,156 +99,139 @@ export default function AdminLoginPage() {
     };
 
     return (
-        <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden">
-            {/* Background Image */}
-            <div
-                className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                style={{ backgroundImage: "url('/admin-login-bg.jpg')" }}
-            />
+        <>
+            {/* Main Layout Container - Column on mobile, Row on Tablet/Desktop (md and up) */}
+            <div className="min-h-screen w-full flex flex-col md:flex-row bg-[#0f172a]">
 
-            {/* Dark Overlay */}
-            <div className="absolute inset-0 bg-black/60" />
-
-            {/* Decorative Curved Shapes */}
-            <div
-                className="absolute -left-32 top-1/4 w-96 h-96 rounded-full opacity-20"
-                style={{ background: '#2e8b57' }}
-            />
-            <div
-                className="absolute -right-48 -bottom-32 w-[500px] h-[500px] rounded-full opacity-15"
-                style={{ background: '#3da36e' }}
-            />
-            <div
-                className="absolute right-1/4 -top-24 w-64 h-64 rounded-full opacity-10"
-                style={{ background: '#4db87e' }}
-            />
-
-            {/* Error Modal */}
-            <Dialog open={showErrorModal} onOpenChange={setShowErrorModal}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader className="text-center">
-                        <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-red-100 flex items-center justify-center">
-                            <AlertCircle className="h-6 w-6 text-red-600" />
-                        </div>
-                        <DialogTitle className="text-center">Login Failed</DialogTitle>
-                        <DialogDescription className="text-center">
-                            {error}
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex justify-center mt-4">
-                        <Button onClick={() => setShowErrorModal(false)}>
-                            Try Again
-                        </Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
-
-            {/* Login Form */}
-            <div className="relative z-10 w-full max-w-sm px-6 sm:px-8">
-                {/* Logo - with max-width to prevent stretching */}
-                <div className="flex justify-center mb-4 sm:mb-6">
+                {/* Left/Top Side - Welcome Image & Message */}
+                <div className="w-full md:w-1/2 h-[35vh] sm:h-[40vh] md:h-screen relative overflow-hidden flex-shrink-0">
+                    {/* Full Background Image */}
                     <img
-                        src={getLogoUrl(settings?.system_logo)}
-                        alt="QuickConn Logo"
-                        className="h-auto max-h-16 md:max-h-24 w-auto max-w-[180px] sm:max-w-[220px] object-contain"
-                        onError={(e) => {
-                            e.currentTarget.src = "/quickconnect-logo.png";
-                            e.currentTarget.onerror = null;
-                        }}
+                        src="/admin-login-bg.jpg"
+                        alt="QuickConn Admin Portal"
+                        className="absolute inset-0 w-full h-full object-cover object-center"
                     />
+
+                    {/* Darker Overlay for Admin - Premium Slate/Blue tint */}
+                    <div className="absolute inset-0 bg-slate-950/50" />
+
+                    {/* Welcome Message Overlay */}
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-6 text-center">
+                        <div className="max-w-md">
+                            <h2 className="text-2xl sm:text-3xl md:text-3xl lg:text-4xl font-extrabold leading-tight text-white drop-shadow-2xl mb-3 sm:mb-4">
+                                Administrator <br className="sm:hidden" />
+                                <span className="text-[#22c55e]">Console</span>
+                            </h2>
+                            <p className="text-white/90 text-sm sm:text-base md:text-base lg:text-lg leading-relaxed drop-shadow-lg font-medium">
+                                Secure access to manage employees, schedules, and attendance system records.
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Title */}
-                <h1 className="text-2xl sm:text-2xl font-bold text-white text-center mb-1 sm:mb-2">
-                    Welcome to <span className="text-[#22c55e]">QuickConn</span>
-                </h1>
-                <p className="text-white/70 text-xs sm:text-sm text-center mb-6 sm:mb-8">
-                    Sign in to access your administrator account
-                </p>
-
-                <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
-                    {/* Email Input */}
-                    <div className="relative">
-                        <div className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-white/60">
-                            <User className="h-4 w-4 sm:h-5 sm:w-5" />
+                {/* Right/Bottom Side - Login Form */}
+                <div className="flex-1 flex flex-col justify-center items-center p-6 sm:p-10 md:p-12 lg:p-16 bg-[#0f172a] shadow-2xl md:shadow-none -mt-4 md:mt-0 rounded-t-3xl md:rounded-none z-20">
+                    <div className="w-full max-w-sm sm:max-w-md mx-auto">
+                        {/* Logo */}
+                        <div className="flex justify-center mb-6 sm:mb-8">
+                            <img
+                                src={getLogoUrl(settings?.system_logo)}
+                                alt="QuickConn Logo"
+                                className="h-auto max-h-16 sm:max-h-20 md:max-h-24 w-auto object-contain filter brightness-0 invert"
+                                onError={(e) => {
+                                    e.currentTarget.src = "/quickconnect-logo.png";
+                                    e.currentTarget.onerror = null;
+                                }}
+                            />
                         </div>
-                        <input
-                            type="email"
-                            placeholder="Enter your email address"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                            autoComplete="email"
-                            className="w-full h-10 sm:h-12 pl-10 sm:pl-12 pr-4 bg-transparent border border-white/30 rounded-md text-white text-xs sm:text-sm placeholder:text-white/50 focus:outline-none focus:border-[#3da36e] transition-colors"
-                        />
-                    </div>
 
-                    {/* Password Input */}
-                    <div className="relative">
-                        <div className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-white/60">
-                            <KeyRound className="h-4 w-4 sm:h-5 sm:w-5" />
+                        {/* Subtitle */}
+                        <div className="text-center mb-8">
+                            <h3 className="text-xl sm:text-2xl font-bold text-white mb-1">Admin Access</h3>
+                            <p className="text-slate-400 text-sm">Welcome back! Please sign in to continue.</p>
                         </div>
-                        <input
-                            type={showPassword ? "text" : "password"}
-                            placeholder="Enter your password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            autoComplete="current-password"
-                            className="w-full h-10 sm:h-12 pl-10 sm:pl-12 pr-10 sm:pr-12 bg-transparent border border-white/30 rounded-md text-white text-xs sm:text-sm placeholder:text-white/50 focus:outline-none focus:border-[#3da36e] transition-colors"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors"
-                        >
-                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                    </div>
 
-                    <div className="flex items-center space-x-2 mb-2 sm:mb-4">
-                        <Checkbox
-                            id="remember"
-                            className="border-white/50 h-3 w-3 sm:h-4 sm:w-4 data-[state=checked]:bg-[#3da36e] data-[state=checked]:border-[#3da36e]"
-                            checked={remember}
-                            onCheckedChange={setRemember}
-                        />
-                        <Label
-                            htmlFor="remember"
-                            className="text-xs sm:text-sm text-white/80 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                        >
-                            Remember me
-                        </Label>
-                    </div>
-                    {/* Login Button */}
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full h-10 sm:h-12 mt-1 sm:mt-2 bg-transparent border rounded-md text-sm sm:text-base font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                        style={{
-                            borderColor: '#3da36e',
-                            color: '#3da36e'
-                        }}
-                        onMouseEnter={(e) => {
-                            if (!loading) {
-                                e.currentTarget.style.background = '#2e8b57';
-                                e.currentTarget.style.color = 'white';
-                            }
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'transparent';
-                            e.currentTarget.style.color = '#3da36e';
-                        }}
-                    >
-                        {loading ? (
-                            <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
-                        ) : (
-                            "Login"
-                        )}
-                    </button>
+                        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+                            <div className="space-y-4">
+                                {/* Email Field */}
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="email" className="text-xs font-bold text-slate-400 uppercase ml-1">Admin Email</Label>
+                                    <div className="relative group">
+                                        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-[#22c55e] transition-colors">
+                                            <User className="h-5 w-5" />
+                                        </div>
+                                        <input
+                                            id="email"
+                                            type="email"
+                                            placeholder="admin@quickconn.com"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            required
+                                            className="w-full h-12 pl-11 pr-4 bg-slate-900/50 border border-slate-800 rounded-xl text-white placeholder:text-slate-600 focus:outline-none focus:border-[#22c55e]/50 focus:ring-4 focus:ring-[#22c55e]/10 transition-all"
+                                        />
+                                    </div>
+                                </div>
 
-                </form>
+                                {/* Password Field */}
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="password" className="text-xs font-bold text-slate-400 uppercase ml-1">Password</Label>
+                                    <div className="relative group">
+                                        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-[#22c55e] transition-colors">
+                                            <KeyRound className="h-5 w-5" />
+                                        </div>
+                                        <input
+                                            id="password"
+                                            type={showPassword ? "text" : "password"}
+                                            placeholder="••••••••"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            required
+                                            className="w-full h-12 pl-11 pr-12 bg-slate-900/50 border border-slate-800 rounded-xl text-white placeholder:text-slate-600 focus:outline-none focus:border-[#22c55e]/50 focus:ring-4 focus:ring-[#22c55e]/10 transition-all"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-slate-500 hover:text-slate-300 rounded-lg hover:bg-slate-800 transition-all"
+                                        >
+                                            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between px-1">
+                                <label className="flex items-center space-x-2 cursor-pointer group">
+                                    <Checkbox
+                                        id="remember"
+                                        className="rounded-md border-slate-700 data-[state=checked]:bg-[#22c55e] data-[state=checked]:border-[#22c55e]"
+                                        checked={remember}
+                                        onCheckedChange={setRemember}
+                                    />
+                                    <span className="text-sm text-slate-400 font-medium group-hover:text-slate-200 selection:bg-transparent">Keep me logged in</span>
+                                </label>
+                            </div>
+
+                            <Button
+                                type="submit"
+                                className="w-full h-13 text-base font-bold rounded-xl shadow-lg shadow-[#22c55e]/10 hover:shadow-xl hover:translate-y-[-1px] active:translate-y-[0px] transition-all duration-200"
+                                loading={loading}
+                                style={{
+                                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                                }}
+                            >
+                                Secure Login
+                            </Button>
+                        </form>
+
+                        {/* Footer text */}
+                        <div className="mt-10 pt-6 border-t border-slate-800/50 text-center">
+                            <p className="text-xs font-bold text-slate-500 tracking-widest uppercase">
+                                System Protected by QuickConn Security
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
+        </>
     );
 }

@@ -248,13 +248,26 @@ class AttendanceSessionController extends Controller
                 $rawType = $validated['session_type'] ?? 'Regular';
                 $sessionType = in_array($rawType, ['Regular', 'Special', 'Overtime', 'Remote/WFH', 'Excused']) ? $rawType : 'Regular';
 
-                $attendanceSession->update([
-                    'status' => 'locked',
-                    'attendance_required' => $validated['attendance_required'] ?? $attendanceSession->attendance_required,
-                    'session_type' => $sessionType,
-                    'locked_at' => now(),
-                    'locked_by' => auth()->id(),
-                ]);
+                $updateData = ['status' => 'locked'];
+
+                // Defensive check: Only update context fields if columns exist in DB
+                if (\Illuminate\Support\Facades\Schema::hasColumn('attendance_sessions', 'attendance_required')) {
+                    $updateData['attendance_required'] = $validated['attendance_required'] ?? $attendanceSession->attendance_required;
+                }
+                
+                if (\Illuminate\Support\Facades\Schema::hasColumn('attendance_sessions', 'session_type')) {
+                    $updateData['session_type'] = $sessionType;
+                }
+                
+                if (\Illuminate\Support\Facades\Schema::hasColumn('attendance_sessions', 'locked_at')) {
+                    $updateData['locked_at'] = now();
+                }
+                
+                if (\Illuminate\Support\Facades\Schema::hasColumn('attendance_sessions', 'locked_by')) {
+                    $updateData['locked_by'] = auth()->id();
+                }
+
+                $attendanceSession->update($updateData);
 
                 // Log action
                 try {
@@ -272,7 +285,12 @@ class AttendanceSessionController extends Controller
                     \Log::warning("Lock Session: Audit Log failed - " . $e->getMessage());
                 }
 
-                $finalStatus = $attendanceSession->attendance_required ? 'absent' : 'excused';
+                $isAttendanceRequired = true;
+                if (\Illuminate\Support\Facades\Schema::hasColumn('attendance_sessions', 'attendance_required')) {
+                    $isAttendanceRequired = $attendanceSession->attendance_required;
+                }
+
+                $finalStatus = $isAttendanceRequired ? 'absent' : 'excused';
                 $reason = ($sessionType ?: "Session") . " Finalization";
                 $sessionDate = $attendanceSession->date->toDateString();
 
