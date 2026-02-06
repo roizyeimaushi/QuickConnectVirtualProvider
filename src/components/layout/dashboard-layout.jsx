@@ -85,7 +85,7 @@ export function AppSidebar() {
     const { settings } = useSettingsContext();
     const pathname = usePathname();
     const navItems = getNavigationItems(user);
-    const { setOpen, isMobile } = useSidebar();
+    const { setOpen } = useSidebar();
 
     const hideSidebar = pathname.startsWith("/settings") ||
         pathname === "/dashboard/admin/profile" ||
@@ -101,29 +101,27 @@ export function AppSidebar() {
     const logoUrl = getLogoUrl(settings?.system_logo);
 
     return (
-        <Sidebar collapsible={hideSidebar ? "offcanvas" : "icon"} className="border-r border-sidebar-border shadow-md transition-all duration-300">
-            <SidebarHeader className="p-4">
+        <Sidebar collapsible={hideSidebar ? "offcanvas" : "icon"} className="border-r border-white/5 shadow-2xl transition-all duration-300">
+            <SidebarHeader className="p-6">
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild className="hover:bg-sidebar-accent transition-colors">
+                        <SidebarMenuButton size="lg" asChild className="hover:bg-transparent transition-all">
                             <Link href={isAdmin ? "/dashboard/admin" : "/dashboard/employee"} className="flex items-center gap-3">
-                                <div className="flex aspect-square size-10 items-center justify-center rounded-xl bg-primary/10 overflow-hidden ring-1 ring-primary/20">
+                                <div className="flex items-center justify-center rounded-lg overflow-hidden">
                                     <img
                                         src={logoUrl}
                                         alt="Logo"
-                                        className="size-8 object-contain"
+                                        className="h-8 w-auto object-contain filter brightness-0 invert"
                                         onError={(e) => {
                                             e.currentTarget.src = "/quickconnect-logo.png";
                                             e.currentTarget.onerror = null;
                                         }}
                                     />
                                 </div>
-                                <div className="flex flex-col items-start leading-none group-data-[collapsible=icon]:hidden">
-                                    <span className="font-bold text-lg text-sidebar-foreground truncate w-40">
+                                <div className="flex flex-col items-start group-data-[collapsible=icon]:hidden">
+                                    <span className="font-black text-lg text-white tracking-tight">
                                         {settings?.company_name || "QuickConn"}
-                                    </span>
-                                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">
-                                        Virtual Management
+                                        <span className="text-emerald-500 font-medium ml-1">Virtual</span>
                                     </span>
                                 </div>
                             </Link>
@@ -132,10 +130,10 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            <SidebarContent className="px-2">
+            <SidebarContent className="px-3">
                 {navItems.map((group) => (
-                    <SidebarGroup key={group.label} className="mt-4">
-                        <SidebarGroupLabel className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50 px-4 mb-2">
+                    <SidebarGroup key={group.label} className="mt-6 first:mt-2">
+                        <SidebarGroupLabel className="text-[11px] font-black uppercase tracking-[0.15em] text-white/40 px-3 mb-3">
                             {group.label}
                         </SidebarGroupLabel>
                         <SidebarGroupContent>
@@ -157,23 +155,26 @@ export function AppSidebar() {
                                             <Collapsible key={item.title} asChild defaultOpen={shouldBeOpen}>
                                                 <SidebarMenuItem>
                                                     <CollapsibleTrigger asChild>
-                                                        <SidebarMenuButton tooltip={item.title} className={`py-6 px-4 rounded-xl ${shouldBeOpen ? 'bg-sidebar-accent/50' : ''}`}>
-                                                            <Icon className={`size-5 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
-                                                            <span className="font-medium">{item.title}</span>
-                                                            <ChevronRight className="ml-auto size-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                                                        <SidebarMenuButton
+                                                            tooltip={item.title}
+                                                            className={`h-11 px-3 rounded-lg transition-all duration-200 ${shouldBeOpen ? 'bg-white/5' : 'hover:bg-white/5'}`}
+                                                        >
+                                                            <Icon className={`size-4.5 ${isActive ? 'text-emerald-400' : 'text-white/70'}`} />
+                                                            <span className="font-semibold text-white/90 text-[13.5px]">{item.title}</span>
+                                                            <ChevronRight className="ml-auto size-3.5 text-white/30 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                                                         </SidebarMenuButton>
                                                     </CollapsibleTrigger>
-                                                    <CollapsibleContent className="animate-collapsible-down pl-4">
-                                                        <SidebarMenuSub className="border-l border-sidebar-border/50 ml-6 pl-4 mt-1 gap-1">
+                                                    <CollapsibleContent className="animate-collapsible-down">
+                                                        <SidebarMenuSub className="border-l border-white/10 ml-5 pl-2 mt-1 gap-1">
                                                             {item.items.map((subItem) => (
                                                                 <SidebarMenuSubItem key={subItem.title}>
                                                                     <SidebarMenuSubButton
                                                                         asChild
                                                                         isActive={pathname === subItem.url}
-                                                                        className="rounded-lg py-4"
+                                                                        className={`rounded-md h-9 px-3 transition-all duration-200 ${pathname === subItem.url ? 'bg-emerald-600/20 text-emerald-400 font-bold' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
                                                                     >
                                                                         <Link href={subItem.url}>
-                                                                            <span className="text-sm">{subItem.title}</span>
+                                                                            <span className="text-[13px]">{subItem.title}</span>
                                                                         </Link>
                                                                     </SidebarMenuSubButton>
                                                                 </SidebarMenuSubItem>
@@ -187,10 +188,15 @@ export function AppSidebar() {
 
                                     return (
                                         <SidebarMenuItem key={item.title}>
-                                            <SidebarMenuButton asChild isActive={isActive} tooltip={item.title} className="py-6 px-4 rounded-xl">
+                                            <SidebarMenuButton
+                                                asChild
+                                                isActive={isActive}
+                                                tooltip={item.title}
+                                                className={`h-11 px-3 rounded-lg transition-all duration-200 ${isActive ? 'bg-emerald-600/20 text-emerald-400 font-bold' : 'hover:bg-white/5 text-white/70 hover:text-white'}`}
+                                            >
                                                 <Link href={item.url}>
-                                                    <Icon className={`size-5 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
-                                                    <span className="font-medium">{item.title}</span>
+                                                    <Icon className="size-4.5" />
+                                                    <span className="text-[13.5px]">{item.title}</span>
                                                 </Link>
                                             </SidebarMenuButton>
                                         </SidebarMenuItem>
@@ -202,61 +208,61 @@ export function AppSidebar() {
                 ))}
             </SidebarContent>
 
-            <SidebarFooter className="p-4 border-t border-sidebar-border/50 bg-sidebar/50">
+            <SidebarFooter className="p-3 border-t border-white/5">
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <SidebarMenuButton
                                     size="lg"
-                                    className="data-[state=open]:bg-sidebar-accent rounded-xl"
+                                    className="data-[state=open]:bg-white/5 rounded-xl transition-all duration-200 p-2"
                                 >
-                                    <Avatar className="h-9 w-9 rounded-lg ring-1 ring-primary/20">
+                                    <Avatar className="h-9 w-9 rounded-lg border border-white/10 ring-2 ring-emerald-500/20">
                                         <AvatarImage src={user?.avatar} alt={user?.first_name} />
-                                        <AvatarFallback className="rounded-lg bg-primary/20 text-primary font-bold">
+                                        <AvatarFallback className="rounded-lg bg-emerald-500/20 text-emerald-400 font-black">
                                             {getInitials(user?.first_name, user?.last_name)}
                                         </AvatarFallback>
                                     </Avatar>
-                                    <div className="grid flex-1 text-left text-sm leading-tight ml-2">
-                                        <span className="truncate font-bold">
+                                    <div className="grid flex-1 text-left text-sm leading-tight ml-3 group-data-[collapsible=icon]:hidden">
+                                        <span className="truncate font-black text-white">
+                                            {isAdmin ? "Admin User" : "Staff Member"}
+                                        </span>
+                                        <span className="truncate text-[11px] text-white/50 font-medium">
                                             {user?.first_name} {user?.last_name}
                                         </span>
-                                        <span className="truncate text-[10px] uppercase text-muted-foreground">
-                                            {isAdmin ? "Administrator" : "Employee"}
-                                        </span>
                                     </div>
-                                    <ChevronRight className="ml-auto size-4" />
+                                    <ChevronRight className="ml-auto size-4 text-white/20" />
                                 </SidebarMenuButton>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent
-                                className="w-64 rounded-xl shadow-xl border-border/50 p-2"
+                                className="w-64 rounded-xl shadow-2xl border-white/10 p-2 bg-[#0a1f16] text-white"
                                 side="right"
                                 align="end"
                                 sideOffset={8}
                             >
                                 <DropdownMenuLabel className="px-3 py-4 font-normal">
                                     <div className="flex flex-col gap-1">
-                                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">Signed in as</p>
+                                        <p className="text-[10px] font-black text-emerald-500/70 uppercase tracking-widest mb-1">Session Identity</p>
                                         <p className="text-sm font-bold truncate">{user?.email}</p>
                                     </div>
                                 </DropdownMenuLabel>
-                                <DropdownMenuSeparator className="my-2" />
-                                <DropdownMenuItem className="cursor-pointer rounded-lg py-3" asChild>
+                                <DropdownMenuSeparator className="bg-white/5" />
+                                <DropdownMenuItem className="cursor-pointer rounded-lg py-3 focus:bg-white/5 focus:text-white" asChild>
                                     <Link href={isAdmin ? "/dashboard/admin/profile" : "/dashboard/employee/profile"}>
-                                        <User className="mr-3 h-4 w-4" />
+                                        <User className="mr-3 h-4 w-4 text-emerald-400" />
                                         Profile Overview
                                     </Link>
                                 </DropdownMenuItem>
                                 {isAdmin && (
-                                    <DropdownMenuItem className="cursor-pointer rounded-lg py-3" asChild>
+                                    <DropdownMenuItem className="cursor-pointer rounded-lg py-3 focus:bg-white/5 focus:text-white" asChild>
                                         <Link href="/settings/general">
-                                            <Settings className="mr-3 h-4 w-4" />
+                                            <Settings className="mr-3 h-4 w-4 text-emerald-400" />
                                             System Settings
                                         </Link>
                                     </DropdownMenuItem>
                                 )}
-                                <DropdownMenuSeparator className="my-2" />
-                                <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10 rounded-lg py-3" onClick={logout}>
+                                <DropdownMenuSeparator className="bg-white/5" />
+                                <DropdownMenuItem className="cursor-pointer text-red-400 focus:text-red-400 focus:bg-red-500/10 rounded-lg py-3" onClick={logout}>
                                     <LogOut className="mr-3 h-4 w-4" />
                                     Log Out Securely
                                 </DropdownMenuItem>
