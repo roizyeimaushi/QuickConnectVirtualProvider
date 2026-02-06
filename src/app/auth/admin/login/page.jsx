@@ -158,8 +158,9 @@ export default function AdminLoginPage() {
                 </div>
 
                 {/* Title */}
-                <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-white text-center mb-2 tracking-tight drop-shadow-lg md:whitespace-nowrap">
-                    Welcome to QuickConn Virtual
+                <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-white text-center mb-2 tracking-tight drop-shadow-lg flex flex-col md:block">
+                    <span className="block md:inline">Welcome to </span>
+                    <span className="text-[#22c55e]">QuickConn Virtual</span>
                 </h1>
                 <p className="text-white/80 text-sm font-medium text-center mb-10 drop-shadow-md">
                     Sign in to access your administrator account
