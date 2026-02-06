@@ -101,7 +101,7 @@ export function AppSidebar() {
     const logoUrl = getLogoUrl(settings?.system_logo);
 
     return (
-        <Sidebar collapsible={hideSidebar ? "offcanvas" : "icon"} className="border-r border-white/5 shadow-2xl transition-all duration-300">
+        <Sidebar collapsible={hideSidebar ? "offcanvas" : "icon"} className="shadow-2xl transition-all duration-300">
             <SidebarHeader className="p-5 pb-2">
                 <SidebarMenu>
                     <SidebarMenuItem>
@@ -111,7 +111,7 @@ export function AppSidebar() {
                                     <img
                                         src={logoUrl}
                                         alt="Logo"
-                                        className="h-7 w-auto object-contain filter brightness-0 invert"
+                                        className="h-8 w-auto object-contain"
                                         onError={(e) => {
                                             e.currentTarget.src = "/quickconnect-logo.png";
                                             e.currentTarget.onerror = null;
@@ -131,8 +131,8 @@ export function AppSidebar() {
 
             <SidebarContent className="px-3">
                 {navItems.map((group) => (
-                    <SidebarGroup key={group.label} className="mt-5 first:mt-2">
-                        <SidebarGroupLabel className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/30 px-3 mb-2">
+                    <SidebarGroup key={group.label} className="mt-6 first:mt-2">
+                        <SidebarGroupLabel className="text-[11px] font-bold text-white/30 px-3 mb-2">
                             {group.label}
                         </SidebarGroupLabel>
                         <SidebarGroupContent>
@@ -158,9 +158,9 @@ export function AppSidebar() {
                                                             tooltip={item.title}
                                                             className={`h-10 px-3 rounded-lg transition-all duration-150 ${shouldBeOpen ? 'bg-white/5' : 'hover:bg-white/5 group/btn'}`}
                                                         >
-                                                            <Icon className={`size-4 ${isActive ? 'text-emerald-400' : 'text-white/60 group-hover/btn:text-white'}`} />
-                                                            <span className="font-medium text-white/80 text-[13px]">{item.title}</span>
-                                                            <ChevronRight className="ml-auto size-3 text-white/20 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                                                            <Icon className={`size-4 ${isActive || isSubItemActive ? 'text-white' : 'text-white/60 group-hover/btn:text-white'}`} />
+                                                            <span className={`font-medium text-[13px] ${isActive || isSubItemActive ? 'text-white' : 'text-white/80'}`}>{item.title}</span>
+                                                            <ChevronRight className="ml-auto size-3.5 text-white/40 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                                                         </SidebarMenuButton>
                                                     </CollapsibleTrigger>
                                                     <CollapsibleContent className="animate-collapsible-down">
@@ -170,7 +170,7 @@ export function AppSidebar() {
                                                                     <SidebarMenuSubButton
                                                                         asChild
                                                                         isActive={pathname === subItem.url}
-                                                                        className={`rounded-md h-9 px-3 transition-all duration-150 ${pathname === subItem.url ? 'bg-emerald-500/10 text-emerald-400 font-bold' : 'text-white/50 hover:text-white hover:bg-white/5'}`}
+                                                                        className={`rounded-md h-9 px-3 transition-all duration-150 ${pathname === subItem.url ? 'bg-white/10 text-white font-bold' : 'text-white/50 hover:text-white hover:bg-white/5'}`}
                                                                     >
                                                                         <Link href={subItem.url}>
                                                                             <span className="text-[12.5px]">{subItem.title}</span>
@@ -191,10 +191,10 @@ export function AppSidebar() {
                                                 asChild
                                                 isActive={isActive}
                                                 tooltip={item.title}
-                                                className={`h-10 px-3 rounded-lg transition-all duration-150 ${isActive ? 'bg-emerald-500/15 text-emerald-400 font-bold' : 'hover:bg-white/5 text-white/60 hover:text-white group/btn'}`}
+                                                className={`h-10 px-3 rounded-lg transition-all duration-150 ${isActive ? 'bg-white/10 text-white font-bold' : 'hover:bg-white/5 text-white/60 hover:text-white group/btn'}`}
                                             >
                                                 <Link href={item.url}>
-                                                    <Icon className={`size-4 ${isActive ? 'text-emerald-400' : 'text-white/60 group-hover/btn:text-white'}`} />
+                                                    <Icon className={`size-4 ${isActive ? 'text-white' : 'text-white/60 group-hover/btn:text-white'}`} />
                                                     <span className="text-[13px] font-medium">{item.title}</span>
                                                 </Link>
                                             </SidebarMenuButton>
@@ -207,7 +207,7 @@ export function AppSidebar() {
                 ))}
             </SidebarContent>
 
-            <SidebarFooter className="p-3 border-t border-white/5 bg-black/10">
+            <SidebarFooter className="p-3 border-t border-white/5">
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <DropdownMenu>
