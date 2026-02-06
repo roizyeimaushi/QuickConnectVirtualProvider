@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/components/providers/auth-provider";
 import { attendanceApi, reportsApi, breakApi } from "@/lib/api";
 import { formatDate, formatTime24, getCurrentDate, getCurrentTime, isSameDay } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import {
     CheckCircle2,
     Clock,
@@ -180,6 +181,28 @@ function TodayStatusCard({ user, session, record, breakStatus, loading, constrai
 
         const Content = () => (
             <>
+                {/* Scanner corners for Time In/Out */}
+                {(variant === 'emerald' || variant === 'purple') && enabled && (
+                    <>
+                        <div className={cn(
+                            "absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 transition-all duration-500 group-hover:scale-110",
+                            variant === 'emerald' ? "border-emerald-500/50" : "border-purple-500/50"
+                        )} />
+                        <div className={cn(
+                            "absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 transition-all duration-500 group-hover:scale-110",
+                            variant === 'emerald' ? "border-emerald-500/50" : "border-purple-500/50"
+                        )} />
+                        <div className={cn(
+                            "absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 transition-all duration-500 group-hover:scale-110",
+                            variant === 'emerald' ? "border-emerald-500/50" : "border-purple-500/50"
+                        )} />
+                        <div className={cn(
+                            "absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 transition-all duration-500 group-hover:scale-110",
+                            variant === 'emerald' ? "border-emerald-500/50" : "border-purple-500/50"
+                        )} />
+                    </>
+                )}
+
                 <div className={`
                     h-14 w-14 rounded-full flex items-center justify-center mb-3 transition-transform duration-300 
                     ${enabled ? "bg-white shadow-sm group-hover:scale-110" : "bg-gray-200"}
