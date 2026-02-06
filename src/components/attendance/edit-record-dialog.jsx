@@ -47,7 +47,7 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
     useEffect(() => {
         if (record) {
             setFormData({
-                status: record.status || "pending",
+                status: record.status || "auto", // Default to auto if new record
                 time_in: record.time_in ? format(new Date(record.time_in), "yyyy-MM-dd'T'HH:mm") : "",
                 time_out: record.time_out ? format(new Date(record.time_out), "yyyy-MM-dd'T'HH:mm") : "",
                 break_start: record.break_start ? format(new Date(record.break_start), "yyyy-MM-dd'T'HH:mm") : "",
@@ -95,9 +95,9 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
 
         setTotals({ hours, overtime, autoStatus });
 
-        // Auto-update internal status if not locked to excused
-        if (formData.status !== 'excused' && formData.status !== 'absent') {
-            setFormData(prev => ({ ...prev, status: autoStatus }));
+        // ONLY update status if user has selected "auto"
+        if (formData.status === 'auto') {
+            setFormData(prev => ({ ...prev, status: 'auto' })); // Stay in auto mode
         }
     }, [formData.time_in, formData.time_out, formData.break_start, formData.break_end, formData.status, record]);
 
@@ -108,6 +108,7 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
             setLoading(true);
             const payload = {
                 ...formData,
+                status: formData.status === 'auto' ? totals.autoStatus : formData.status,
                 time_in: formData.time_in || null,
                 time_out: formData.time_out || null,
                 break_start: formData.break_start || null,
@@ -195,6 +196,7 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                                     <SelectValue placeholder="Select status" />
                                 </SelectTrigger>
                                 <SelectContent>
+                                    <SelectItem value="auto">System (Auto-Calculate)</SelectItem>
                                     <SelectItem value="present">Present</SelectItem>
                                     <SelectItem value="late">Late</SelectItem>
                                     <SelectItem value="absent">Absent</SelectItem>
@@ -205,7 +207,7 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                         </div>
                         <div className="grid gap-2">
                             <Label className="text-xs font-bold uppercase text-muted-foreground invisible">Placeholder</Label>
-                            <div className="flex items-center justify-end h-10 px-3 rounded-md border bg-slate-50 dark:bg-slate-900">
+                            <div className="flex items-center justify-start h-10 px-3 rounded-md border bg-slate-50 dark:bg-slate-900">
                                 <span className="text-xs font-bold text-muted-foreground mr-2">Calculated:</span>
                                 <Badge variant="outline" className={`capitalize text-[10px] ${totals.autoStatus === 'present' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                                     totals.autoStatus === 'late' ? 'bg-amber-50 text-amber-700 border-amber-200' :
