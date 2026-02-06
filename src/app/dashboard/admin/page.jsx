@@ -321,14 +321,14 @@ function ActiveSessionCard({ session, loading }) {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 py-2 border-y border-dashed">
-                    <div>
+                    <div className="whitespace-nowrap">
                         <p className="text-xs text-muted-foreground uppercase tracking-wider">Assigned</p>
                         <p className="text-lg font-bold text-emerald-600">{session.total_count} employees</p>
                     </div>
-                    <div>
+                    <div className="whitespace-nowrap">
                         <p className="text-xs text-muted-foreground uppercase tracking-wider">Confirmed</p>
                         <p className="text-lg font-bold">
-                            {session.confirmed_count} / {session.total_count}
+                            {session.confirmed_count}/{session.total_count}
                         </p>
                     </div>
                 </div>

@@ -418,7 +418,7 @@ export default function SessionDetailsPage() {
                                     <div className="flex items-center gap-2 text-sm">
                                         <CheckCircle2 className="h-4 w-4 text-primary" />
                                         <span className="font-semibold">
-                                            {session.records?.filter(r => r.time_in).length || 0} / {session.total_employees_count || session.records?.length || 0}
+                                            {session.records?.filter(r => r.time_in).length || 0}/{session.total_employees_count || session.records?.length || 0}
                                         </span>
                                     </div>
                                 </div>

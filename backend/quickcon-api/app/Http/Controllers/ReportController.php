@@ -110,6 +110,13 @@ class ReportController extends Controller
                 ];
             });
 
+            if ($todaySession) {
+                $todaySession->confirmed_count = AttendanceRecord::where('session_id', $todaySession->id)
+                    ->whereNotNull('time_in')
+                    ->count();
+                $todaySession->total_count = AttendanceRecord::where('session_id', $todaySession->id)->count();
+            }
+
             $attendanceRate = $totalEmployees > 0 
                 ? round(($presentToday / $totalEmployees) * 100, 1)
                 : 0;

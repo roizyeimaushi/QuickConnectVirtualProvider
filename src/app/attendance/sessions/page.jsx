@@ -262,7 +262,7 @@ export default function AttendanceSessionsPage() {
                             <div className="flex items-center gap-6">
                                 <div className="text-center px-4">
                                     <p className="text-3xl font-bold text-emerald-600">
-                                        {activeSession.confirmed_count} / {activeSession.total_employees}
+                                        {activeSession.confirmed_count}/{activeSession.total_employees}
                                     </p>
                                     <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Attendance</p>
                                 </div>
