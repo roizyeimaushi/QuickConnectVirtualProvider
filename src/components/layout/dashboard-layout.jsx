@@ -101,6 +101,97 @@ export function AppSidebar() {
 
     const logoUrl = getLogoUrl(settings?.system_logo);
 
+    const { state } = useSidebar();
+    const isCollapsed = state === "collapsed";
+
+    const userProfileButton = (
+        <SidebarMenuButton
+            size="lg"
+            className="data-[state=open]:bg-white/5 rounded-lg transition-all p-2 h-12"
+        >
+            <Avatar className="h-8 w-8 rounded-full border border-white/10 shrink-0">
+                <AvatarImage src={user?.avatar} alt={user?.first_name} />
+                <AvatarFallback className="rounded-full bg-white/10 text-white text-xs font-bold">
+                    {loading ? "?" : getInitials(user?.first_name, user?.last_name)}
+                </AvatarFallback>
+            </Avatar>
+            <div className="grid flex-1 text-left text-sm leading-tight ml-2.5 group-data-[collapsible=icon]:hidden overflow-hidden">
+                {loading ? (
+                    <>
+                        <Skeleton className="h-3 w-20 mb-1.5 bg-white/10" />
+                        <Skeleton className="h-2 w-24 bg-white/5" />
+                    </>
+                ) : (
+                    <>
+                        <span className="truncate font-bold text-white text-[13px]">
+                            {isAdmin ? "Admin User" : "Staff Member"}
+                        </span>
+                        <span className="truncate text-[11px] text-white/40 font-medium">
+                            {user?.first_name} {user?.last_name}
+                        </span>
+                    </>
+                )}
+            </div>
+            <ChevronRight className="ml-auto size-3.5 text-white/20 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 group-data-[collapsible=icon]:hidden shrink-0" />
+        </SidebarMenuButton>
+    );
+
+    const ProfileMenuItems = ({ isCollapsible = false }) => (
+        <div className={isCollapsible ? "space-y-1 mb-2" : "space-y-1"}>
+            {!isCollapsible && (
+                <>
+                    <DropdownMenuLabel className="px-3 py-3 font-normal text-white/90">
+                        <div className="flex items-center gap-3 mb-2">
+                            <Avatar className="h-10 w-10 rounded-full border border-emerald-500/20 shadow-lg shrink-0">
+                                <AvatarImage src={user?.avatar} alt={user?.first_name} />
+                                <AvatarFallback className="rounded-full bg-emerald-950 text-emerald-400 text-sm font-bold">
+                                    {getInitials(user?.first_name, user?.last_name)}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div className="flex flex-col min-w-0">
+                                <span className="text-sm font-bold text-white truncate">
+                                    {user?.first_name} {user?.last_name}
+                                </span>
+                                <span className="text-[10px] text-emerald-500/70 font-bold uppercase tracking-widest">
+                                    {isAdmin ? "Administrator" : "Staff Member"}
+                                </span>
+                            </div>
+                        </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-white/5" />
+                </>
+            )}
+
+            <Link
+                href={isAdmin ? "/dashboard/admin/profile" : "/dashboard/employee/profile"}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${isCollapsible ? 'hover:bg-white/5 text-white/60 hover:text-white' : 'hover:bg-white/5 text-white/70 focus:bg-white/5 focus:text-white'}`}
+            >
+                <User className="h-4 w-4 text-emerald-500 shrink-0" />
+                <span className="text-[13px] font-medium">Profile Overview</span>
+            </Link>
+
+            {isAdmin && (
+                <Link
+                    href="/settings/general"
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${isCollapsible ? 'hover:bg-white/5 text-white/60 hover:text-white' : 'hover:bg-white/5 text-white/70 focus:bg-white/5 focus:text-white'}`}
+                >
+                    <Settings className="h-4 w-4 text-emerald-500 shrink-0" />
+                    <span className="text-[13px] font-medium">System Settings</span>
+                </Link>
+            )}
+
+            {isCollapsible && <div className="h-px bg-white/5 my-1 mx-2" />}
+
+            <button
+                onClick={logout}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all w-full text-left ${isCollapsible ? 'hover:bg-red-500/10 text-red-400/80 hover:text-red-400' : 'hover:bg-red-500/10 text-red-400 focus:bg-red-500/10 focus:text-red-400'}`}
+            >
+                <LogOut className="h-4 w-4 shrink-0" />
+                <span className="text-[13px] font-bold">Log Out Securely</span>
+            </button>
+        </div>
+    );
+
     return (
         <Sidebar collapsible="icon" className="border-r border-white/5">
             <SidebarHeader className="p-4">
@@ -130,7 +221,7 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            <SidebarContent className="px-2">
+            <SidebarContent className="px-2 scrollbar-hidden">
                 {navItems.map((group) => (
                     <SidebarGroup key={group.label} className="mt-4">
                         <SidebarGroupLabel className="text-[12px] font-medium text-white/60 px-4 mb-2 group-data-[collapsible=icon]:hidden">
@@ -210,104 +301,31 @@ export function AppSidebar() {
 
             <SidebarFooter className="p-3 border-t border-white/5">
                 <SidebarMenu>
-                    <SidebarMenuItem>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <SidebarMenuButton
-                                    size="lg"
-                                    className="data-[state=open]:bg-white/5 rounded-lg transition-all p-2 h-12"
+                    <SidebarMenuItem className="group/collapsible">
+                        {isCollapsed ? (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    {userProfileButton}
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                    className="w-64 rounded-xl shadow-2xl border-white/10 p-2 bg-[#0a1f16] text-white"
+                                    side="right"
+                                    align="end"
+                                    sideOffset={8}
                                 >
-                                    <Avatar className="h-8 w-8 rounded-full border border-white/10 shrink-0">
-                                        <AvatarImage src={user?.avatar} alt={user?.first_name} />
-                                        <AvatarFallback className="rounded-full bg-white/10 text-white text-xs font-bold">
-                                            {loading ? "?" : getInitials(user?.first_name, user?.last_name)}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <div className="grid flex-1 text-left text-sm leading-tight ml-2.5 group-data-[collapsible=icon]:hidden overflow-hidden">
-                                        {loading ? (
-                                            <>
-                                                <Skeleton className="h-3 w-20 mb-1.5 bg-white/10" />
-                                                <Skeleton className="h-2 w-24 bg-white/5" />
-                                            </>
-                                        ) : (
-                                            <>
-                                                <span className="truncate font-bold text-white text-[13px]">
-                                                    {isAdmin ? "Admin User" : "Staff Member"}
-                                                </span>
-                                                <span className="truncate text-[11px] text-white/40 font-medium">
-                                                    {user?.first_name} {user?.last_name}
-                                                </span>
-                                            </>
-                                        )}
-                                    </div>
-                                    <ChevronRight className="ml-auto size-3.5 text-white/20 group-data-[collapsible=icon]:hidden shrink-0" />
-                                </SidebarMenuButton>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                                className="w-64 rounded-xl shadow-2xl border-white/10 p-2 bg-[#0a1f16] text-white"
-                                side="right"
-                                align="end"
-                                sideOffset={8}
-                            >
-                                <DropdownMenuLabel className="px-3 py-3 font-normal text-white/90">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <Avatar className="h-10 w-10 rounded-full border border-emerald-500/20 shadow-lg shrink-0">
-                                            <AvatarImage src={user?.avatar} alt={user?.first_name} />
-                                            <AvatarFallback className="rounded-full bg-emerald-950 text-emerald-400 text-sm font-bold">
-                                                {getInitials(user?.first_name, user?.last_name)}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <div className="flex flex-col min-w-0">
-                                            <span className="text-sm font-bold text-white truncate">
-                                                {user?.first_name} {user?.last_name}
-                                            </span>
-                                            <span className="text-[10px] text-emerald-500/70 font-bold uppercase tracking-widest">
-                                                {isAdmin ? "Administrator" : "Staff Member"}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="bg-white/5 rounded-lg p-2 border border-white/5 mt-2">
-                                        <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest mb-0.5">Contact</p>
-                                        <p className="text-[11px] font-medium text-white/60 truncate">{user?.email}</p>
-                                    </div>
-                                </DropdownMenuLabel>
-                                <DropdownMenuSeparator className="bg-white/5" />
-                                <DropdownMenuItem
-                                    className="cursor-pointer rounded-lg py-3 focus:bg-white/5 focus:text-white text-white/70 hover:bg-white/5"
-                                    asChild
-                                >
-                                    <Link href={isAdmin ? "/dashboard/admin/profile" : "/dashboard/employee/profile"}>
-                                        <User className="mr-3 h-4 w-4 text-emerald-500" />
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-semibold">Profile Overview</span>
-                                            <span className="text-[10px] text-white/30">View your details</span>
-                                        </div>
-                                    </Link>
-                                </DropdownMenuItem>
-                                {isAdmin && (
-                                    <DropdownMenuItem
-                                        className="cursor-pointer rounded-lg py-3 focus:bg-white/5 focus:text-white text-white/70 hover:bg-white/5"
-                                        asChild
-                                    >
-                                        <Link href="/settings/general">
-                                            <Settings className="mr-3 h-4 w-4 text-emerald-500" />
-                                            <div className="flex flex-col">
-                                                <span className="text-sm font-semibold">System Settings</span>
-                                                <span className="text-[10px] text-white/30">Admin preferences</span>
-                                            </div>
-                                        </Link>
-                                    </DropdownMenuItem>
-                                )}
-                                <DropdownMenuSeparator className="bg-white/5" />
-                                <DropdownMenuItem
-                                    className="cursor-pointer text-red-400 focus:text-red-400 focus:bg-red-500/10 rounded-lg py-3 mt-1"
-                                    onClick={logout}
-                                >
-                                    <LogOut className="mr-3 h-4 w-4" />
-                                    <span className="text-sm font-bold">Log Out Securely</span>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                                    <ProfileMenuItems />
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        ) : (
+                            <Collapsible>
+                                <CollapsibleTrigger asChild>
+                                    {userProfileButton}
+                                </CollapsibleTrigger>
+                                <CollapsibleContent className="animate-collapsible-down px-1 pt-1 mt-1 border-t border-white/5">
+                                    <ProfileMenuItems isCollapsible />
+                                </CollapsibleContent>
+                            </Collapsible>
+                        )}
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarFooter>
