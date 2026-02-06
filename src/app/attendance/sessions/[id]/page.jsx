@@ -615,11 +615,16 @@ export default function SessionDetailsPage() {
                                                                         </Badge>
                                                                     ) : null}
                                                                     <span className={`font-mono text-xs ${isOnBreak ? 'font-bold text-amber-700' : ''}`}>
-                                                                        {(totalMinutes > 0 || isOnBreak) ? '1h 30m' : '-'}
+                                                                        {record.break_start && record.break_end
+                                                                            ? `${formatTime24(record.break_start)} - ${formatTime24(record.break_end)}`
+                                                                            : isOnBreak
+                                                                                ? `${formatTime24(record.break_start)} - ...`
+                                                                                : '-'
+                                                                        }
                                                                     </span>
                                                                     {(totalMinutes > 0 || isOnBreak) && (
-                                                                        <span className="text-[10px] text-muted-foreground mt-0.5 opacity-70">
-                                                                            {record.break_start ? formatTime24(record.break_start) : ''} - {record.break_end ? formatTime24(record.break_end) : '...'}
+                                                                        <span className="text-[10px] text-muted-foreground mt-0.5 font-bold">
+                                                                            ({totalMinutes > 0 ? totalMinutes : '0'}m)
                                                                         </span>
                                                                     )}
                                                                 </div>

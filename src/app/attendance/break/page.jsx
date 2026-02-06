@@ -63,7 +63,7 @@ export default function BreakPage() {
     }, []);
 
     // Calculate Time Used
-    const maxSeconds = 90 * 60; // 90 minutes
+    const maxSeconds = (breakStatus?.break_window?.max_minutes || 90) * 60;
     const remaining = breakStatus?.break_remaining_seconds || 0;
     const usedSeconds = Math.max(0, maxSeconds - remaining);
 
@@ -245,19 +245,19 @@ export default function BreakPage() {
                             </div>
                         ) : (
                             <div className="space-y-4">
-                                {/* Fixed Break Card */}
+                                {/* Break Card */}
                                 <BreakTypeCard
-                                    type="Fixed"
-                                    label="Fixed Break"
-                                    duration="1 hour 30 minutes"
+                                    type="Regular"
+                                    label="Start Break"
+                                    duration={`${breakStatus?.break_window?.max_minutes || 90} minutes`}
                                     icon={<Timer className="h-6 w-6" />}
-                                    isUsed={false} // Allow starting if not currently on break, backend handles limits
+                                    isUsed={false}
                                     isActive={isOnBreak}
                                     isDisabled={!canStartBreak || !!submittingType}
                                     timeLeft={timeLeft}
-                                    onStart={() => handleStartBreak('Fixed')}
+                                    onStart={() => handleStartBreak('Regular')}
                                     onEnd={handleEndBreak}
-                                    isLoading={submittingType === 'Fixed' || submittingType === 'End'}
+                                    isLoading={submittingType === 'Regular' || submittingType === 'End'}
                                 />
 
                                 {breakMessage && !isOnBreak && (

@@ -850,7 +850,7 @@ class AttendanceRecordController extends Controller
         
         // Calculate Total Break Duration from EmployeeBreak table (Single Source of Truth)
         // This ensures multiple breaks and admin-edited breaks are accounted for.
-        $totalBreakMinutes = 90;
+        $totalBreakMinutes = $attendanceRecord->breaks()->sum('duration_minutes') ?: 0;
 
         $netMinutes = max(0, $grossMinutes - $totalBreakMinutes);
         $hoursWorked = round($netMinutes / 60, 2);

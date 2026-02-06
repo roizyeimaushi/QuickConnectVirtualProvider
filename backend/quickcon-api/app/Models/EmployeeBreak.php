@@ -133,7 +133,7 @@ class EmployeeBreak extends Model
             ->where('id', '!=', $this->id) 
             ->sum('duration_minutes');
             
-        $globalLimit = 90;
+        $globalLimit = (int)(\App\Models\Setting::where('key', 'break_duration')->value('value') ?? 90);
         $globalRemaining = max(0, $globalLimit - $totalUsedMinutes);
         
         $limitSeconds = $globalRemaining * 60;
@@ -174,7 +174,7 @@ class EmployeeBreak extends Model
                 ->where('id', '!=', $this->id)
                 ->sum('duration_minutes');
                 
-            $globalLimit = 90;
+            $globalLimit = (int)(\App\Models\Setting::where('key', 'break_duration')->value('value') ?? 90);
             $globalRemaining = max(0, $globalLimit - $previouslyUsedMinutes);
             $finalDuration = $globalRemaining;
         }

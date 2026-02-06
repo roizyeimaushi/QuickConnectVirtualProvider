@@ -85,7 +85,7 @@ class BreakController extends Controller
         // DYNAMIC SCHEDULE LOGIC - Read from Settings
         $startTime = \App\Models\Setting::where('key', 'break_start_window')->value('value') ?? '00:00:00';
         $endTime = \App\Models\Setting::where('key', 'break_end_window')->value('value') ?? '23:59:59';
-        $maxMinutes = (int)(\App\Models\Setting::where('key', 'break_duration')->value('value') ?? 60);
+        $maxMinutes = (int)(\App\Models\Setting::where('key', 'break_duration')->value('value') ?? 90);
 
         // Ensure 24-hour format logic for comparison if needed, but for display we send raw or formatted
         $startFormatted = Carbon::parse($startTime)->format('H:i');
@@ -235,9 +235,9 @@ class BreakController extends Controller
         $today = Carbon::today()->toDateString();
         $currentTime = $this->getCurrentTime();
 
-        // Default to 'Fixed' type for the new 1.5h policy
-        $type = $request->input('type', 'Fixed');
-        $segmentLimit = 90; // Fixed 1.5 hours (1 hour 30 minutes)
+        // Default to 'Regular' type
+        $type = $request->input('type', 'Regular');
+        $segmentLimit = (int)(\App\Models\Setting::where('key', 'break_duration')->value('value') ?? 90);
 
         // ============================================================
         // STEP 1: Verify Attendance (Anchor to ACTIVE Session)
