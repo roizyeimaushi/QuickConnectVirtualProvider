@@ -141,7 +141,6 @@ export function getNavigationItems(user) {
                     icon: "ClipboardCheck",
                     items: [
                         { title: "Attendance History", url: "/attendance/history" },
-                        { title: "Break History", url: "/attendance/break-history" },
                     ]
                 },
             ]
@@ -191,16 +190,8 @@ export function getNavigationItems(user) {
                             url: "/attendance/check-out",
                         },
                         {
-                            title: "Break Time",
-                            url: "/attendance/break",
-                        },
-                        {
                             title: "Attendance History",
                             url: "/attendance/history",
-                        },
-                        {
-                            title: "Break History",
-                            url: "/attendance/break-history",
                         },
                     ]
                 },

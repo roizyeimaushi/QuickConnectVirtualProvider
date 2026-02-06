@@ -419,14 +419,6 @@ export default function SessionDetailsPage() {
                                         </div>
                                     </div>
                                 </div>
-
-                                <div className="md:col-span-2 space-y-2">
-                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Reason / Incident Report</p>
-                                    <div className={`p-4 rounded-lg border text-sm italic leading-relaxed shadow-inner ${session.session_type === 'Emergency' ? 'bg-white border-amber-200 text-amber-900' : 'bg-slate-50/50 border-slate-200 text-slate-700'
-                                        }`}>
-                                        "{session.completion_reason || (session.status === 'locked' ? "Closure protocol activated without specific incident notes." : "Current session is active or completed. Admin has not yet authorized the final attendance lock or provided the decision context.")}"
-                                    </div>
-                                </div>
                             </div>
                         </CardContent>
                     </Card>
@@ -554,7 +546,6 @@ export default function SessionDetailsPage() {
                                                 <TableHead className="text-center">Break</TableHead>
                                                 <TableHead className="text-center">Time Out</TableHead>
                                                 <TableHead className="text-center">Status</TableHead>
-                                                <TableHead className="text-center">Reason</TableHead>
                                                 <TableHead className="text-center">Device & Location</TableHead>
                                                 <TableHead className="text-right">Actions</TableHead>
                                             </TableRow>
@@ -645,11 +636,7 @@ export default function SessionDetailsPage() {
                                                             {record.user?.status === 'inactive' ? 'inactive' : (statusConfig[record.status]?.label || record.status)}
                                                         </Badge>
                                                     </TableCell>
-                                                    <TableCell className="text-center">
-                                                        <span className="text-xs text-muted-foreground italic">
-                                                            {record.excuse_reason || (record.status === 'late' ? 'Late Arrival' : record.status === 'absent' ? 'Unaccounted' : '-')}
-                                                        </span>
-                                                    </TableCell>
+
                                                     <TableCell className="text-center text-xs text-muted-foreground">
                                                         {record.user?.status === 'inactive' ? (
                                                             <span className="italic text-red-500">Account inactive</span>

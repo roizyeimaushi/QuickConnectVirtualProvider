@@ -102,15 +102,6 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!formData.reason || formData.reason.length < 5) {
-            toast({
-                title: "Validation Error",
-                description: "A reason is required (min 5 chars) for audit logging.",
-                variant: "destructive",
-            });
-            return;
-        }
-
         try {
             setLoading(true);
             const payload = {
@@ -177,9 +168,9 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                         <div className="text-right">
                             <p className="text-[10px] font-bold text-muted-foreground uppercase">Current Status</p>
                             <Badge variant="outline" className={`capitalize ${totals.autoStatus === 'present' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                                    totals.autoStatus === 'late' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                                        totals.autoStatus === 'absent' ? 'bg-red-50 text-red-700 border-red-200' :
-                                            'bg-blue-50 text-blue-700 border-blue-200'
+                                totals.autoStatus === 'late' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                    totals.autoStatus === 'absent' ? 'bg-red-50 text-red-700 border-red-200' :
+                                        'bg-blue-50 text-blue-700 border-blue-200'
                                 }`}>
                                 {totals.autoStatus}
                             </Badge>
@@ -261,30 +252,6 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                                     <SelectItem value="System error">System Error / Glitch</SelectItem>
                                 </SelectContent>
                             </Select>
-                        </div>
-
-                        {formData.status === 'excused' && (
-                            <div className="grid gap-2 animate-in fade-in slide-in-from-top-2">
-                                <Label htmlFor="excuse_reason">Excuse Reason</Label>
-                                <Input
-                                    id="excuse_reason"
-                                    placeholder="e.g. Severe Rainfall, Medical Leave..."
-                                    value={formData.excuse_reason}
-                                    onChange={(e) => setFormData({ ...formData, excuse_reason: e.target.value })}
-                                />
-                            </div>
-                        )}
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="reason">Reason for Correction <span className="text-red-500">*</span></Label>
-                            <Textarea
-                                id="reason"
-                                className="min-h-[100px] resize-none"
-                                placeholder="Provide a detailed explanation for the audit trail..."
-                                value={formData.reason}
-                                onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-                                required
-                            />
                         </div>
                     </div>
 

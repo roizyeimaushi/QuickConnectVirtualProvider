@@ -239,7 +239,6 @@ class AttendanceSessionController extends Controller
         $validated = $request->validate([
             'attendance_required' => 'nullable|boolean',
             'session_type' => 'nullable|string|in:Normal,Emergency,Holiday,Maintenance',
-            'completion_reason' => 'nullable|string|max:255',
         ]);
 
         $oldStatus = $attendanceSession->status;
@@ -247,7 +246,6 @@ class AttendanceSessionController extends Controller
             'status' => 'locked',
             'attendance_required' => $validated['attendance_required'] ?? $attendanceSession->attendance_required,
             'session_type' => $validated['session_type'] ?? $attendanceSession->session_type,
-            'completion_reason' => $validated['completion_reason'] ?? $attendanceSession->completion_reason,
             'locked_at' => now(),
             'locked_by' => auth()->id(),
         ]);
@@ -265,7 +263,7 @@ class AttendanceSessionController extends Controller
 
         // 3. Finalize Employee Statuses
         $finalStatus = $attendanceSession->attendance_required ? 'absent' : 'excused';
-        $reason = $attendanceSession->completion_reason ?: ($attendanceSession->session_type . " Finalization");
+        $reason = $attendanceSession->session_type . " Finalization";
 
         // Use a loop to ensure audit logs/events are triggered if necessary, 
         // but for performance, bulk update is better for large teams.

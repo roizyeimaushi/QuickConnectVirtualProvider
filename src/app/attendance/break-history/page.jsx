@@ -215,7 +215,6 @@ export default function BreakHistoryPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Break Sessions</CardTitle>
-                        <CardDescription>Individual break records</CardDescription>
                     </CardHeader>
                     <CardContent>
                         {loading ? null : groupedRecords.length === 0 ? (
@@ -429,17 +428,6 @@ export default function BreakHistoryPage() {
                     </CardContent>
                 </Card>
 
-                {/* Night Shift Info Note */}
-                <div className="text-xs text-muted-foreground bg-muted/30 rounded-lg p-4 border flex items-start gap-3 mt-6">
-                    <History className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                    <div>
-                        <p className="font-semibold text-foreground">Night Shift & Break Tracking</p>
-                        <p>
-                            Break records are anchored to the <strong>Shift Date</strong> (the day the work shift started).
-                            Even if a break occurs after midnight, it will be listed under the original shift date to maintain reporting consistency.
-                        </p>
-                    </div>
-                </div>
             </div>
             <EditBreakDialog
                 record={editingRecord}

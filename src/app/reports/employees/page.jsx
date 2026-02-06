@@ -67,7 +67,6 @@ export default function EmployeeReportsPage() {
         return fullName.includes(query) ||
             (emp.employee_id && emp.employee_id.toLowerCase().includes(query)) ||
             (emp.position && emp.position.toLowerCase().includes(query)) ||
-            (emp.department && emp.department.toLowerCase().includes(query)) ||
             (emp.employee_type && emp.employee_type.toLowerCase().includes(query));
     });
 
@@ -89,7 +88,7 @@ export default function EmployeeReportsPage() {
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
-                            placeholder="Search by name, ID, position, or department..."
+                            placeholder="Search by name, ID, or position..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             className="pl-9"
@@ -144,12 +143,12 @@ export default function EmployeeReportsPage() {
                                             <Briefcase className="h-4 w-4" />
                                             {employee.position || "No position"}
                                         </div>
-                                        {employee.department && (
+                                        {employee.employee_type && (
                                             <div className="flex items-center gap-2">
                                                 <div className="w-4 h-4 rounded-full bg-primary/10 flex items-center justify-center">
-                                                    <span className="text-[10px] font-bold text-primary">D</span>
+                                                    <span className="text-[10px] font-bold text-primary">T</span>
                                                 </div>
-                                                {employee.department} • {employee.employee_type || "Full-time"}
+                                                {employee.employee_type}
                                             </div>
                                         )}
                                     </div>

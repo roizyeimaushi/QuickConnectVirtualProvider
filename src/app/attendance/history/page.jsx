@@ -269,7 +269,6 @@ export default function AttendanceHistoryPage() {
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                             <div>
                                 <CardTitle>Attendance Records</CardTitle>
-                                <CardDescription>Your detailed attendance log</CardDescription>
                             </div>
                             <div className="flex flex-col sm:flex-row flex-wrap items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
                                 <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -598,18 +597,6 @@ export default function AttendanceHistoryPage() {
                     </CardContent>
                 </Card>
 
-                {/* Night Shift Info Note */}
-                <div className="text-xs text-muted-foreground bg-muted/30 rounded-lg p-4 border flex items-start gap-3">
-                    <History className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                    <div>
-                        <p className="font-semibold text-foreground">Night Shift & Date Accuracy</p>
-                        <p>
-                            Attendance records are anchored to the <strong>Shift Start Date</strong>.
-                            For night shifts (e.g., 10:00 PM to 6:00 AM), the "Time Out" and "Hours Worked"
-                            correctly account for time crossing over into the next calendar day.
-                        </p>
-                    </div>
-                </div>
 
                 {editingRecord && (
                     <EditRecordDialog

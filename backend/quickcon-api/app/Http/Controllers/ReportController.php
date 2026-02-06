@@ -779,13 +779,7 @@ class ReportController extends Controller
                     }
                     
                     // Subtract break time
-                    $breakMinutes = 0;
-                    if ($record->breaks()->exists()) {
-                        $breakMinutes = $record->breaks()->sum('duration_minutes');
-                    } elseif ($record->break_start && $record->break_end) {
-                        $breakMinutes = $record->break_start->diffInMinutes($record->break_end, false);
-                        if ($breakMinutes < 0) $breakMinutes += 1440;
-                    }
+                    $breakMinutes = 90;
                     
                     $totalMinutes -= $breakMinutes;
                     
@@ -953,7 +947,11 @@ class ReportController extends Controller
 
     public function employeeReport($employeeId, Request $request)
     {
-        $employee = User::withTrashed()->where('employee_id', $employeeId)->firstOrFail();
+        // Support both numeric database ID and string employee_id
+        $employee = User::withTrashed()
+            ->where('employee_id', $employeeId)
+            ->orWhere('id', is_numeric($employeeId) ? $employeeId : -1)
+            ->firstOrFail();
 
         $baseQuery = AttendanceRecord::where('user_id', $employee->id);
 
@@ -1002,11 +1000,7 @@ class ReportController extends Controller
                 $diff = $timeIn->diffInMinutes($timeOut, false);
                 if ($diff < 0) $diff += 1440;
                 
-                $breakMins = $record->breaks()->sum('duration_minutes');
-                if ($breakMins == 0 && $record->break_start && $record->break_end) {
-                    $bDiff = $record->break_start->diffInMinutes($record->break_end, false);
-                    $breakMins = $bDiff < 0 ? $bDiff + 1440 : $bDiff;
-                }
+                $breakMins = 90;
                 
                 $net = max(0, $diff - $breakMins);
                 $record->hours_worked = round($net / 60, 2);

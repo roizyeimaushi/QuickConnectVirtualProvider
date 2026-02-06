@@ -144,18 +144,7 @@ export function LockSessionDialog({ session, open, onOpenChange, onConfirm }) {
                             />
                         </div>
 
-                        {/* Reason / Notes */}
-                        <div className="grid gap-2">
-                            <Label htmlFor="completion_reason">
-                                {formData.session_type === 'Normal' ? 'Completion Notes' : 'Specific Reason / Details'}
-                            </Label>
-                            <Input
-                                id="completion_reason"
-                                placeholder={formData.session_type === 'Emergency' ? 'e.g. Signal No. 3 - All work suspended' : 'Optional details...'}
-                                value={formData.completion_reason}
-                                onChange={(e) => setFormData({ ...formData, completion_reason: e.target.value })}
-                            />
-                        </div>
+
 
                         {/* Summary/Recommendation */}
                         {!formData.attendance_required && formData.session_type !== 'Normal' && (

@@ -331,7 +331,7 @@ export default function EmployeesPage() {
                                                     <DropdownMenuContent align="end">
                                                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                                         <DropdownMenuItem
-                                                            onClick={() => router.push(`/reports/employees/${employee.id}`)}
+                                                            onClick={() => router.push(`/reports/employees/${employee.employee_id}`)}
                                                         >
                                                             <Eye className="mr-2 h-4 w-4" />
                                                             View Profile
@@ -389,10 +389,6 @@ export default function EmployeesPage() {
                                                     </Badge>
                                                 </div>
                                                 <div className="bg-muted/50 rounded p-2 text-left">
-                                                    <p className="text-xs text-muted-foreground">Department</p>
-                                                    <p className="font-medium truncate">{employee.department || "—"}</p>
-                                                </div>
-                                                <div className="bg-muted/50 rounded p-2 text-left">
                                                     <p className="text-xs text-muted-foreground">Type</p>
                                                     <p className="font-medium">{employee.employee_type || "—"}</p>
                                                 </div>
@@ -430,7 +426,7 @@ export default function EmployeesPage() {
                                                 <TableHead className="text-center">Employee ID</TableHead>
                                                 <TableHead className="text-center">Position</TableHead>
                                                 <TableHead className="text-center">Status</TableHead>
-                                                <TableHead className="text-center">Dept / Type</TableHead>
+                                                <TableHead className="text-center">Type</TableHead>
                                                 <TableHead className="text-center">Last Attendance</TableHead>
                                                 <TableHead className="w-[70px] text-center">Actions</TableHead>
                                             </TableRow>
@@ -475,10 +471,7 @@ export default function EmployeesPage() {
                                                         </Badge>
                                                     </TableCell>
                                                     <TableCell className="text-center">
-                                                        <div className="flex flex-col items-center">
-                                                            <span className="text-sm font-medium">{employee.department || "—"}</span>
-                                                            <span className="text-xs text-muted-foreground">{employee.employee_type || "—"}</span>
-                                                        </div>
+                                                        <span className="text-sm font-medium">{employee.employee_type || "—"}</span>
                                                     </TableCell>
                                                     <TableCell className="text-center">
                                                         {employee.last_attendance_date ? (
@@ -506,7 +499,7 @@ export default function EmployeesPage() {
                                                             <DropdownMenuContent align="end" className="w-[180px]">
                                                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                                                 <DropdownMenuItem
-                                                                    onClick={() => router.push(`/reports/employees/${employee.id}`)}
+                                                                    onClick={() => router.push(`/reports/employees/${employee.employee_id}`)}
                                                                 >
                                                                     <Eye className="mr-2 h-4 w-4" />
                                                                     View Profile

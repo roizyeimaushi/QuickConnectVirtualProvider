@@ -72,7 +72,6 @@ class EmployeeController extends Controller
             'email' => 'required|email|unique:users,email',
             'password' => $passwordRules,
             'position' => 'required|string|max:100',
-            'department' => 'nullable|string|max:100',
             'employee_type' => 'nullable|string|max:100',
         ], [
             'password.regex' => 'Password must contain at least one special character (!@#$%^&*(),.?":{}|<>).',
@@ -111,7 +110,6 @@ class EmployeeController extends Controller
             'last_name' => 'string|max:100',
             'email' => 'email|unique:users,email,' . $employee->id,
             'position' => 'string|max:100',
-            'department' => 'nullable|string|max:100',
             'employee_type' => 'nullable|string|max:100',
             'status' => 'in:active,inactive',
             'password' => 'nullable|string|min:6',

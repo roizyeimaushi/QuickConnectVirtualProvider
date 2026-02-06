@@ -616,11 +616,7 @@ class AttendanceRecordController extends Controller
                 $diff = $timeIn->diffInMinutes($timeOut, false);
                 if ($diff < 0) $diff += 1440;
                 
-                $breakMins = $record->breaks()->sum('duration_minutes');
-                if ($breakMins == 0 && $record->break_start && $record->break_end) {
-                    $bDiff = Carbon::parse($record->break_start)->diffInMinutes(Carbon::parse($record->break_end), false);
-                    $breakMins = $bDiff < 0 ? $bDiff + 1440 : $bDiff;
-                }
+                $breakMins = 90;
                 
                 $net = max(0, $diff - $breakMins);
                 $record->hours_worked = round($net / 60, 2);
@@ -766,11 +762,7 @@ class AttendanceRecordController extends Controller
                 $diff = $timeIn->diffInMinutes($timeOut, false);
                 if ($diff < 0) $diff += 1440;
                 
-                $breakMins = $record->breaks()->sum('duration_minutes');
-                if ($breakMins == 0 && $record->break_start && $record->break_end) {
-                    $bDiff = Carbon::parse($record->break_start)->diffInMinutes(Carbon::parse($record->break_end), false);
-                    $breakMins = $bDiff < 0 ? $bDiff + 1440 : $bDiff;
-                }
+                $breakMins = 90;
                 
                 $record->hours_worked = round(max(0, $diff - $breakMins) / 60, 2);
             }
@@ -858,17 +850,7 @@ class AttendanceRecordController extends Controller
         
         // Calculate Total Break Duration from EmployeeBreak table (Single Source of Truth)
         // This ensures multiple breaks and admin-edited breaks are accounted for.
-        $totalBreakMinutes = $attendanceRecord->breaks()->sum('duration_minutes');
-        
-        // Fallback: If no EmployeeBreaks found but Legacy columns exist (Old records), use Legacy
-        if ($totalBreakMinutes == 0 && $attendanceRecord->break_start && $attendanceRecord->break_end) {
-             $start = Carbon::parse($attendanceRecord->break_start);
-             $end = Carbon::parse($attendanceRecord->break_end);
-             $totalBreakMinutes = $start->diffInMinutes($end, false);
-             if ($totalBreakMinutes < 0) {
-                 $totalBreakMinutes += 1440;
-             }
-        }
+        $totalBreakMinutes = 90;
 
         $netMinutes = max(0, $grossMinutes - $totalBreakMinutes);
         $hoursWorked = round($netMinutes / 60, 2);
@@ -1211,8 +1193,6 @@ class AttendanceRecordController extends Controller
             'time_out' => 'nullable|date',
             'break_start' => 'nullable|date',
             'break_end' => 'nullable|date',
-            'reason' => 'required|string|min:5',
-            'excuse_reason' => 'nullable|string',
         ]);
 
         $changes = [];
@@ -1220,11 +1200,6 @@ class AttendanceRecordController extends Controller
         if ($request->has('status')) {
             $attendanceRecord->status = $request->status;
             $changes[] = "status to {$request->status}";
-        }
-
-        if ($request->has('excuse_reason')) {
-            $attendanceRecord->excuse_reason = $request->excuse_reason;
-            $changes[] = "excuse_reason updated";
         }
 
         if ($request->has('time_in')) {
@@ -1306,13 +1281,11 @@ class AttendanceRecordController extends Controller
 
         $attendanceRecord->save();
 
-        // Sanitize reason to prevent XSS in audit logs
-        $sanitizedReason = strip_tags($request->reason);
         $correctionType = $request->input('correction_type', 'Manual Adjustment');
 
         AuditLog::log(
             'update_attendance',
-            "Admin {$request->user()->name} updated record via [{$correctionType}]: " . implode(', ', $changes) . ". Context: {$sanitizedReason}",
+            "Admin {$request->user()->name} updated record via [{$correctionType}]: " . implode(', ', $changes),
             AuditLog::STATUS_SUCCESS,
             $request->user()->id,
             'AttendanceRecord',

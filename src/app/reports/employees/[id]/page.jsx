@@ -190,17 +190,8 @@ export default function EmployeeReportDetailPage() {
                                     </Badge>
                                     <span className="flex items-center gap-1">
                                         <Briefcase className="h-3 w-3" />
-                                        {employee.position}
+                                        {employee.position} ({employee.employee_type || "Regular"})
                                     </span>
-                                    {employee.department && (
-                                        <>
-                                            <span>•</span>
-                                            <span className="flex items-center gap-1">
-                                                <span className="text-[10px] font-bold text-primary">D</span>
-                                                {employee.department} ({employee.employee_type || "Full-time"})
-                                            </span>
-                                        </>
-                                    )}
                                 </div>
                             </div>
                         </div>
@@ -262,9 +253,6 @@ export default function EmployeeReportDetailPage() {
                             <Clock className="h-5 w-5 text-primary" />
                             Full Attendance History
                         </CardTitle>
-                        <CardDescription>
-                            Complete list of attendance records for {employee.first_name}
-                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         {records.length === 0 ? (

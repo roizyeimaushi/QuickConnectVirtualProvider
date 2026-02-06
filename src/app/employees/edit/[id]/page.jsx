@@ -48,8 +48,7 @@ export default function EditEmployeePage() {
         email: "",
         position: "",
         status: "active",
-        department: "",
-        employee_type: "Full-time",
+        employee_type: "Regular",
         password: "",
         confirmPassword: "",
     });
@@ -71,8 +70,7 @@ export default function EditEmployeePage() {
                     email: employee.email || "",
                     position: employee.position || "",
                     status: employee.status || "active",
-                    department: employee.department || "",
-                    employee_type: employee.employee_type || "Full-time",
+                    employee_type: employee.employee_type || "Regular",
                 });
 
                 // Fetch positions from settings
@@ -161,7 +159,6 @@ export default function EditEmployeePage() {
                 email: formData.email,
                 position: formData.position,
                 status: formData.status,
-                department: formData.department,
                 employee_type: formData.employee_type,
             };
 
@@ -319,20 +316,6 @@ export default function EditEmployeePage() {
                                 )}
                             </div>
 
-                            {/* Department */}
-                            <div className="space-y-2">
-                                <Label htmlFor="department">Department</Label>
-                                <Input
-                                    id="department"
-                                    value={formData.department}
-                                    onChange={(e) => handleChange("department", e.target.value)}
-                                    placeholder="e.g. Operations, IT, Sales"
-                                />
-                                <p className="text-xs text-muted-foreground">
-                                    The department this employee belongs to.
-                                </p>
-                            </div>
-
                             {/* Employee Type */}
                             <div className="space-y-2">
                                 <Label htmlFor="employee_type">Employee Type</Label>
@@ -344,11 +327,11 @@ export default function EditEmployeePage() {
                                         <SelectValue placeholder="Select type" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="Full-time">Full-time</SelectItem>
-                                        <SelectItem value="Part-time">Part-time</SelectItem>
-                                        <SelectItem value="Contractor">Contractor</SelectItem>
-                                        <SelectItem value="Freelance">Freelance</SelectItem>
-                                        <SelectItem value="Intern">Intern</SelectItem>
+                                        <SelectItem value="Regular">Regular</SelectItem>
+                                        <SelectItem value="Part-Time">Part-Time</SelectItem>
+                                        <SelectItem value="Trial">Trial</SelectItem>
+                                        <SelectItem value="Temporary">Temporary</SelectItem>
+                                        <SelectItem value="OJT / Trainee">OJT / Trainee</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <p className="text-xs text-muted-foreground">

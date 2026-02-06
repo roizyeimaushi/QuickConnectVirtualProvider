@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { API_BASE_URL } from "@/lib/constants";
-import { Plus, Trash2, Save, ArrowLeft, Briefcase, GripVertical } from "lucide-react";
+import { Plus, Trash2, Save, ArrowLeft, Briefcase, GripVertical, Loader2 } from "lucide-react";
 
 export default function PositionsPage() {
     const router = useRouter();
@@ -194,14 +194,6 @@ export default function PositionsPage() {
                             </p>
                         </div>
                     </div>
-                    <Button
-                        onClick={handleSave}
-                        disabled={isSaving}
-                        className="w-full sm:w-auto min-w-[150px] transition-none active:scale-100"
-                    >
-                        <Save className="h-4 w-4 mr-2" />
-                        {isSaving ? "Saving..." : "Save Changes"}
-                    </Button>
                 </div>
 
                 {/* Add New Position Card */}
@@ -280,13 +272,30 @@ export default function PositionsPage() {
                     </CardContent>
                 </Card>
 
-                {/* Info Note */}
-                <div className="text-sm text-muted-foreground bg-muted/30 rounded-lg p-4 border">
-                    <p>
-                        <strong>Note:</strong> Removing a position will not affect employees who already have that position assigned.
-                        You can still update their position to a new one when editing their profile.
-                    </p>
+                {/* Save Changes Button Block */}
+                <div className="flex justify-end pt-2">
+                    <Button
+                        onClick={handleSave}
+                        disabled={isSaving}
+                        className="w-full sm:w-auto min-w-[180px] shadow-sm hover:shadow-md transition-all active:scale-[0.98]"
+                    >
+                        <Save className="h-4 w-4 mr-2" />
+                        Save Changes
+                    </Button>
                 </div>
+
+                {/* Loading Overlay */}
+                {isSaving && (
+                    <div className="fixed inset-0 bg-background/60 backdrop-blur-[2px] z-[100] flex items-center justify-center animate-in fade-in duration-200">
+                        <div className="bg-card p-6 rounded-xl shadow-xl border flex flex-col items-center gap-4 animate-in zoom-in-95 duration-200">
+                            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                            <div className="text-center">
+                                <p className="font-semibold text-lg">Saving Changes</p>
+                                <p className="text-sm text-muted-foreground">Please wait while we update your settings...</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Delete Confirmation Dialog */}
