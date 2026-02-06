@@ -281,23 +281,29 @@ class AttendanceSessionController extends Controller
                     ->get();
                 
                 foreach ($activeEmployees as $employee) {
-                    $recordData = [
-                        'status' => $finalStatus,
-                        'session_id' => $attendanceSession->id,
-                    ];
+                    // Check for existing record for this user and date
+                    $existingRecord = \App\Models\AttendanceRecord::where('user_id', $employee->id)
+                        ->where('attendance_date', $sessionDate)
+                        ->first();
 
-                    // Safely handle excuse_reason if column exists
-                    if ($finalStatus === 'excused') {
-                        $recordData['excuse_reason'] = $reason;
-                    }
-
-                    \App\Models\AttendanceRecord::updateOrCreate(
-                        [
+                    if (!$existingRecord) {
+                        // Create new record for missing employee
+                        \App\Models\AttendanceRecord::create([
                             'user_id' => $employee->id,
                             'attendance_date' => $sessionDate,
-                        ],
-                        $recordData
-                    );
+                            'session_id' => $attendanceSession->id,
+                            'status' => $finalStatus,
+                            'excuse_reason' => ($finalStatus === 'excused') ? $reason : null,
+                        ]);
+                    } elseif (in_array($existingRecord->status, ['pending', 'absent'])) {
+                        // Update status only if it's not a "completed" status
+                        $existingRecord->update([
+                            'status' => $finalStatus,
+                            'excuse_reason' => ($finalStatus === 'excused') ? $reason : $existingRecord->excuse_reason,
+                            // Ensure session_id is linked if it wasn't
+                            'session_id' => $existingRecord->session_id ?: $attendanceSession->id,
+                        ]);
+                    }
                 }
 
                 $attendanceSession->refresh();
