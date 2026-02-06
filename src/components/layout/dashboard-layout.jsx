@@ -101,8 +101,8 @@ export function AppSidebar() {
 
     const logoUrl = getLogoUrl(settings?.system_logo);
 
-    const { state } = useSidebar();
-    const isCollapsed = state === "collapsed";
+    const { state, isMobile } = useSidebar();
+    const isCollapsed = state === "collapsed" && !isMobile;
 
     const userProfileButton = (
         <SidebarMenuButton
@@ -124,10 +124,10 @@ export function AppSidebar() {
                 ) : (
                     <>
                         <span className="truncate font-bold text-white text-[13px]">
-                            {isAdmin ? "Admin User" : "Staff Member"}
-                        </span>
-                        <span className="truncate text-[11px] text-white/40 font-medium">
                             {user?.first_name} {user?.last_name}
+                        </span>
+                        <span className="truncate text-[11px] text-white/40 font-medium capitalize">
+                            {user?.role === 'admin' ? "Administrator" : (user?.role || "Staff Member")}
                         </span>
                     </>
                 )}
