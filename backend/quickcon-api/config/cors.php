@@ -14,7 +14,8 @@ return [
 
     'allowed_origins' => array_values(array_filter(array_merge(
         [
-            'https://quickconnect-frontend.onrender.com', // Updated to Render
+            'https://quickconnect-frontend.onrender.com',
+            'https://virtualquickconnect.vercel.app',
             'http://localhost:3000',
         ],
         explode(',', env('CORS_ALLOWED_ORIGINS', ''))

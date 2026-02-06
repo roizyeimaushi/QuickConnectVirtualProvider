@@ -676,9 +676,9 @@ body::-webkit-scrollbar,
 }
 
 .scanner-corner {
-  @apply absolute w-6 h-6 border-emerald-500 border-opacity-80;
+  @apply absolute w-6 h-6 border-emerald-500/80;
 }
 
 .scanner-corner-purple {
-  @apply absolute w-6 h-6 border-purple-500 border-opacity-80;
+  @apply absolute w-6 h-6 border-purple-500/80;
 }
