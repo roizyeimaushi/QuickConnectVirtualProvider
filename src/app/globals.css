@@ -161,12 +161,10 @@
     min-width: 50% !important;
   }
 
-  /* Show headers on desktop for centered layouts (like Admin) */
   .login-header-mobile-top {
     display: block !important;
   }
 
-  /* However, if there IS a left-section (split layout), we might want to hide the redundant header */
   .left-section+.right-section .login-header-mobile-top {
     display: none !important;
   }
