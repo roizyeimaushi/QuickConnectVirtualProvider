@@ -243,15 +243,8 @@ export default function SessionDetailsPage() {
         }
     };
 
-    if (loading) {
-        return (
-            <DashboardLayout title="Session Details">
-                <div className="flex items-center justify-center py-20">
-                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                </div>
-            </DashboardLayout>
-        );
-    }
+    // Simplified: No more full-page blocking loader.
+    // The page will render the layout and header immediately.
 
     if (!session) {
         return (

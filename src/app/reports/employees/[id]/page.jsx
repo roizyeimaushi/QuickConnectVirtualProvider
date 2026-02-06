@@ -116,6 +116,28 @@ export default function EmployeeReportDetailPage() {
         );
     }
 
+    if (initialLoad) {
+        return (
+            <DashboardLayout title="Loading Report...">
+                <div className="space-y-6 animate-pulse p-4">
+                    <div className="flex items-center gap-4">
+                        <div className="h-16 w-16 rounded-full bg-slate-200 dark:bg-slate-800" />
+                        <div className="space-y-2">
+                            <div className="h-6 w-48 bg-slate-200 dark:bg-slate-800 rounded" />
+                            <div className="h-4 w-32 bg-slate-100 dark:bg-slate-900 rounded" />
+                        </div>
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-4">
+                        {[1, 2, 3, 4].map(i => (
+                            <div key={i} className="h-24 bg-slate-50 dark:bg-slate-900 border rounded-lg" />
+                        ))}
+                    </div>
+                    <div className="h-96 bg-slate-50 dark:bg-slate-900 border rounded-lg" />
+                </div>
+            </DashboardLayout>
+        );
+    }
+
     const employee = data?.employee || {};
     const stats = data?.stats || { attendance_rate: 0, present: 0, late: 0, absent: 0 };
     const records = data?.records ? (Array.isArray(data.records) ? data.records : (data.records?.data || [])) : [];
@@ -129,7 +151,7 @@ export default function EmployeeReportDetailPage() {
 
             const blob = await reportsApi.exportToExcel({
                 employee_id: employee.id,
-                start_date: format(new Date(new Date().getFullYear(), 0, 1), 'yyyy-MM-dd'), // Start of current year (2026)
+                start_date: format(new Date(new Date().getFullYear(), 0, 1), 'yyyy-MM-dd'),
                 end_date: format(new Date(), 'yyyy-MM-dd'),
                 includePresent: true,
                 includeLate: true,
@@ -138,7 +160,6 @@ export default function EmployeeReportDetailPage() {
                 includeBreaks: true,
             });
 
-            // Create a URL for the blob
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -162,7 +183,6 @@ export default function EmployeeReportDetailPage() {
             });
         }
     };
-
 
     return (
         <DashboardLayout title={`${employee?.first_name || 'Employee'}'s Report`}>

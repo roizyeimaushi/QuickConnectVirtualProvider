@@ -313,9 +313,10 @@ class AttendanceSessionController extends Controller
             });
         } catch (\Exception $e) {
             \Log::error("Lock Session Critical Failure: " . $e->getMessage());
+            \Log::error($e->getTraceAsString());
             return response()->json([
-                'message' => 'Failed to lock session. Database error.',
-                'error' => $e->getMessage()
+                'message' => 'Failed to lock session. ' . $e->getMessage(),
+                'error_type' => get_class($e)
             ], 500);
         }
     }

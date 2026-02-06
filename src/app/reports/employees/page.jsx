@@ -98,7 +98,11 @@ export default function EmployeeReportsPage() {
 
                 {/* Employee Cards */}
                 {loading ? (
-                    null
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {[1, 2, 3, 4, 5, 6].map(i => (
+                            <div key={i} className="h-48 bg-slate-50 dark:bg-slate-900 border rounded-xl animate-pulse" />
+                        ))}
+                    </div>
                 ) : filteredEmployees.length === 0 ? (
                     <Card>
                         <CardContent className="py-12 text-center">
