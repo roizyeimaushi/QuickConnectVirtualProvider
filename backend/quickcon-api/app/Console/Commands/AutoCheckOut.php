@@ -68,8 +68,9 @@ class AutoCheckOut extends Command
                 $shiftEnd->addDay();
             }
 
-            // Auto checkout 1 hour after shift end (grace period)
-            $autoCheckoutTime = $shiftEnd->copy()->addHour();
+            // Auto checkout based on configurable grace period (default 1 hour)
+            $graceHours = (int) (Setting::where('key', 'auto_checkout_grace_hours')->value('value') ?: 1);
+            $autoCheckoutTime = $shiftEnd->copy()->addHours($graceHours);
 
             // If current time is past the auto checkout time, force checkout
             if ($now->gt($autoCheckoutTime)) {

@@ -41,6 +41,7 @@ export default function AttendanceSettingsPage() {
                 allow_multi_checkin: settings.allow_multi_checkin === "1" || settings.allow_multi_checkin === true,
                 prevent_duplicate_checkin: settings.prevent_duplicate_checkin !== false && settings.prevent_duplicate_checkin !== "0",
                 auto_checkout: settings.auto_checkout === "1" || settings.auto_checkout === true,
+                auto_checkout_grace_hours: settings.auto_checkout_grace_hours || "1",
                 weekend_checkin: settings.weekend_checkin === "1" || settings.weekend_checkin === true,
 
                 // --- SECTION 3: Break Rules ---
@@ -209,15 +210,28 @@ export default function AttendanceSettingsPage() {
                                             />
                                         </div>
                                         <div className="flex items-center justify-between">
-                                            <Label className="flex flex-col">
-                                                <span>Auto Time-out</span>
-                                                <span className="font-normal text-muted-foreground text-xs">Automatically closes open sessions at midnight.</span>
-                                            </Label>
+                                            <div className="space-y-0.5">
+                                                <Label className="text-sm">Auto Time-out</Label>
+                                                <p className="text-[0.7rem] text-muted-foreground">Automatically closes open sessions after shift ends.</p>
+                                            </div>
                                             <Switch
                                                 checked={formData.auto_checkout || false}
                                                 onCheckedChange={(val) => handleChange("auto_checkout", val)}
                                             />
                                         </div>
+                                        {formData.auto_checkout && (
+                                            <div className="pl-4 border-l-2 border-primary/20 space-y-1 mt-1">
+                                                <Label className="text-[0.75rem]">Grace Period (Hours)</Label>
+                                                <Input
+                                                    type="number"
+                                                    size="sm"
+                                                    className="h-8 text-xs"
+                                                    value={formData.auto_checkout_grace_hours || "1"}
+                                                    onChange={(e) => handleChange("auto_checkout_grace_hours", e.target.value)}
+                                                />
+                                                <p className="text-[0.65rem] text-muted-foreground italic">Hours to wait after shift end before auto-closing.</p>
+                                            </div>
+                                        )}
                                         <div className="flex items-center justify-between border-t pt-4">
                                             <Label className="flex flex-col">
                                                 <span>Weekend Support</span>
