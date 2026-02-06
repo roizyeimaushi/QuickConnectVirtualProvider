@@ -25,6 +25,7 @@ import {
     Smartphone,
     Globe
 } from "lucide-react";
+import { FingerprintScanner } from "@/components/ui/fingerprint-scanner";
 
 // Helper to detect device info
 const getDeviceInfo = () => {
@@ -273,40 +274,15 @@ function AttendanceConfirmationCard({ session, canConfirm, onConfirm, confirming
                     </div>
                 )}
 
-                {/* Fingerprint Button */}
-                <button
-                    onClick={onConfirm}
-                    disabled={!canConfirm || confirming || locationState.loading}
-                    className={`
-                        relative w-40 h-40 rounded-full 
-                        bg-gradient-to-br from-primary via-primary/90 to-primary/80
-                        flex items-center justify-center
-                        transition-all duration-300 ease-in-out
-                        shadow-lg shadow-primary/30
-                        ${canConfirm && !confirming && !locationState.loading
-                            ? 'hover:scale-105 hover:shadow-xl hover:shadow-primary/40 active:scale-95 cursor-pointer'
-                            : 'opacity-50 cursor-not-allowed'}
-                        focus:outline-none focus:ring-4 focus:ring-primary/30
-                    `}
-                >
-                    {confirming ? (
-                        <Loader2 className="h-16 w-16 text-white animate-spin" />
-                    ) : locationState.loading ? (
-                        <div className="flex flex-col items-center">
-                            <Loader2 className="h-12 w-12 text-white/80 animate-spin" />
-                            <span className="text-white/80 text-xs mt-2">Locating...</span>
-                        </div>
-                    ) : (
-                        <Fingerprint className="h-20 w-20 text-white" />
-                    )}
-                </button>
-
-                <p className="text-lg font-semibold mt-6 text-foreground">
-                    {confirming ? 'Recording...' : locationState.loading ? 'Verifying Location...' : 'Tap to Time In'}
-                </p>
-                <p className="text-xs text-muted-foreground mt-2 max-w-xs">
-                    Your attendance will be recorded with timestamp & location verification.
-                </p>
+                {/* New Biometric Scanner Component */}
+                <FingerprintScanner
+                    isScanning={confirming}
+                    isSuccess={!!todayRecord?.time_in}
+                    onScan={onConfirm}
+                    disabled={!canConfirm || locationState.loading}
+                    color="emerald"
+                    label={canConfirm ? "Tap to Time In" : "Scan Locked"}
+                />
             </CardContent>
         </Card>
     );

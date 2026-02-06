@@ -21,6 +21,7 @@ import {
     CheckCircle2,
     Shield,
 } from "lucide-react";
+import { FingerprintScanner } from "@/components/ui/fingerprint-scanner";
 
 
 function LiveClockCard() {
@@ -157,35 +158,15 @@ function CheckOutConfirmationCard({ recordId, canCheckOut, onCheckOut, checkingO
                     </div>
                 )}
 
-                {/* Fingerprint Button - Purple Theme for Time Out */}
-                <button
-                    onClick={onCheckOut}
-                    disabled={!canCheckOut || checkingOut}
-                    className={`
-                        relative w-40 h-40 rounded-full 
-                        bg-gradient-to-br from-[#7C3AED] via-[#7C3AED]/90 to-[#6D28D9]
-                        flex items-center justify-center
-                        transition-all duration-300 ease-in-out
-                        shadow-lg shadow-purple-300/50 dark:shadow-purple-900/30
-                        ${canCheckOut && !checkingOut
-                            ? 'hover:scale-105 hover:shadow-xl hover:shadow-purple-400/50 active:scale-95 cursor-pointer'
-                            : 'opacity-50 cursor-not-allowed'}
-                        focus:outline-none focus:ring-4 focus:ring-purple-300/50
-                    `}
-                >
-                    {checkingOut ? (
-                        <Loader2 className="h-16 w-16 text-white animate-spin" />
-                    ) : (
-                        <Fingerprint className="h-20 w-20 text-white" />
-                    )}
-                </button>
-
-                <p className="text-lg font-semibold mt-6 text-foreground">
-                    {checkingOut ? 'Recording...' : 'Tap to Time Out'}
-                </p>
-                <p className="text-xs text-muted-foreground mt-2 max-w-xs">
-                    Your departure time will be recorded and your shift will be completed.
-                </p>
+                {/* New Biometric Scanner Component */}
+                <FingerprintScanner
+                    isScanning={checkingOut}
+                    isSuccess={false} // Transition handled by polling/redirect
+                    onScan={onCheckOut}
+                    disabled={!canCheckOut}
+                    color="purple"
+                    label={canCheckOut ? "Tap to Time Out" : "Scan Locked"}
+                />
 
                 {!canCheckOut && (
                     <Button
