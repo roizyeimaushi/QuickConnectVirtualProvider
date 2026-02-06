@@ -17,6 +17,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Loader2, AlertCircle, Mail, Lock } from "lucide-react";
 import { useSettingsContext } from "@/components/providers/settings-provider";
+import { getLogoUrl } from "@/lib/constants";
 
 export default function EmployeeLoginPage() {
     const { settings } = useSettingsContext();
@@ -156,9 +157,13 @@ export default function EmployeeLoginPage() {
                         {/* Logo - using max-w to prevent stretching */}
                         <div className="flex justify-center mb-4 sm:mb-6">
                             <img
-                                src={settings?.system_logo || "/logo.png"}
+                                src={getLogoUrl(settings?.system_logo)}
                                 alt="QuickConn Logo"
                                 className="h-auto max-h-16 md:max-h-24 w-auto max-w-[300px] sm:max-w-[350px] object-contain"
+                                onError={(e) => {
+                                    e.currentTarget.src = "/quickconnect-logo.png";
+                                    e.currentTarget.onerror = null;
+                                }}
                             />
                         </div>
 

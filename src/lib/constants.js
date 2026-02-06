@@ -63,6 +63,24 @@ export const API_BASE_URL = (() => {
     return 'http://localhost:8000/api';
 })();
 
+/**
+ * Helper to resolve the correct logo URL based on settings
+ * @param {string} settingsLogo - Logo path from settings
+ * @returns {string} Resolved logo URL
+ */
+export const getLogoUrl = (settingsLogo) => {
+    if (!settingsLogo) return "/quickconnect-logo.png";
+    if (settingsLogo.startsWith("http")) return settingsLogo;
+
+    // Handle Laravel storage paths - only if we have a valid backend root
+    const backendRoot = API_BASE_URL.replace("/api", "").replace(/\/$/, "");
+    if (backendRoot && backendRoot !== "" && backendRoot !== "/") {
+        return `${backendRoot}/storage/${settingsLogo.replace(/^\/?storage\//, "")}`;
+    }
+
+    return "/quickconnect-logo.png";
+};
+
 export const USER_ROLES = {
     ADMIN: 'admin',
     EMPLOYEE: 'employee',

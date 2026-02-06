@@ -62,7 +62,7 @@ import {
     Timer,
 } from "lucide-react";
 import { getInitials } from "@/lib/utils";
-import { API_BASE_URL } from "@/lib/constants";
+import { API_BASE_URL, getLogoUrl } from "@/lib/constants";
 import { NotificationsPopover } from "@/components/notifications-popover";
 
 // ... imports
@@ -104,15 +104,8 @@ export function AppSidebar() {
 
 
 
-    // Construct properly prefixed logo URL if it's a relative path from backend
-    const logoUrl = React.useMemo(() => {
-        if (!settings?.system_logo) return "/quickconnect-logo.png";
-        if (settings.system_logo.startsWith("http")) return settings.system_logo;
-
-        // Handle Laravel storage paths
-        const backendRoot = API_BASE_URL.replace("/api", "");
-        return `${backendRoot}/storage/${settings.system_logo.replace(/^\/?storage\//, "")}`;
-    }, [settings?.system_logo]);
+    // Construct properly prefixed logo URL
+    const logoUrl = getLogoUrl(settings?.system_logo);
 
     return (
         <Sidebar collapsible={hideSidebar ? "offcanvas" : "icon"}>
@@ -125,10 +118,10 @@ export function AppSidebar() {
                                     <img
                                         src={logoUrl}
                                         alt="Logo"
-                                        className="size-8 object-contain"
+                                        className="size-8 object-contain shrink-0"
                                         onError={(e) => {
                                             e.currentTarget.src = "/quickconnect-logo.png";
-                                            e.currentTarget.onerror = null; // Prevent infinite loop
+                                            e.currentTarget.onerror = null;
                                         }}
                                     />
                                 </div>
