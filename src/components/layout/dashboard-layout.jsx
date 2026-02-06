@@ -45,7 +45,6 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
-    Building2,
     ChevronRight,
     LogOut,
     Settings,
@@ -62,10 +61,8 @@ import {
     Timer,
 } from "lucide-react";
 import { getInitials } from "@/lib/utils";
-import { API_BASE_URL, getLogoUrl } from "@/lib/constants";
+import { getLogoUrl } from "@/lib/constants";
 import { NotificationsPopover } from "@/components/notifications-popover";
-
-// ... imports
 
 const iconMap = {
     LayoutDashboard,
@@ -84,13 +81,12 @@ const iconMap = {
 };
 
 export function AppSidebar() {
-    const { user, logout, isAdmin, loading } = useAuth();
+    const { user, logout, isAdmin } = useAuth();
     const { settings } = useSettingsContext();
     const pathname = usePathname();
     const navItems = getNavigationItems(user);
-    const { setOpen } = useSidebar();
+    const { setOpen, isMobile } = useSidebar();
 
-    // specific paths to hide sidebar
     const hideSidebar = pathname.startsWith("/settings") ||
         pathname === "/dashboard/admin/profile" ||
         pathname === "/dashboard/employee/profile" ||
@@ -100,33 +96,35 @@ export function AppSidebar() {
         if (hideSidebar) {
             setOpen(false);
         }
-    }, [pathname, hideSidebar]);
+    }, [pathname, hideSidebar, setOpen]);
 
-
-
-    // Construct properly prefixed logo URL
     const logoUrl = getLogoUrl(settings?.system_logo);
 
     return (
-        <Sidebar collapsible={hideSidebar ? "offcanvas" : "icon"}>
-            <SidebarHeader>
+        <Sidebar collapsible={hideSidebar ? "offcanvas" : "icon"} className="border-r border-sidebar-border shadow-md transition-all duration-300">
+            <SidebarHeader className="p-4">
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild>
-                            <Link href={isAdmin ? "/dashboard/admin" : "/dashboard/employee"}>
-                                <div className="flex aspect-square size-8 items-center justify-center rounded-lg overflow-hidden">
+                        <SidebarMenuButton size="lg" asChild className="hover:bg-sidebar-accent transition-colors">
+                            <Link href={isAdmin ? "/dashboard/admin" : "/dashboard/employee"} className="flex items-center gap-3">
+                                <div className="flex aspect-square size-10 items-center justify-center rounded-xl bg-primary/10 overflow-hidden ring-1 ring-primary/20">
                                     <img
                                         src={logoUrl}
                                         alt="Logo"
-                                        className="size-8 object-contain shrink-0"
+                                        className="size-8 object-contain"
                                         onError={(e) => {
                                             e.currentTarget.src = "/quickconnect-logo.png";
                                             e.currentTarget.onerror = null;
                                         }}
                                     />
                                 </div>
-                                <div className="flex flex-1 items-center text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-                                    <span className="truncate font-semibold">{settings?.company_name || "QuickConn Virtual"}</span>
+                                <div className="flex flex-col items-start leading-none group-data-[collapsible=icon]:hidden">
+                                    <span className="font-bold text-lg text-sidebar-foreground truncate w-40">
+                                        {settings?.company_name || "QuickConn"}
+                                    </span>
+                                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">
+                                        Virtual Management
+                                    </span>
                                 </div>
                             </Link>
                         </SidebarMenuButton>
@@ -134,26 +132,24 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            <SidebarContent>
+            <SidebarContent className="px-2">
                 {navItems.map((group) => (
-                    <SidebarGroup key={group.label}>
-                        <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+                    <SidebarGroup key={group.label} className="mt-4">
+                        <SidebarGroupLabel className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50 px-4 mb-2">
+                            {group.label}
+                        </SidebarGroupLabel>
                         <SidebarGroupContent>
-                            <SidebarMenu>
+                            <SidebarMenu className="gap-1">
                                 {group.items.map((item) => {
                                     const Icon = iconMap[item.icon] || LayoutDashboard;
-
-                                    // For items with sub-items, check if ANY sub-item URL matches
                                     const isActive = item.url
                                         ? (pathname === item.url || pathname.startsWith(item.url + "/"))
                                         : false;
 
-                                    // Check if any sub-item is active (for keeping submenu open)
                                     const isSubItemActive = item.items?.some(subItem =>
                                         pathname === subItem.url || pathname.startsWith(subItem.url + "/")
                                     ) || false;
 
-                                    // Submenu should be open if parent is active OR any sub-item is active
                                     const shouldBeOpen = isActive || isSubItemActive;
 
                                     if (item.items) {
@@ -161,22 +157,23 @@ export function AppSidebar() {
                                             <Collapsible key={item.title} asChild defaultOpen={shouldBeOpen}>
                                                 <SidebarMenuItem>
                                                     <CollapsibleTrigger asChild>
-                                                        <SidebarMenuButton tooltip={item.title}>
-                                                            <Icon className="size-4" />
-                                                            <span>{item.title}</span>
+                                                        <SidebarMenuButton tooltip={item.title} className={`py-6 px-4 rounded-xl ${shouldBeOpen ? 'bg-sidebar-accent/50' : ''}`}>
+                                                            <Icon className={`size-5 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
+                                                            <span className="font-medium">{item.title}</span>
                                                             <ChevronRight className="ml-auto size-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                                                         </SidebarMenuButton>
                                                     </CollapsibleTrigger>
-                                                    <CollapsibleContent>
-                                                        <SidebarMenuSub>
+                                                    <CollapsibleContent className="animate-collapsible-down pl-4">
+                                                        <SidebarMenuSub className="border-l border-sidebar-border/50 ml-6 pl-4 mt-1 gap-1">
                                                             {item.items.map((subItem) => (
                                                                 <SidebarMenuSubItem key={subItem.title}>
                                                                     <SidebarMenuSubButton
                                                                         asChild
                                                                         isActive={pathname === subItem.url}
+                                                                        className="rounded-lg py-4"
                                                                     >
                                                                         <Link href={subItem.url}>
-                                                                            <span>{subItem.title}</span>
+                                                                            <span className="text-sm">{subItem.title}</span>
                                                                         </Link>
                                                                     </SidebarMenuSubButton>
                                                                 </SidebarMenuSubItem>
@@ -190,10 +187,10 @@ export function AppSidebar() {
 
                                     return (
                                         <SidebarMenuItem key={item.title}>
-                                            <SidebarMenuButton asChild isActive={isActive} tooltip={item.title}>
+                                            <SidebarMenuButton asChild isActive={isActive} tooltip={item.title} className="py-6 px-4 rounded-xl">
                                                 <Link href={item.url}>
-                                                    <Icon className="size-4" />
-                                                    <span>{item.title}</span>
+                                                    <Icon className={`size-5 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
+                                                    <span className="font-medium">{item.title}</span>
                                                 </Link>
                                             </SidebarMenuButton>
                                         </SidebarMenuItem>
@@ -205,83 +202,63 @@ export function AppSidebar() {
                 ))}
             </SidebarContent>
 
-            <SidebarFooter>
+            <SidebarFooter className="p-4 border-t border-sidebar-border/50 bg-sidebar/50">
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <SidebarMenuButton
                                     size="lg"
-                                    className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                                    className="data-[state=open]:bg-sidebar-accent rounded-xl"
                                 >
-                                    <Avatar className="h-8 w-8 rounded-full">
+                                    <Avatar className="h-9 w-9 rounded-lg ring-1 ring-primary/20">
                                         <AvatarImage src={user?.avatar} alt={user?.first_name} />
-                                        <AvatarFallback className="rounded-full bg-primary/20 text-primary">
+                                        <AvatarFallback className="rounded-lg bg-primary/20 text-primary font-bold">
                                             {getInitials(user?.first_name, user?.last_name)}
                                         </AvatarFallback>
                                     </Avatar>
-                                    <div className="grid flex-1 text-left text-sm leading-tight">
-                                        <span className="truncate font-semibold">
-                                            {isAdmin ? "Admin User" : "My Account"}
-                                        </span>
-                                        <span className="truncate text-xs capitalize text-muted-foreground">
+                                    <div className="grid flex-1 text-left text-sm leading-tight ml-2">
+                                        <span className="truncate font-bold">
                                             {user?.first_name} {user?.last_name}
+                                        </span>
+                                        <span className="truncate text-[10px] uppercase text-muted-foreground">
+                                            {isAdmin ? "Administrator" : "Employee"}
                                         </span>
                                     </div>
                                     <ChevronRight className="ml-auto size-4" />
                                 </SidebarMenuButton>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent
-                                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                                side="bottom"
+                                className="w-64 rounded-xl shadow-xl border-border/50 p-2"
+                                side="right"
                                 align="end"
-                                sideOffset={4}
+                                sideOffset={8}
                             >
-                                <DropdownMenuLabel className="p-0 font-normal">
-                                    <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                                        <Avatar className="h-8 w-8 rounded-full">
-                                            <AvatarImage src={user?.avatar} alt={user?.first_name} />
-                                            <AvatarFallback className="rounded-full">
-                                                {getInitials(user?.first_name, user?.last_name)}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <div className="grid flex-1 text-left text-sm leading-tight">
-                                            <span className="truncate font-semibold">
-                                                {user?.first_name} {user?.last_name}
-                                            </span>
-                                            <span className="truncate text-xs text-muted-foreground">
-                                                {user?.email}
-                                            </span>
-                                        </div>
+                                <DropdownMenuLabel className="px-3 py-4 font-normal">
+                                    <div className="flex flex-col gap-1">
+                                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">Signed in as</p>
+                                        <p className="text-sm font-bold truncate">{user?.email}</p>
                                     </div>
                                 </DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem className="cursor-pointer" asChild>
+                                <DropdownMenuSeparator className="my-2" />
+                                <DropdownMenuItem className="cursor-pointer rounded-lg py-3" asChild>
                                     <Link href={isAdmin ? "/dashboard/admin/profile" : "/dashboard/employee/profile"}>
-                                        <User className="mr-2 h-4 w-4" />
-                                        {isAdmin ? "Profile" : "My Profile"}
+                                        <User className="mr-3 h-4 w-4" />
+                                        Profile Overview
                                     </Link>
                                 </DropdownMenuItem>
                                 {isAdmin && (
-                                    <DropdownMenuItem className="cursor-pointer" asChild>
+                                    <DropdownMenuItem className="cursor-pointer rounded-lg py-3" asChild>
                                         <Link href="/settings/general">
-                                            <Settings className="mr-2 h-4 w-4" />
-                                            Settings
+                                            <Settings className="mr-3 h-4 w-4" />
+                                            System Settings
                                         </Link>
                                     </DropdownMenuItem>
                                 )}
-                                {isAdmin && (
-                                    <DropdownMenuItem className="cursor-pointer" asChild>
-                                        <Link href="/dashboard/admin/change-password">
-                                            <Key className="mr-2 h-4 w-4" />
-                                            Change Password
-                                        </Link>
-                                    </DropdownMenuItem>
-                                )}
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive" onClick={logout}>
-                                    <LogOut className="mr-2 h-4 w-4" />
-                                    Log out
+                                <DropdownMenuSeparator className="my-2" />
+                                <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10 rounded-lg py-3" onClick={logout}>
+                                    <LogOut className="mr-3 h-4 w-4" />
+                                    Log Out Securely
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -294,7 +271,6 @@ export function AppSidebar() {
 
 export function DashboardHeader({ title, children }) {
     const pathname = usePathname();
-    const { isAdmin } = useAuth();
 
     const getBreadcrumbs = () => {
         const paths = pathname.split("/").filter(Boolean);
@@ -317,29 +293,30 @@ export function DashboardHeader({ title, children }) {
     const breadcrumbs = getBreadcrumbs();
 
     return (
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-            <div className="flex items-center gap-2">
-                <SidebarTrigger className="-ml-1" />
-                <Separator orientation="vertical" className="mr-2 h-4" />
-                <Breadcrumb>
+        <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b bg-background/80 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-6 transition-all">
+            <div className="flex items-center gap-4">
+                <SidebarTrigger className="h-9 w-9 border shadow-sm rounded-lg hover:bg-muted" />
+                <Separator orientation="vertical" className="h-6 hidden sm:block" />
+                <Breadcrumb className="hidden md:block">
                     <BreadcrumbList>
                         {breadcrumbs.map((crumb, index) => (
-                            <div key={crumb.href} className="flex items-center gap-2">
+                            <React.Fragment key={crumb.href}>
                                 {index > 0 && <BreadcrumbSeparator />}
                                 <BreadcrumbItem>
                                     {crumb.isLast ? (
-                                        <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                                        <BreadcrumbPage className="font-bold text-primary">{crumb.label}</BreadcrumbPage>
                                     ) : (
-                                        <BreadcrumbLink href={crumb.href}>{crumb.label}</BreadcrumbLink>
+                                        <BreadcrumbLink href={crumb.href} className="text-muted-foreground hover:text-foreground">
+                                            {crumb.label}
+                                        </BreadcrumbLink>
                                     )}
                                 </BreadcrumbItem>
-                            </div>
+                            </React.Fragment>
                         ))}
                     </BreadcrumbList>
                 </Breadcrumb>
             </div>
-            <div className="ml-auto flex items-center gap-2">
-                {/* Notifications bell - All users */}
+            <div className="flex items-center gap-3">
                 <NotificationsPopover />
                 {children}
             </div>
@@ -350,7 +327,6 @@ export function DashboardHeader({ title, children }) {
 export function DashboardLayout({ children, title }) {
     const pathname = usePathname();
 
-    // Updated hide logic for new routes
     const hideHeader = pathname.startsWith("/settings") ||
         pathname === "/dashboard/admin/profile" ||
         pathname === "/dashboard/employee/profile" ||
@@ -358,13 +334,28 @@ export function DashboardLayout({ children, title }) {
 
     return (
         <SidebarProvider>
-            <AppSidebar />
-            <SidebarInset className="overflow-x-hidden">
-                {!hideHeader && <DashboardHeader title={title} />}
-                <div className="flex-1 w-full overflow-auto p-4 md:p-6 lg:p-8">
-                    {children}
-                </div>
-            </SidebarInset>
+            <div className="flex min-h-screen w-full bg-[#f8f8ff] dark:bg-slate-950 overflow-hidden">
+                <AppSidebar />
+                <SidebarInset className="flex flex-col flex-1 min-w-0 bg-transparent lg:border-l border-border/10">
+                    {!hideHeader && <DashboardHeader title={title} />}
+                    <main className="flex-1 overflow-y-auto scrollbar-hidden">
+                        <div className="mx-auto w-full max-w-[1600px] min-h-[calc(100vh-64px)] flex flex-col">
+                            <div className="flex-1 p-4 sm:p-6 lg:p-10 animate-fade-in">
+                                {children}
+                            </div>
+
+                            {/* Dashboard Footer / Status Bar */}
+                            <footer className="p-4 sm:p-6 border-t border-border/5 bg-background/50 text-[10px] sm:text-xs text-muted-foreground/60 flex items-center justify-between">
+                                <p>© 2026 QuickConnect Virtual Management. All rights reserved.</p>
+                                <div className="flex items-center gap-4 hidden sm:flex">
+                                    <span>System Status: <span className="text-emerald-500 font-bold">Online</span></span>
+                                    <span>Version 1.2.0</span>
+                                </div>
+                            </footer>
+                        </div>
+                    </main>
+                </SidebarInset>
+            </div>
         </SidebarProvider>
     );
 }

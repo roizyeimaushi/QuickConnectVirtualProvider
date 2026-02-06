@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { useAuth } from "@/components/providers/auth-provider";
 import { attendanceApi, reportsApi, breakApi } from "@/lib/api";
@@ -245,39 +246,82 @@ function TodayStatusCard({ user, session, record, breakStatus, loading, constrai
         );
     };
 
+    if (loading) {
+        return (
+            <div className="space-y-6 animate-fade-in">
+                {/* Header Skeleton */}
+                <div className="space-y-2">
+                    <Skeleton className="h-10 w-64" />
+                    <Skeleton className="h-5 w-48" />
+                </div>
+
+                {/* Status Card Skeleton */}
+                <Card className="col-span-full border-none shadow-lg overflow-hidden">
+                    <div className="bg-slate-500/10 p-6 md:p-8">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <div className="space-y-3 w-full md:w-auto">
+                                <Skeleton className="h-8 w-40 bg-white/20" />
+                                <Skeleton className="h-6 w-32 bg-white/20" />
+                            </div>
+                            <div className="text-left md:text-right space-y-2 w-full md:w-auto">
+                                <Skeleton className="h-5 w-36 bg-white/20 ml-0 md:ml-auto" />
+                                <Skeleton className="h-12 w-32 bg-white/20 ml-0 md:ml-auto" />
+                            </div>
+                        </div>
+                    </div>
+                    <CardContent className="p-8">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <Skeleton className="h-40 w-full" />
+                            <Skeleton className="h-40 w-full" />
+                            <Skeleton className="h-40 w-full" />
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Bottom Cards Skeleton */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <Skeleton className="h-64 w-full" />
+                    <Skeleton className="h-64 w-full" />
+                </div>
+            </div>
+        );
+    }
+
     return (
         <Card className="col-span-full overflow-hidden border-none shadow-lg mb-6">
-            <div className={`${headerColor} text-white p-6 transition-colors duration-500`}>
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h3 className="text-xl font-bold">Today's Status</h3>
-                        <div className="flex items-center gap-3 mt-2">
-                            <Badge className={`${statusColor} hover:${statusColor} border-none text-sm px-3 py-1 font-bold`}>
-                                <StatusIcon className="h-4 w-4 mr-2" />
+            <div className={`${headerColor} text-white p-5 md:p-8 transition-colors duration-500`}>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-2">
+                    <div className="space-y-1.5">
+                        <h3 className="text-lg md:text-xl font-bold tracking-tight">Today's Status</h3>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <Badge className={`${statusColor} hover:${statusColor} border-none text-xs md:text-sm px-3 py-1 font-bold`}>
+                                <StatusIcon className="h-3.5 w-3.5 mr-1.5" />
                                 {statusText}
                             </Badge>
-                            {/* Timer directly next to status if needed, or below */}
+                            {session?.schedule?.name && (
+                                <Badge variant="outline" className="bg-white/10 text-white border-white/20 backdrop-blur-sm text-[10px] md:text-xs px-2 py-0.5 font-medium">
+                                    {session.schedule.name}
+                                </Badge>
+                            )}
                         </div>
+                    </div>
+
+                    <div className="flex flex-row sm:flex-col justify-between items-end sm:items-end w-full sm:w-auto border-t border-white/10 sm:border-none pt-5 sm:pt-0 mt-2 sm:mt-0">
+                        <div className="text-left sm:text-right order-2 sm:order-1">
+                            <p className="text-[10px] md:text-xs opacity-75 font-bold uppercase tracking-widest mb-1">
+                                {formatDate(record?.attendance_date || session?.date || getCurrentDate(), "EEEE, MMM do")}
+                            </p>
+                            <p className="text-4xl md:text-5xl font-black font-mono tracking-tighter text-white leading-none">
+                                {currentTime}
+                            </p>
+                        </div>
+
                         {isBreakActive && (
-                            <div className="mt-3 flex items-center gap-2 bg-white/20 p-2 rounded-lg w-fit backdrop-blur-sm animate-pulse">
-                                <Timer className="h-4 w-4" />
-                                <span className="font-mono font-bold text-lg">{timeLeft}</span>
-                                <span className="text-xs opacity-90">remaining</span>
+                            <div className="flex items-center gap-2 bg-white/20 px-3 py-1.5 rounded-full backdrop-blur-md animate-pulse order-1 sm:order-2">
+                                <Timer className="h-3.5 w-3.5" />
+                                <span className="font-mono font-bold text-sm">{timeLeft}</span>
                             </div>
                         )}
-                    </div>
-                    <div className="text-right">
-                        {/* 
-                            Logic: Show the "Shift Date" (Session Date) if available, to align with the user's mental model 
-                            of their work day, especially for overnight shifts. 
-                            If no session/record, default to current date.
-                        */}
-                        <p className="text-sm opacity-80 font-medium">
-                            {formatDate(record?.attendance_date || session?.date || getCurrentDate(), "EEEE, MMMM do")}
-                        </p>
-                        <p className="text-3xl font-bold font-mono tracking-wider text-white drop-shadow-sm">
-                            {currentTime}
-                        </p>
                     </div>
                 </div>
             </div>
@@ -594,28 +638,34 @@ export default function EmployeeDashboardPage() {
                         </CardHeader>
                         <CardContent className="grid grid-cols-2 gap-4">
 
-                            <Link href="/dashboard/employee/profile" className="block p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                            <Link href="/dashboard/employee/profile" className="block p-4 border rounded-lg hover:bg-muted/50 transition-colors group">
                                 <div className="flex items-center gap-2 mb-2">
-                                    <Fingerprint className="h-5 w-5 text-purple-500" />
-                                    <span className="font-semibold">My Profile</span>
+                                    <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                                        <Fingerprint className="h-4 w-4 text-purple-600" />
+                                    </div>
+                                    <span className="font-semibold text-sm sm:text-base">My Profile</span>
                                 </div>
-                                <p className="text-xs text-muted-foreground">View your information</p>
+                                <p className="text-[10px] sm:text-xs text-muted-foreground ml-10">View your information</p>
                             </Link>
 
-                            <Link href="/attendance/break" className="block p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                            <Link href="/attendance/break" className="block p-4 border rounded-lg hover:bg-muted/50 transition-colors group">
                                 <div className="flex items-center gap-2 mb-2">
-                                    <Coffee className="h-5 w-5 text-amber-500" />
-                                    <span className="font-semibold">Break</span>
+                                    <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center group-hover:bg-amber-200 transition-colors">
+                                        <Coffee className="h-4 w-4 text-amber-600" />
+                                    </div>
+                                    <span className="font-semibold text-sm sm:text-base">Break</span>
                                 </div>
-                                <p className="text-xs text-muted-foreground">Start or end your break</p>
+                                <p className="text-[10px] sm:text-xs text-muted-foreground ml-10">Start or end your break</p>
                             </Link>
 
-                            <Link href="/attendance/history" className="block p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                            <Link href="/attendance/history" className="block p-4 border rounded-lg hover:bg-muted/50 transition-colors group">
                                 <div className="flex items-center gap-2 mb-2">
-                                    <History className="h-5 w-5 text-blue-500" />
-                                    <span className="font-semibold">Attendance History</span>
+                                    <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                                        <History className="h-4 w-4 text-blue-600" />
+                                    </div>
+                                    <span className="font-semibold text-sm sm:text-base">Attendance History</span>
                                 </div>
-                                <p className="text-xs text-muted-foreground">View past records</p>
+                                <p className="text-[10px] sm:text-xs text-muted-foreground ml-10">View past records</p>
                             </Link>
                         </CardContent>
                     </Card>

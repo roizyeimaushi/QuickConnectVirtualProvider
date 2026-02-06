@@ -119,11 +119,11 @@ export default function EmployeeLoginPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* Layout - Fixed to ALWAYS be side-by-side: Image LEFT, Login RIGHT */}
-            <div className="h-screen w-full flex bg-[#f8f8ff] overflow-hidden">
+            {/* Layout - Responsive: side-by-side on desktop, stacked on mobile */}
+            <div className="min-h-screen w-full flex flex-col md:flex-row bg-[#f8f8ff]">
 
-                {/* Left Side - Welcome Image (Always 1/2 width) */}
-                <div className="w-1/2 h-full relative overflow-hidden flex-shrink-0">
+                {/* Left Side (Desktop) / Top Side (Mobile) - Image */}
+                <div className="w-full md:w-1/2 h-[35vh] sm:h-[40vh] md:h-screen relative overflow-hidden flex-shrink-0">
                     <img
                         src="/employee-login-side.png"
                         alt="Welcome"
@@ -133,24 +133,24 @@ export default function EmployeeLoginPage() {
 
                     <div className="absolute inset-0 z-10 flex items-center justify-center p-6 text-center">
                         <div className="max-w-md">
-                            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold leading-tight text-white drop-shadow-lg mb-2 sm:mb-4">
+                            <h2 className="text-2xl sm:text-3xl lg:text-3xl font-bold leading-tight text-white drop-shadow-lg mb-2 sm:mb-4">
                                 Welcome to <span className="text-[#22c55e]">QuickConn Virtual</span>
                             </h2>
-                            <p className="text-white/90 text-[10px] sm:text-sm lg:text-base leading-relaxed max-w-sm mx-auto drop-shadow-md">
+                            <p className="text-white/90 text-sm sm:text-base lg:text-lg leading-relaxed max-w-sm sm:max-w-md mx-auto drop-shadow-md">
                                 Track your attendance, view schedules, and manage your work records in one convenient portal.
                             </p>
                         </div>
                     </div>
                 </div>
 
-                {/* Right Side - Login Form (Always 1/2 width) */}
-                <div className="w-1/2 h-full flex flex-col justify-center p-4 sm:p-10 md:p-12 lg:p-16 bg-[#f8f8ff] overflow-y-auto">
+                {/* Right Side (Desktop) / Bottom Side (Mobile) - Login Form */}
+                <div className="flex-1 flex flex-col justify-center p-6 sm:p-10 md:p-12 lg:p-16 bg-[#f8f8ff]">
                     <div className="w-full max-w-md mx-auto">
-                        <div className="flex justify-center mb-4">
+                        <div className="flex justify-center mb-6">
                             <img
                                 src={getLogoUrl(settings?.system_logo)}
                                 alt="QuickConn Logo"
-                                className="h-auto max-h-12 sm:max-h-20 md:max-h-24 w-auto object-contain"
+                                className="h-auto max-h-16 md:max-h-24 w-auto object-contain"
                                 onError={(e) => {
                                     e.currentTarget.src = "/quickconnect-logo.png";
                                     e.currentTarget.onerror = null;
@@ -158,17 +158,17 @@ export default function EmployeeLoginPage() {
                             />
                         </div>
 
-                        <p className="text-muted-foreground text-[10px] sm:text-sm text-center mb-6">
+                        <p className="text-muted-foreground text-sm text-center mb-8">
                             Sign in to access your QuickConn Virtual account
                         </p>
 
-                        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
-                            <div className="space-y-3 sm:space-y-4">
-                                <div className="space-y-1">
-                                    <Label htmlFor="email" className="text-[10px] sm:text-xs font-bold text-slate-700 uppercase ml-1">Email Address</Label>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div className="space-y-4">
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="email" className="text-xs font-bold text-slate-700 uppercase ml-1">Email Address</Label>
                                     <div className="relative">
-                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                                            <Mail className="h-4 w-4 sm:h-5 sm:w-5" />
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
+                                            <Mail className="h-5 w-5" />
                                         </div>
                                         <input
                                             id="email"
@@ -177,16 +177,16 @@ export default function EmployeeLoginPage() {
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
                                             required
-                                            className="w-full h-10 sm:h-12 pl-10 sm:pl-12 pr-4 bg-white border border-gray-200 rounded-lg text-xs sm:text-base focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                                            className="w-full h-12 pl-12 pr-4 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
                                         />
                                     </div>
                                 </div>
 
-                                <div className="space-y-1">
-                                    <Label htmlFor="password" className="text-[10px] sm:text-xs font-bold text-slate-700 uppercase ml-1">Password</Label>
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="password" className="text-xs font-bold text-slate-700 uppercase ml-1">Password</Label>
                                     <div className="relative">
-                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                                            <Lock className="h-4 w-4 sm:h-5 sm:w-5" />
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
+                                            <Lock className="h-5 w-5" />
                                         </div>
                                         <input
                                             id="password"
@@ -195,14 +195,14 @@ export default function EmployeeLoginPage() {
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
                                             required
-                                            className="w-full h-10 sm:h-12 pl-10 sm:pl-12 pr-10 sm:pr-12 bg-white border border-gray-200 rounded-lg text-xs sm:text-base focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                                            className="w-full h-12 pl-12 pr-12 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
                                         />
                                         <button
                                             type="button"
                                             onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground"
                                         >
-                                            {showPassword ? <EyeOff className="h-4 w-4 sm:h-5 sm:w-5" /> : <Eye className="h-4 w-4 sm:h-5 sm:w-5" />}
+                                            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                                         </button>
                                     </div>
                                 </div>
@@ -214,9 +214,9 @@ export default function EmployeeLoginPage() {
                                         id="remember"
                                         checked={remember}
                                         onCheckedChange={setRemember}
-                                        className="h-3 w-3 sm:h-4 sm:w-4 border-gray-300"
+                                        className="border-gray-300"
                                     />
-                                    <Label htmlFor="remember" className="text-[10px] sm:text-sm text-muted-foreground">
+                                    <Label htmlFor="remember" className="text-sm text-muted-foreground">
                                         Remember me
                                     </Label>
                                 </div>
@@ -224,7 +224,7 @@ export default function EmployeeLoginPage() {
 
                             <Button
                                 type="submit"
-                                className="w-full h-10 sm:h-12 text-xs sm:text-base font-semibold rounded-lg shadow-lg"
+                                className="w-full h-12 text-base font-semibold rounded-lg shadow-lg"
                                 loading={loading}
                                 style={{
                                     background: 'linear-gradient(135deg, #2e8b57 0%, #236b43 100%)'
@@ -234,7 +234,7 @@ export default function EmployeeLoginPage() {
                             </Button>
                         </form>
 
-                        <p className="mt-6 text-center text-[10px] sm:text-sm text-muted-foreground">
+                        <p className="mt-8 text-center text-sm text-muted-foreground">
                             QuickConn Virtual Attendance System
                         </p>
                     </div>

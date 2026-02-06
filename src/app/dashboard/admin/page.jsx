@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { useAuth } from "@/components/providers/auth-provider";
 import { reportsApi } from "@/lib/api";
@@ -449,13 +450,55 @@ export default function AdminDashboard() {
     return (
         <DashboardLayout title="Admin Dashboard">
             {loading ? (
-                <div className="flex-1 flex items-center justify-center min-h-[400px]">
-                    {/* Empty space or a single subtle loader could go here, but per user request we just want the fade in once ready */}
+                <div className="space-y-6 animate-fade-in">
+                    {/* Welcome Skeleton */}
+                    <div className="space-y-2">
+                        <Skeleton className="h-10 w-64" />
+                        <Skeleton className="h-4 w-48" />
+                    </div>
+
+                    {/* Stats Grid Skeleton */}
+                    <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+                        {[...Array(5)].map((_, i) => (
+                            <Card key={i} className="h-32">
+                                <CardHeader className="pb-2">
+                                    <Skeleton className="h-4 w-24" />
+                                </CardHeader>
+                                <CardContent>
+                                    <Skeleton className="h-8 w-16 mb-2" />
+                                    <Skeleton className="h-4 w-20" />
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+
+                    {/* Main Content Skeleton */}
+                    <div className="grid gap-4 lg:grid-cols-3">
+                        <Card className="lg:col-span-2 h-[400px]">
+                            <CardHeader>
+                                <Skeleton className="h-6 w-48 mb-2" />
+                                <Skeleton className="h-4 w-64" />
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                {[...Array(4)].map((_, i) => (
+                                    <div key={i} className="space-y-2">
+                                        <Skeleton className="h-4 w-full" />
+                                        <Skeleton className="h-2 w-full" />
+                                    </div>
+                                ))}
+                            </CardContent>
+                        </Card>
+                        <div className="space-y-4">
+                            <Skeleton className="h-48 w-full" />
+                            <Skeleton className="h-32 w-full" />
+                            <Skeleton className="h-48 w-full" />
+                        </div>
+                    </div>
                 </div>
             ) : (
                 <div className="space-y-6 animate-fade-in">
                     {/* Welcome Section */}
-                    <div className="flex flex-col space-y-0">
+                    <div className="flex flex-col space-y-0 text-left">
                         <h1 className="text-3xl font-bold tracking-tight">
                             Welcome back, {user?.first_name || "Admin"}
                         </h1>

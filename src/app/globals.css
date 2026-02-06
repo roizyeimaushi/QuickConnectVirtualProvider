@@ -397,11 +397,23 @@ body::-webkit-scrollbar,
 
   .animate-shimmer {
     background: linear-gradient(90deg,
-        var(--muted) 0%,
-        var(--muted-foreground) 50%,
-        var(--muted) 100%);
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.4) 50%,
+        rgba(255, 255, 255, 0) 100%);
+    background-color: var(--muted);
     background-size: 200% 100%;
-    animation: shimmer 1.5s ease-in-out infinite;
+    animation: shimmer 2s infinite linear;
+    border-radius: var(--radius);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .dark .animate-shimmer {
+    background: linear-gradient(90deg,
+        rgba(0, 0, 0, 0) 0%,
+        rgba(255, 255, 255, 0.05) 50%,
+        rgba(0, 0, 0, 0) 100%);
+    background-color: var(--muted);
   }
 }
 

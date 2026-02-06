@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -328,7 +329,46 @@ export default function AttendanceHistoryPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        {loading ? null : records.length === 0 ? (
+                        {loading && records.length === 0 ? (
+                            <div className="space-y-4">
+                                {/* Skeleton Table */}
+                                <div className="hidden md:block">
+                                    <div className="border rounded-md">
+                                        <div className="p-0">
+                                            {[...Array(6)].map((_, i) => (
+                                                <div key={i} className="p-4 border-b last:border-0">
+                                                    <div className="grid grid-cols-7 gap-4 items-center">
+                                                        <Skeleton className="h-4 w-full" />
+                                                        <Skeleton className="h-4 w-full" />
+                                                        <Skeleton className="h-4 w-full" />
+                                                        <Skeleton className="h-4 w-full" />
+                                                        <Skeleton className="h-4 w-full" />
+                                                        <Skeleton className="h-4 w-full" />
+                                                        <Skeleton className="h-8 w-8 rounded-md mx-auto" />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                                {/* Skeleton Cards (Mobile) */}
+                                <div className="md:hidden space-y-3">
+                                    {[...Array(3)].map((_, i) => (
+                                        <div key={i} className="border rounded-lg p-4 space-y-3">
+                                            <div className="flex justify-between">
+                                                <Skeleton className="h-4 w-32" />
+                                                <Skeleton className="h-6 w-16 rounded-full" />
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <Skeleton className="h-10 w-full" />
+                                                <Skeleton className="h-10 w-full" />
+                                            </div>
+                                            <Skeleton className="h-8 w-full" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : records.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-12 text-center">
                                 <History className="h-12 w-12 text-muted-foreground mb-4" />
                                 <h3 className="text-lg font-semibold">No records found</h3>

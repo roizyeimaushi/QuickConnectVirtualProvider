@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -131,6 +132,40 @@ export default function EmployeeProfilePage() {
             setLoading(false);
         }
     };
+
+    if (initialLoading) {
+        return (
+            <DashboardLayout title="Profile">
+                <div className="max-w-2xl mx-auto space-y-6 animate-fade-in">
+                    <Skeleton className="h-10 w-32" />
+                    <div className="space-y-2">
+                        <Skeleton className="h-10 w-64" />
+                        <Skeleton className="h-4 w-48" />
+                    </div>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center gap-4">
+                            <Skeleton className="h-20 w-20 rounded-full" />
+                            <div className="space-y-2">
+                                <Skeleton className="h-6 w-40" />
+                                <Skeleton className="h-4 w-24" />
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="grid grid-cols-2 gap-4">
+                                <Skeleton className="h-12 w-full" />
+                                <Skeleton className="h-12 w-full" />
+                            </div>
+                            <Skeleton className="h-12 w-full" />
+                            <div className="grid grid-cols-2 gap-4">
+                                <Skeleton className="h-12 w-full" />
+                                <Skeleton className="h-12 w-full" />
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </DashboardLayout>
+        );
+    }
 
     return (
         <DashboardLayout title="Profile">

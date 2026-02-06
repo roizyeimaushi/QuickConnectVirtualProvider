@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import {
     Table,
@@ -280,8 +281,56 @@ export default function EmployeesPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        {loading ? (
-                            null
+                        {loading && employees.length === 0 ? (
+                            <div className="space-y-4">
+                                <div className="hidden md:block">
+                                    <div className="border rounded-md">
+                                        <div className="bg-muted/30 p-4 border-b">
+                                            <div className="grid grid-cols-7 gap-4">
+                                                {[...Array(7)].map((_, i) => (
+                                                    <Skeleton key={i} className="h-4 w-20" />
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="p-0">
+                                            {[...Array(5)].map((_, i) => (
+                                                <div key={i} className="p-4 border-b last:border-0">
+                                                    <div className="grid grid-cols-7 gap-4 items-center">
+                                                        <div className="flex items-center gap-3 col-span-1">
+                                                            <Skeleton className="h-9 w-9 rounded-full" />
+                                                            <Skeleton className="h-4 w-24" />
+                                                        </div>
+                                                        <Skeleton className="h-4 w-32" />
+                                                        <Skeleton className="h-6 w-16 mx-auto" />
+                                                        <Skeleton className="h-4 w-24 mx-auto" />
+                                                        <Skeleton className="h-6 w-16 mx-auto" />
+                                                        <Skeleton className="h-6 w-24 mx-auto" />
+                                                        <Skeleton className="h-8 w-8 rounded-md mx-auto" />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="md:hidden space-y-3">
+                                    {[...Array(3)].map((_, i) => (
+                                        <div key={i} className="border rounded-lg p-4 space-y-3">
+                                            <div className="flex items-center gap-3">
+                                                <Skeleton className="h-12 w-12 rounded-full" />
+                                                <div className="space-y-2">
+                                                    <Skeleton className="h-4 w-32" />
+                                                    <Skeleton className="h-3 w-24" />
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <Skeleton className="h-10 w-full" />
+                                                <Skeleton className="h-10 w-full" />
+                                            </div>
+                                            <Skeleton className="h-4 w-full" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         ) : employees.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-12 text-center">
                                 <Users className="h-12 w-12 text-muted-foreground mb-4" />
