@@ -888,8 +888,6 @@ class AttendanceRecordController extends Controller
                     $finalOtMinutes = $rawOtMinutes;
 
                     // Apply Rounding
-                    // Example: 'down_30' -> floor to nearest 30 mins, 'up_30' -> ceil, 'nearest_15', etc.
-                    // For now supporting 'none', 'down_15', 'down_30', 'down_60'
                     if (str_starts_with($roundingRule, 'down_')) {
                         $interval = (int) explode('_', $roundingRule)[1];
                         if ($interval > 0) {
@@ -899,6 +897,11 @@ class AttendanceRecordController extends Controller
 
                     $attendanceRecord->overtime_minutes = $finalOtMinutes;
                     $attendanceRecord->overtime_status = $requireApproval ? 'pending' : 'approved';
+                }
+            } elseif ($now->lt($shiftEnd) && $attendanceRecord->status !== 'excused') {
+                // Determine if it's a significant early leave (more than 5 mins before shift end)
+                if ($shiftEnd->diffInMinutes($now) > 5) {
+                    $attendanceRecord->status = 'left_early';
                 }
             }
         }

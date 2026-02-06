@@ -244,7 +244,13 @@ export default function SessionDetailsPage() {
     };
 
     if (loading) {
-        return null; // Or a loading spinner if preferred, but keeping it minimal as requested
+        return (
+            <DashboardLayout title="Session Details">
+                <div className="flex items-center justify-center py-20">
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                </div>
+            </DashboardLayout>
+        );
     }
 
     if (!session) {
@@ -270,9 +276,9 @@ export default function SessionDetailsPage() {
 
     return (
         <DashboardLayout title="Session Details">
-            <div className="space-y-6">
+            <div className="space-y-6 animate-fade-in">
                 {/* Header */}
-                <div className="flex items-center gap-4 animate-fade-in">
+                <div className="flex items-center gap-4">
                     <Button variant="ghost" size="icon" asChild>
                         <Link href="/attendance/sessions">
                             <ArrowLeft className="h-4 w-4" />
@@ -301,7 +307,7 @@ export default function SessionDetailsPage() {
                     </div>
                 </div>
 
-                <div className="grid gap-6 md:grid-cols-2 animate-fade-in stagger-1">
+                <div className="grid gap-6 md:grid-cols-2">
                     {/* Session Info Card */}
                     <Card>
                         <CardHeader>
@@ -382,45 +388,38 @@ export default function SessionDetailsPage() {
                         </CardHeader>
                         <CardContent className="pt-5 pb-5">
                             <div className="grid gap-6 md:grid-cols-2">
-                                <div className="space-y-2">
-                                    <div className="flex items-center gap-2">
-                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Attendance Required</p>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        {session.status === 'locked' ? (
-                                            session.attendance_required ? (
-                                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">
-                                                    <CheckCircle2 className="h-4 w-4" />
-                                                    MANDATORY
-                                                </div>
+                                <div className="space-y-4">
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Decision</p>
+                                        <div className="flex items-center gap-2">
+                                            {session.status === 'locked' ? (
+                                                <Badge className="bg-emerald-600 text-white border-none text-[10px] font-bold">LOCKED & APPROVED</Badge>
+                                            ) : session.status === 'completed' ? (
+                                                <Badge variant="outline" className="border-amber-500 text-amber-600 bg-amber-50 text-[10px] font-bold">AWAITING REVIEW</Badge>
                                             ) : (
-                                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold">
-                                                    <AlertTriangle className="h-4 w-4" />
-                                                    SUSPENDED / VOLUNTARY
-                                                </div>
-                                            )
-                                        ) : (
-                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 text-slate-500 border border-slate-200 text-xs italic">
-                                                <Clock className="h-3.5 w-3.5" />
-                                                Decision Pending
-                                            </div>
-                                        )}
+                                                <Badge variant="outline" className="border-blue-500 text-blue-600 bg-blue-50 text-[10px] font-bold uppercase">{session.status}</Badge>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Protocol</p>
+                                        <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                            {session.attendance_required ? "Auto-mark ABSENT if not present" : "Excused / Voluntary Attendance"}
+                                        </p>
                                     </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                                        {session.status === 'locked' ? 'Finalized By' : 'Review Responsibility'}
-                                    </p>
-                                    <div className="flex items-center gap-3">
+                                <div className="space-y-4">
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Review Responsibility</p>
                                         <div className="flex items-center gap-2 text-sm">
-                                            <div className="h-7 w-7 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden border border-slate-300">
+                                            <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border border-primary/20">
                                                 {session.locked_by_user?.avatar ? (
                                                     <img src={session.locked_by_user.avatar} className="object-cover h-full w-full" />
                                                 ) : (
-                                                    <User className="h-4 w-4 text-slate-500" />
+                                                    <User className="h-3 w-3 text-primary" />
                                                 )}
                                             </div>
-                                            <span className="font-bold underline decoration-slate-300 underline-offset-4">
+                                            <span className="font-bold text-xs uppercase tracking-tight">
                                                 {session.status === 'locked' ? (session.locked_by_user?.name || "Administrator") : "Admin Group"}
                                             </span>
                                         </div>
@@ -432,7 +431,7 @@ export default function SessionDetailsPage() {
                 </div>
 
                 {/* Attendance Records Table */}
-                <Card className="animate-fade-in stagger-2">
+                <Card>
                     <CardHeader>
                         <CardTitle>Attendance Records</CardTitle>
                         <CardDescription>
@@ -616,12 +615,11 @@ export default function SessionDetailsPage() {
                                                                         </Badge>
                                                                     ) : null}
                                                                     <span className={`font-mono text-xs ${isOnBreak ? 'font-bold text-amber-700' : ''}`}>
-                                                                        {totalMinutes > 0 ? `${totalMinutes}m` : '0m'}
+                                                                        {(totalMinutes > 0 || isOnBreak) ? '1h 30m' : '-'}
                                                                     </span>
-                                                                    {/* Show latest break times if available for context */}
-                                                                    {record.break_start && !hasBreaks && (
-                                                                        <span className="text-[10px] text-muted-foreground mt-0.5">
-                                                                            {formatTime24(record.break_start)} - {record.break_end ? formatTime24(record.break_end) : '...'}
+                                                                    {(totalMinutes > 0 || isOnBreak) && (
+                                                                        <span className="text-[10px] text-muted-foreground mt-0.5 opacity-70">
+                                                                            {record.break_start ? formatTime24(record.break_start) : ''} - {record.break_end ? formatTime24(record.break_end) : '...'}
                                                                         </span>
                                                                     )}
                                                                 </div>
