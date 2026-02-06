@@ -106,15 +106,15 @@
   --chart-4: #f59e0b;
   --chart-5: #ef4444;
 
-  /* Sidebar - 2nd Image Reference Design */
-  --sidebar: #102a1e;
+  /* Sidebar - Image 1 Reference Design */
+  --sidebar: #06160e;
   --sidebar-foreground: #ffffff;
-  --sidebar-primary: #3da36e;
+  --sidebar-primary: #2e8b57;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #204533;
+  --sidebar-accent: #112a1f;
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: rgba(255, 255, 255, 0.05);
-  --sidebar-ring: #3da36e;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: #2e8b57;
 }
 
 .dark {
@@ -183,11 +183,18 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .font-mono,
+  .font-mono * {
+    font-family: var(--font-mono) !important;
   }
 
   html,
   body {
     @apply overflow-x-hidden;
+    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   }
 
   body {

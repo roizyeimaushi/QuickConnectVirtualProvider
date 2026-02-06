@@ -101,17 +101,17 @@ export function AppSidebar() {
     const logoUrl = getLogoUrl(settings?.system_logo);
 
     return (
-        <Sidebar collapsible="none" className="shadow-2xl">
-            <SidebarHeader className="p-5 pb-2">
+        <Sidebar collapsible="icon" className="border-r border-white/5">
+            <SidebarHeader className="p-4">
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild className="hover:bg-transparent transition-all">
-                            <Link href={isAdmin ? "/dashboard/admin" : "/dashboard/employee"} className="flex items-center gap-2.5">
-                                <div className="flex items-center justify-center overflow-hidden">
+                            <Link href={isAdmin ? "/dashboard/admin" : "/dashboard/employee"} className="flex items-center gap-3">
+                                <div className="flex items-center justify-center shrink-0">
                                     <img
                                         src={logoUrl}
                                         alt="Logo"
-                                        className="h-7 w-auto object-contain filter brightness-0 invert"
+                                        className="h-8 w-auto object-contain filter brightness-0 invert"
                                         onError={(e) => {
                                             e.currentTarget.src = "/quickconnect-logo.png";
                                             e.currentTarget.onerror = null;
@@ -119,7 +119,7 @@ export function AppSidebar() {
                                     />
                                 </div>
                                 <div className="flex flex-col items-start group-data-[collapsible=icon]:hidden">
-                                    <span className="font-bold text-[17px] text-white tracking-tight leading-none">
+                                    <span className="font-bold text-[16px] text-white tracking-tight leading-none">
                                         {settings?.company_name || "QuickConn Virtual"}
                                     </span>
                                 </div>
@@ -129,14 +129,14 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            <SidebarContent className="px-3">
+            <SidebarContent className="px-2">
                 {navItems.map((group) => (
-                    <SidebarGroup key={group.label} className="mt-6 first:mt-2">
-                        <SidebarGroupLabel className="text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-400/70 px-3 mb-2">
+                    <SidebarGroup key={group.label} className="mt-4">
+                        <SidebarGroupLabel className="text-[12px] font-medium text-white/60 px-4 mb-2 group-data-[collapsible=icon]:hidden">
                             {group.label}
                         </SidebarGroupLabel>
                         <SidebarGroupContent>
-                            <SidebarMenu className="gap-0.5">
+                            <SidebarMenu className="gap-1">
                                 {group.items.map((item) => {
                                     const Icon = iconMap[item.icon] || LayoutDashboard;
                                     const isActive = item.url
@@ -156,24 +156,24 @@ export function AppSidebar() {
                                                     <CollapsibleTrigger asChild>
                                                         <SidebarMenuButton
                                                             tooltip={item.title}
-                                                            className={`h-11 px-3 rounded-lg transition-all duration-150 ${shouldBeOpen ? 'bg-white/5' : 'hover:bg-white/5 group/btn'}`}
+                                                            className={`h-10 px-3 rounded-lg transition-all ${shouldBeOpen ? 'bg-white/5' : 'hover:bg-white/5 group/btn'}`}
                                                         >
-                                                            <Icon className={`size-4 ${isActive || isSubItemActive ? 'text-emerald-400' : 'text-white/60 group-hover/btn:text-white'}`} />
-                                                            <span className="font-medium text-white text-[13.5px]">{item.title}</span>
-                                                            <ChevronRight className="ml-auto size-3.5 text-white/30 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                                                            <Icon className={`size-4 ${isActive || isSubItemActive ? 'text-white' : 'text-white/50 group-hover/btn:text-white'}`} />
+                                                            <span className="text-white text-[13.5px] group-data-[collapsible=icon]:hidden">{item.title}</span>
+                                                            <ChevronRight className="ml-auto size-3.5 text-white/30 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 group-data-[collapsible=icon]:hidden" />
                                                         </SidebarMenuButton>
                                                     </CollapsibleTrigger>
-                                                    <CollapsibleContent className="animate-collapsible-down">
-                                                        <SidebarMenuSub className="border-l border-emerald-500/20 ml-5 pl-3 mt-1 gap-1">
+                                                    <CollapsibleContent className="animate-collapsible-down group-data-[collapsible=icon]:hidden">
+                                                        <SidebarMenuSub className="border-l border-white/10 ml-5 pl-3 mt-1 gap-1">
                                                             {item.items.map((subItem) => (
                                                                 <SidebarMenuSubItem key={subItem.title}>
                                                                     <SidebarMenuSubButton
                                                                         asChild
                                                                         isActive={pathname === subItem.url}
-                                                                        className={`rounded-md h-9 px-3 transition-all duration-150 ${pathname === subItem.url ? 'bg-emerald-500/10 text-emerald-400 font-bold' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+                                                                        className={`rounded-md h-9 px-3 transition-all ${pathname === subItem.url ? 'bg-primary/20 text-white font-medium' : 'text-white/50 hover:text-white hover:bg-white/5'}`}
                                                                     >
                                                                         <Link href={subItem.url}>
-                                                                            <span className="text-[12.5px]">{subItem.title}</span>
+                                                                            <span className="text-[13px]">{subItem.title}</span>
                                                                         </Link>
                                                                     </SidebarMenuSubButton>
                                                                 </SidebarMenuSubItem>
@@ -191,11 +191,11 @@ export function AppSidebar() {
                                                 asChild
                                                 isActive={isActive}
                                                 tooltip={item.title}
-                                                className={`h-11 px-3 rounded-lg transition-all duration-150 ${isActive ? 'bg-emerald-500/15 text-emerald-400 font-bold' : 'hover:bg-white/5 text-white/70 hover:text-white group/btn'}`}
+                                                className={`h-10 px-3 rounded-lg transition-all ${isActive ? 'bg-primary text-white font-medium' : 'hover:bg-white/5 text-white/60 hover:text-white group/btn'}`}
                                             >
                                                 <Link href={item.url}>
-                                                    <Icon className={`size-4 ${isActive ? 'text-emerald-400' : 'text-white/60 group-hover/btn:text-white'}`} />
-                                                    <span className="text-[13.5px] font-medium">{item.title}</span>
+                                                    <Icon className={`size-4 ${isActive ? 'text-white' : 'text-white/50 group-hover/btn:text-white'}`} />
+                                                    <span className="text-[13.5px] group-data-[collapsible=icon]:hidden">{item.title}</span>
                                                 </Link>
                                             </SidebarMenuButton>
                                         </SidebarMenuItem>
@@ -214,11 +214,11 @@ export function AppSidebar() {
                             <DropdownMenuTrigger asChild>
                                 <SidebarMenuButton
                                     size="lg"
-                                    className="data-[state=open]:bg-white/5 rounded-lg transition-all duration-200 p-2 h-12"
+                                    className="data-[state=open]:bg-white/5 rounded-lg transition-all p-2 h-12"
                                 >
-                                    <Avatar className="h-8 w-8 rounded-md border border-white/10">
+                                    <Avatar className="h-8 w-8 rounded-full border border-white/10">
                                         <AvatarImage src={user?.avatar} alt={user?.first_name} />
-                                        <AvatarFallback className="rounded-md bg-emerald-500/10 text-emerald-400 text-xs font-bold">
+                                        <AvatarFallback className="rounded-full bg-white/10 text-white text-xs font-bold">
                                             {getInitials(user?.first_name, user?.last_name)}
                                         </AvatarFallback>
                                     </Avatar>
@@ -230,7 +230,7 @@ export function AppSidebar() {
                                             {user?.first_name} {user?.last_name}
                                         </span>
                                     </div>
-                                    <ChevronRight className="ml-auto size-3.5 text-white/20" />
+                                    <ChevronRight className="ml-auto size-3.5 text-white/20 group-data-[collapsible=icon]:hidden" />
                                 </SidebarMenuButton>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent
@@ -298,10 +298,10 @@ export function DashboardHeader({ title, children }) {
     const breadcrumbs = getBreadcrumbs();
 
     return (
-        <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b bg-background/80 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-6 transition-all">
-            <div className="flex items-center gap-4">
-                <SidebarTrigger className="h-9 w-9 border shadow-sm rounded-lg hover:bg-muted md:hidden" />
-                <Separator orientation="vertical" className="h-6 hidden sm:block" />
+        <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40 px-4">
+            <div className="flex items-center gap-2">
+                <SidebarTrigger className="h-8 w-8 text-muted-foreground hover:text-foreground transition-colors" />
+                <Separator orientation="vertical" className="mr-2 h-4 hidden sm:block" />
                 <Breadcrumb className="hidden md:block">
                     <BreadcrumbList>
                         {breadcrumbs.map((crumb, index) => (
