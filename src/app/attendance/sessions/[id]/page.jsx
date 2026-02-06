@@ -662,19 +662,28 @@ export default function SessionDetailsPage() {
                                                                     if (b.duration_minutes) {
                                                                         totalMinutes += b.duration_minutes;
                                                                     } else if (!b.break_end && b.break_start) {
-                                                                        isOnBreak = true;
-                                                                        // Estimate current duration roughly or just flagging
-                                                                        const start = new Date(b.break_start);
-                                                                        const now = new Date();
-                                                                        const diff = Math.floor((now - start) / 60000);
-                                                                        totalMinutes += diff;
+                                                                        const isToday = new Date(session.date).toDateString() === new Date().toDateString();
+                                                                        if (isToday) {
+                                                                            isOnBreak = true;
+                                                                            const start = new Date(b.break_start);
+                                                                            const now = new Date();
+                                                                            const diff = Math.floor((now - start) / 60000);
+                                                                            totalMinutes += diff;
+                                                                        }
+                                                                        // If not today, we don't add ongoing time to minutes
                                                                     }
                                                                 });
                                                             } else if (record.break_start) {
                                                                 // Legacy fallback
                                                                 const start = new Date(record.break_start);
-                                                                const end = record.break_end ? new Date(record.break_end) : new Date();
-                                                                if (!record.break_end) isOnBreak = true;
+
+                                                                // If session is old, don't use 'now' as it creates 7000+ min durations
+                                                                const isToday = new Date(session.date).toDateString() === new Date().toDateString();
+                                                                const end = record.break_end
+                                                                    ? new Date(record.break_end)
+                                                                    : (isToday ? new Date() : (record.time_out ? new Date(record.time_out) : start));
+
+                                                                if (!record.break_end && isToday) isOnBreak = true;
                                                                 totalMinutes = Math.floor((end - start) / 60000);
                                                             }
 

@@ -213,17 +213,13 @@ export default function AdminLoginPage() {
                     </div>
 
                     {/* Login Button */}
-                    <button
+                    <Button
                         type="submit"
-                        disabled={loading}
-                        className="w-full h-12 mt-4 bg-transparent border border-emerald-500 text-emerald-500 rounded-xl text-base font-bold transition-all duration-300 hover:bg-emerald-500/10 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                        loading={loading}
+                        className="w-full h-12 mt-4 bg-transparent border border-emerald-500 text-emerald-500 rounded-xl text-base font-bold transition-all duration-300 hover:bg-emerald-500/10 active:scale-[0.98] disabled:opacity-50"
                     >
-                        {loading ? (
-                            <Loader2 className="h-5 w-5 animate-spin" />
-                        ) : (
-                            "Login"
-                        )}
-                    </button>
+                        Login
+                    </Button>
                 </form>
             </div>
         </div>

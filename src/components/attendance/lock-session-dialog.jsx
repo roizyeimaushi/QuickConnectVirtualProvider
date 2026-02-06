@@ -124,10 +124,10 @@ export function LockSessionDialog({ session, open, onOpenChange, onConfirm }) {
                     <DialogFooter className="flex flex-col gap-3 sm:flex-row sm:justify-end sm:space-x-2 sm:space-y-0">
                         <Button
                             type="submit"
-                            disabled={loading}
+                            loading={loading}
                             className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white font-semibold py-6 sm:py-2 order-1 sm:order-2"
                         >
-                            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Finalize & Lock Session"}
+                            Finalize & Lock Session
                         </Button>
                         <Button
                             type="button"

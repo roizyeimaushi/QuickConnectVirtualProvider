@@ -181,19 +181,43 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                                 </p>
                             </div>
                         </div>
-                        <div className="text-right">
-                            <p className="text-[10px] font-bold text-muted-foreground uppercase">Current Status</p>
-                            <Badge variant="outline" className={`capitalize ${totals.autoStatus === 'present' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                                totals.autoStatus === 'late' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                                    totals.autoStatus === 'absent' ? 'bg-red-50 text-red-700 border-red-200' :
-                                        'bg-blue-50 text-blue-700 border-blue-200'
-                                }`}>
-                                {totals.autoStatus}
-                            </Badge>
+                    </div>
+
+                    {/* Status and Time Inputs */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="status" className="text-xs font-bold uppercase text-muted-foreground">Status Override</Label>
+                            <Select
+                                value={formData.status}
+                                onValueChange={(val) => setFormData({ ...formData, status: val })}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="present">Present</SelectItem>
+                                    <SelectItem value="late">Late</SelectItem>
+                                    <SelectItem value="absent">Absent</SelectItem>
+                                    <SelectItem value="excused">Excused</SelectItem>
+                                    <SelectItem value="left_early">Left Early</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label className="text-xs font-bold uppercase text-muted-foreground invisible">Placeholder</Label>
+                            <div className="flex items-center justify-end h-10 px-3 rounded-md border bg-slate-50 dark:bg-slate-900">
+                                <span className="text-xs font-bold text-muted-foreground mr-2">Calculated:</span>
+                                <Badge variant="outline" className={`capitalize text-[10px] ${totals.autoStatus === 'present' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                    totals.autoStatus === 'late' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                        totals.autoStatus === 'absent' ? 'bg-red-50 text-red-700 border-red-200' :
+                                            'bg-blue-50 text-blue-700 border-blue-200'
+                                    }`}>
+                                    {totals.autoStatus}
+                                </Badge>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Time Inputs */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
                             <Label htmlFor="time_in" className="text-xs font-bold uppercase text-muted-foreground">Time In</Label>
@@ -294,8 +318,8 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                         <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="h-11 sm:h-10 order-2 sm:order-1 flex-1 sm:flex-none">
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={loading} className="px-8 h-11 sm:h-10 order-1 sm:order-2 flex-1 sm:flex-none">
-                            {loading ? "Saving..." : "Apply Correction"}
+                        <Button type="submit" loading={loading} className="px-8 h-11 sm:h-10 order-1 sm:order-2 flex-1 sm:flex-none">
+                            Apply Correction
                         </Button>
                     </DialogFooter>
                 </form>
