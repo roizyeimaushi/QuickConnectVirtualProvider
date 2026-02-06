@@ -1385,6 +1385,7 @@ class AttendanceRecordController extends Controller
         $this->syncAllSessionStatuses();
 
         $today = $this->getToday();
+        $realToday = Carbon::today()->toDateString();
 
         // 2. Find the most relevant session for today
         // Priority: Active > Pending (if within time window)
@@ -1393,6 +1394,17 @@ class AttendanceRecordController extends Controller
                                     ->whereIn('status', ['active', 'pending'])
                                     ->orderByRaw("CASE WHEN status = 'active' THEN 1 ELSE 2 END")
                                     ->first();
+
+        // FALLBACK: If logically and truly different, and logically has nothing, check true today
+        if (!$session && $today !== $realToday) {
+            $session = AttendanceSession::with('schedule')
+                                    ->whereDate('date', $realToday)
+                                    ->whereIn('status', ['active', 'pending', 'locked'])
+                                    ->first();
+            if ($session) {
+                $today = $realToday;
+            }
+        }
 
         // FALLBACK: Check yesterday's active session (for overnight shifts)
         if (!$session) {

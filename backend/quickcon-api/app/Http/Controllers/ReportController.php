@@ -174,24 +174,22 @@ class ReportController extends Controller
                     ->first();
             }
 
-            // D. Handle Overnight Roll-over Fallback
+            // D. Handle Overnight Roll-over / Early Access Fallback
+            // If logically today is yesterday (overnight gap), but no session exists for it,
+            // check if there's a session for "real today".
             if (!$todaySession && $today !== $realToday) {
-                 $completedYesterday = AttendanceRecord::where('user_id', $user->id)
-                     ->where('attendance_date', $today)
-                     ->whereNotNull('time_out')
-                     ->exists();
-                     
-                 if ($completedYesterday) {
-                     $today = $realToday;
-                     $todaySession = AttendanceSession::whereDate('date', $today)
-                        ->whereIn('status', ['active', 'locked'])
-                        ->whereHas('records', function($q) use ($user) {
-                            $q->where('user_id', $user->id);
-                        })
-                        ->first() ?: AttendanceSession::whereDate('date', $today)
-                            ->whereIn('status', ['active', 'locked'])
-                            ->first();
-                 }
+                 $todaySession = AttendanceSession::whereDate('date', $realToday)
+                    ->whereIn('status', ['active', 'locked', 'pending'])
+                    ->whereHas('records', function($q) use ($user) {
+                        $q->where('user_id', $user->id);
+                    })
+                    ->first() ?: AttendanceSession::whereDate('date', $realToday)
+                        ->whereIn('status', ['active', 'locked', 'pending'])
+                        ->first();
+                
+                if ($todaySession) {
+                    $today = $realToday;
+                }
             }
         }
 
