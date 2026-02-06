@@ -62,6 +62,7 @@ import {
     Timer,
 } from "lucide-react";
 import { getInitials } from "@/lib/utils";
+import { API_BASE_URL } from "@/lib/constants";
 import { NotificationsPopover } from "@/components/notifications-popover";
 
 // ... imports
@@ -103,6 +104,16 @@ export function AppSidebar() {
 
 
 
+    // Construct properly prefixed logo URL if it's a relative path from backend
+    const logoUrl = React.useMemo(() => {
+        if (!settings?.system_logo) return "/quickconnect-logo.png";
+        if (settings.system_logo.startsWith("http")) return settings.system_logo;
+
+        // Handle Laravel storage paths
+        const backendRoot = API_BASE_URL.replace("/api", "");
+        return `${backendRoot}/storage/${settings.system_logo.replace(/^\/?storage\//, "")}`;
+    }, [settings?.system_logo]);
+
     return (
         <Sidebar collapsible={hideSidebar ? "offcanvas" : "icon"}>
             <SidebarHeader>
@@ -111,7 +122,15 @@ export function AppSidebar() {
                         <SidebarMenuButton size="lg" asChild>
                             <Link href={isAdmin ? "/dashboard/admin" : "/dashboard/employee"}>
                                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg overflow-hidden">
-                                    <img src={settings?.system_logo || "/logo.png"} alt="Logo" className="size-8 object-contain" />
+                                    <img
+                                        src={logoUrl}
+                                        alt="Logo"
+                                        className="size-8 object-contain"
+                                        onError={(e) => {
+                                            e.currentTarget.src = "/quickconnect-logo.png";
+                                            e.currentTarget.onerror = null; // Prevent infinite loop
+                                        }}
+                                    />
                                 </div>
                                 <div className="flex flex-1 items-center text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                                     <span className="truncate font-semibold">{settings?.company_name || "QuickConn Virtual"}</span>

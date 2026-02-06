@@ -275,24 +275,33 @@ class AttendanceSessionController extends Controller
         $activeEmployees = \App\Models\User::where('role', 'employee')->where('status', 'active')->get();
         
         foreach ($activeEmployees as $employee) {
-            $record = \App\Models\AttendanceRecord::firstOrNew([
-                'user_id' => $employee->id,
-                'session_id' => $attendanceSession->id,
-                'attendance_date' => $attendanceSession->date->toDateString(),
-            ]);
+            // Check if user already has a record for this DATE (Global unique constraint)
+            $record = \App\Models\AttendanceRecord::where('user_id', $employee->id)
+                ->where('attendance_date', $attendanceSession->date->toDateString())
+                ->first();
 
-            // Only update if it's a new record or still pending
-            if (!$record->exists || $record->status === 'pending') {
-                $record->status = $finalStatus;
-                if (!$record->exists) {
-                    $record->created_by = auth()->id();
-                }
-                // Only set excuse_reason if we are marking as excused
-                if ($finalStatus === 'excused') {
-                    $record->excuse_reason = $reason;
-                }
-                $record->save();
+            // Case A: No record exists AT ALL for this day
+            if (!$record) {
+                \App\Models\AttendanceRecord::create([
+                    'user_id' => $employee->id,
+                    'session_id' => $attendanceSession->id,
+                    'attendance_date' => $attendanceSession->date->toDateString(),
+                    'status' => $finalStatus,
+                    'excuse_reason' => $finalStatus === 'excused' ? $reason : null,
+                ]);
+                continue;
             }
+
+            // Case B: Record exists but it's still 'pending' or was never finalized
+            if ($record->status === 'pending') {
+                $record->update([
+                    'status' => $finalStatus,
+                    'excuse_reason' => ($finalStatus === 'excused' && !$record->excuse_reason) ? $reason : $record->excuse_reason,
+                    'session_id' => $attendanceSession->id, // Attribute this record to the locking session
+                ]);
+            }
+            
+            // Case C: Record is already 'present', 'late', etc. -> LEAVE ALONE
         }
 
         // Broadcast real-time session update
@@ -368,7 +377,6 @@ class AttendanceSessionController extends Controller
 
         return response()->json($query->orderBy('locked_at', 'desc')->paginate(20));
     }
-
     /**
      * Rule 1 & 3: Automated Lifecycle Management
      * Synchronizes Active/Pending/Completed states based on wall-clock time and schedules.
@@ -379,28 +387,25 @@ class AttendanceSessionController extends Controller
         $boundary = (int) (\App\Models\Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
         $today = ($now->hour < $boundary ? Carbon::yesterday() : Carbon::today())->startOfDay();
 
-        // 1. Auto-Activate: Pending sessions whose date has arrived
-        AttendanceSession::where('status', 'pending')
-            ->where('date', '<=', $today)
-            ->update(['status' => 'active']);
-
-        // 2. Auto-Complete: Overdue active sessions
-        $activeSessions = AttendanceSession::where('status', 'active')
+        // Fetch all non-locked sessions for today or earlier that are not yet completed correctly.
+        $sessions = AttendanceSession::whereIn('status', ['pending', 'active'])
             ->where('date', '<=', $today)
             ->with('schedule')
             ->get();
 
-        foreach ($activeSessions as $session) {
+        foreach ($sessions as $session) {
             if (!$session->schedule) {
-                // If it's old (more than 24h), just close it
-                if ($session->date->addDay()->isPast()) $session->update(['status' => 'completed']);
+                // Heuristic for sessions without a schedule: If active and date is past, complete it.
+                if ($session->status === 'active' && $session->date->addDay()->isPast()) {
+                    $session->update(['status' => 'completed']);
+                }
                 continue;
             }
 
             $schedule = $session->schedule;
             $sessionDate = $session->date->format('Y-m-d');
             
-            // Shift End Calculation
+            // Calculate exact start and end times
             $shiftStart = Carbon::parse("$sessionDate {$schedule->time_in}");
             $shiftEnd = Carbon::parse("$sessionDate {$schedule->time_out}");
             
@@ -409,10 +414,29 @@ class AttendanceSessionController extends Controller
                 $shiftEnd->addDay();
             }
 
-            // Completion check: If current time is past shift end, session is completed.
-            if ($now->gt($shiftEnd)) {
-                $session->update(['status' => 'completed']);
-                event(new SessionUpdated($session, 'completed'));
+            $oldStatus = $session->status;
+            $newStatus = $oldStatus;
+
+            if ($now->lt($shiftStart)) {
+                // 1. Upcoming Phase
+                $newStatus = 'pending';
+            } elseif ($now->gte($shiftStart) && $now->lte($shiftEnd)) {
+                // 2. Live Phase
+                $newStatus = 'active';
+            } else {
+                // 3. Completed Phase
+                $newStatus = 'completed';
+            }
+
+            if ($newStatus !== $oldStatus) {
+                $session->update(['status' => $newStatus]);
+                
+                // Optional: Broadcast or Log transitions
+                if ($newStatus === 'active') {
+                    event(new SessionUpdated($session, 'opened'));
+                } elseif ($newStatus === 'completed') {
+                    event(new SessionUpdated($session, 'completed'));
+                }
             }
         }
     }

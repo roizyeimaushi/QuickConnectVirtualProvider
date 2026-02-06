@@ -31,6 +31,14 @@ import {
 import { useAuth } from "@/components/providers/auth-provider";
 import { EditBreakDialog } from "@/components/attendance/edit-break-dialog";
 import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
     AlertDialog,
     AlertDialogAction,
     AlertDialogCancel,
@@ -40,6 +48,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { MoreHorizontal } from "lucide-react";
 
 
 
@@ -280,28 +289,35 @@ export default function BreakHistoryPage() {
                                                     </div>
                                                 </div>
                                                 {user?.role === 'admin' && (
-                                                    <div className="flex gap-2 pt-2 border-t mt-2">
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            className="flex-1"
-                                                            onClick={() => {
-                                                                setEditingRecord(record);
-                                                                setIsEditDialogOpen(true);
-                                                            }}
-                                                        >
-                                                            <Edit className="h-4 w-4 mr-2" />
-                                                            Edit
-                                                        </Button>
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                            onClick={() => handleDeleteRecord(record.id)}
-                                                        >
-                                                            <Trash2 className="h-4 w-4 mr-2" />
-                                                            Delete
-                                                        </Button>
+                                                    <div className="pt-2 border-t mt-2">
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <Button variant="outline" size="sm" className="w-full">
+                                                                    <MoreHorizontal className="h-4 w-4 mr-2" />
+                                                                    Manage Break
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end" className="w-[180px]">
+                                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                                <DropdownMenuItem
+                                                                    onClick={() => {
+                                                                        setEditingRecord(record);
+                                                                        setIsEditDialogOpen(true);
+                                                                    }}
+                                                                >
+                                                                    <Edit className="h-4 w-4 mr-2 text-muted-foreground" />
+                                                                    Edit Break
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuSeparator />
+                                                                <DropdownMenuItem
+                                                                    className="text-destructive focus:text-destructive"
+                                                                    onClick={() => handleDeleteRecord(record.id)}
+                                                                >
+                                                                    <Trash2 className="h-4 w-4 mr-2" />
+                                                                    Delete Record
+                                                                </DropdownMenuItem>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
                                                     </div>
                                                 )}
                                             </CardContent>
@@ -374,26 +390,33 @@ export default function BreakHistoryPage() {
                                                     </TableCell>
                                                     {user?.role === 'admin' && (
                                                         <TableCell className="text-center">
-                                                            <div className="flex items-center justify-center gap-1">
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="icon"
-                                                                    onClick={() => {
-                                                                        setEditingRecord(record);
-                                                                        setIsEditDialogOpen(true);
-                                                                    }}
-                                                                >
-                                                                    <Edit className="h-4 w-4" />
-                                                                </Button>
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="icon"
-                                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                                    onClick={() => handleDeleteRecord(record.id)}
-                                                                >
-                                                                    <Trash2 className="h-4 w-4" />
-                                                                </Button>
-                                                            </div>
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild>
+                                                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                                        <MoreHorizontal className="h-4 w-4" />
+                                                                    </Button>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="end" className="w-[160px]">
+                                                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                                    <DropdownMenuItem
+                                                                        onClick={() => {
+                                                                            setEditingRecord(record);
+                                                                            setIsEditDialogOpen(true);
+                                                                        }}
+                                                                    >
+                                                                        <Edit className="mr-2 h-4 w-4 text-muted-foreground" />
+                                                                        Edit Break
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuSeparator />
+                                                                    <DropdownMenuItem
+                                                                        className="text-destructive focus:text-destructive"
+                                                                        onClick={() => handleDeleteRecord(record.id)}
+                                                                    >
+                                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                                        Delete
+                                                                    </DropdownMenuItem>
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
                                                         </TableCell>
                                                     )}
                                                 </TableRow>

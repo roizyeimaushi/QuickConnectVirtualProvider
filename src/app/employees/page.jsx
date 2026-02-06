@@ -43,6 +43,7 @@ import {
     Search,
     Plus,
     MoreHorizontal,
+    Eye,
     Pencil,
     Trash2,
     UserCheck,

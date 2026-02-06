@@ -1308,14 +1308,17 @@ class AttendanceRecordController extends Controller
 
         // Sanitize reason to prevent XSS in audit logs
         $sanitizedReason = strip_tags($request->reason);
+        $correctionType = $request->input('correction_type', 'Manual Adjustment');
 
         AuditLog::log(
             'update_attendance',
-            "Admin {$request->user()->first_name} updated record: " . implode(', ', $changes) . ". Reason: {$sanitizedReason}",
+            "Admin {$request->user()->name} updated record via [{$correctionType}]: " . implode(', ', $changes) . ". Context: {$sanitizedReason}",
             AuditLog::STATUS_SUCCESS,
             $request->user()->id,
             'AttendanceRecord',
-            $attendanceRecord->id
+            $attendanceRecord->id,
+            null,
+            ['correction_type' => $correctionType]
         );
 
         return response()->json([

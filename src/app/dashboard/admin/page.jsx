@@ -175,53 +175,59 @@ function QuickActionsCard() {
     );
 }
 
-function SessionCountdown({ endTime, date }) {
+function SessionTimer({ session }) {
     const [timeLeft, setTimeLeft] = useState("");
+    const [isCountingToStart, setIsCountingToStart] = useState(false);
 
     useEffect(() => {
         const calculateTimeLeft = () => {
-            if (!endTime) return "";
-
             const now = new Date();
-            const [hours, minutes] = endTime.split(':');
+            const sessionDate = new Date(session.date);
+            const [hIn, mIn] = session.schedule.time_in.split(':').map(Number);
+            const [hOut, mOut] = session.schedule.time_out.split(':').map(Number);
 
-            // Create target date object
-            const targetDate = new Date(date);
-            targetDate.setHours(parseInt(hours), parseInt(minutes), 0);
+            const startTime = new Date(sessionDate);
+            startTime.setHours(hIn, mIn, 0);
 
-            // If endTime is earlier than shift start, it's next day (overnight)
-            // But we already handle that with date from backend if it's anchored.
-            // Let's assume the backend 'date' is the anchor date.
-            // If now is already past target, usually the session is 'completed'
-            // but just in case:
-            if (now > targetDate && now.getHours() > 12) { // Just a heuristic
-                targetDate.setDate(targetDate.getDate() + 1);
-            } else if (now > targetDate) {
-                // Already past
+            let endTime = new Date(sessionDate);
+            endTime.setHours(hOut, mOut, 0);
+            if (endTime < startTime) endTime.setDate(endTime.getDate() + 1);
+
+            if (now < startTime) {
+                // Counting to start
+                const diff = startTime - now;
+                setIsCountingToStart(true);
+                return formatDiff(diff);
+            } else if (now >= startTime && now <= endTime) {
+                // Counting to end
+                const diff = endTime - now;
+                setIsCountingToStart(false);
+                return formatDiff(diff);
+            } else {
                 return "Session ended";
             }
+        };
 
-            const diff = targetDate - now;
+        const formatDiff = (diff) => {
             const h = Math.floor(diff / (1000 * 60 * 60));
             const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
-            return `${h > 0 ? h + " hours " : ""}${m} minutes`;
+            return `${h > 0 ? h + "h " : ""}${m}m`;
         };
 
         setTimeLeft(calculateTimeLeft());
         const interval = setInterval(() => {
             setTimeLeft(calculateTimeLeft());
-        }, 30000); // Update every 30 seconds
+        }, 30000);
 
         return () => clearInterval(interval);
-    }, [endTime, date]);
+    }, [session]);
 
-    if (!timeLeft) return null;
+    if (!timeLeft || timeLeft === "Session ended") return null;
 
     return (
-        <div className="flex items-center gap-2 text-sm font-medium text-amber-600 animate-pulse">
+        <div className={`flex items-center gap-2 text-sm font-medium ${isCountingToStart ? 'text-blue-600' : 'text-amber-600 animate-pulse'}`}>
             <Timer className="h-4 w-4" />
-            <span>Session ends in: {timeLeft}</span>
+            <span>{isCountingToStart ? "Starts in: " : "Ends in: "}{timeLeft}</span>
         </div>
     );
 }
@@ -258,16 +264,16 @@ function ActiveSessionCard({ session, loading }) {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Clock className="h-5 w-5 text-muted-foreground" />
-                        Active Session
+                        Attendance Session
                     </CardTitle>
-                    <CardDescription>Current attendance session status</CardDescription>
+                    <CardDescription>Current attendance status</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="flex flex-col items-center justify-center py-6 text-center">
                         <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
                             <AlertTriangle className="h-6 w-6 text-muted-foreground" />
                         </div>
-                        <p className="text-sm text-muted-foreground mb-4">No active session</p>
+                        <p className="text-sm text-muted-foreground mb-4">No session found for today</p>
                         <Button asChild size="sm">
                             <Link href="/attendance/sessions/create">Create Session</Link>
                         </Button>
@@ -279,12 +285,12 @@ function ActiveSessionCard({ session, loading }) {
 
     return (
         <Card className="overflow-hidden border-2 border-primary/10">
-            <div className="h-1 bg-primary" />
+            <div className={`h-1 ${session.status === 'active' ? 'bg-emerald-500' : session.status === 'pending' ? 'bg-blue-500' : 'bg-slate-300'}`} />
             <CardHeader>
                 <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2">
-                        <Clock className="h-5 w-5 text-primary" />
-                        Active Session
+                        <Clock className={`h-5 w-5 ${session.status === 'active' ? 'text-emerald-500' : 'text-primary'}`} />
+                        {session.status === 'pending' ? 'Upcoming Session' : 'Active Session'}
                     </CardTitle>
                     <Badge
                         variant={
@@ -293,13 +299,15 @@ function ActiveSessionCard({ session, loading }) {
                                     'outline'
                         }
                         className={
-                            session.status === 'completed' ? 'bg-amber-100 text-amber-700 border-amber-200 shadow-sm' :
-                                session.status === 'locked' ? 'bg-slate-100 text-slate-700 border-slate-200' : ''
+                            session.status === 'active' ? 'bg-emerald-500 hover:bg-emerald-600' :
+                                session.status === 'completed' ? 'bg-amber-100 text-amber-700 border-amber-200 shadow-sm' :
+                                    session.status === 'locked' ? 'bg-slate-100 text-slate-700 border-slate-200' :
+                                        session.status === 'pending' ? 'bg-blue-100 text-blue-700 border-blue-200' : ''
                         }
                     >
                         {session.status === 'active' ? 'Live' :
                             session.status === 'completed' ? 'Awaiting Review' :
-                                session.status === 'locked' ? 'Finalized' : 'Scheduled'}
+                                session.status === 'locked' ? 'Finalized' : 'Upcoming'}
                     </Badge>
                 </div>
             </CardHeader>
@@ -313,22 +321,19 @@ function ActiveSessionCard({ session, loading }) {
 
                 <div className="grid grid-cols-2 gap-4 py-2 border-y border-dashed">
                     <div>
-                        <p className="text-xs text-muted-foreground uppercase tracking-wider">Confirmed</p>
-                        <p className="text-lg font-bold text-emerald-600">{session.confirmed_count} employees</p>
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider">Assigned</p>
+                        <p className="text-lg font-bold text-emerald-600">{session.total_count} employees</p>
                     </div>
                     <div>
-                        <p className="text-xs text-muted-foreground uppercase tracking-wider">Status</p>
-                        <p className="text-lg font-bold capitalize">
-                            {session.status === 'completed' ? 'Awaiting Review' : session.status}
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider">Confirmed</p>
+                        <p className="text-lg font-bold">
+                            {session.confirmed_count} / {session.total_count}
                         </p>
                     </div>
                 </div>
 
-                {session.status === 'active' && session.schedule?.time_out && (
-                    <SessionCountdown
-                        endTime={session.schedule.time_out}
-                        date={session.date}
-                    />
+                {(session.status === 'active' || session.status === 'pending') && (
+                    <SessionTimer session={session} />
                 )}
 
                 <Button asChild variant="outline" className="w-full">

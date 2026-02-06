@@ -39,6 +39,8 @@ import {
     Lock,
     CheckCircle2,
     AlertCircle,
+    AlertTriangle,
+    ShieldCheck,
     Timer,
     MapPin,
     User,
@@ -46,7 +48,7 @@ import {
     Smartphone,
     Pencil,
     Trash2,
-    MoreVertical
+    MoreHorizontal
 } from "lucide-react";
 import {
     DropdownMenu,
@@ -194,13 +196,13 @@ export default function SessionDetailsPage() {
 
     const statusConfig = {
         active: {
-            label: "Active",
+            label: "Live",
             color: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 shadow-sm font-semibold",
             icon: Timer,
         },
         pending: {
-            label: "Scheduled",
-            color: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400 border-gray-200",
+            label: "Upcoming",
+            color: "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200",
             icon: Calendar,
         },
         locked: {
@@ -209,7 +211,7 @@ export default function SessionDetailsPage() {
             icon: Lock,
         },
         completed: {
-            label: "Completed",
+            label: "Awaiting Review",
             color: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 font-medium",
             icon: CheckCircle2,
         },
@@ -346,49 +348,83 @@ export default function SessionDetailsPage() {
                     </Card>
 
                     {/* Context Card */}
-                    <Card className={session.status === 'locked' && session.session_type === 'Emergency' ? 'border-amber-200 bg-amber-50/30' : ''}>
-                        <CardHeader>
-                            <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
-                                Decision Context
+                    <Card className={`overflow-hidden border-2 transition-all ${session.status === 'locked'
+                        ? (session.session_type === 'Emergency' ? 'border-amber-200 bg-amber-50/20' : 'border-emerald-100 bg-emerald-50/10')
+                        : 'border-slate-100'
+                        }`}>
+                        <CardHeader className={`${session.session_type === 'Emergency' ? 'bg-amber-100/50' :
+                            session.session_type === 'Holiday' ? 'bg-blue-100/50' :
+                                session.status === 'locked' ? 'bg-emerald-50' : 'bg-slate-50'
+                            } py-3`}>
+                            <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <ShieldCheck className={`h-4 w-4 ${session.status === 'locked' ? 'text-primary' : ''}`} />
+                                    Final Verdict & Protocol
+                                </div>
                                 {session.status === 'locked' && (
-                                    <Badge variant="outline" className="text-[10px] bg-white">
-                                        {session.session_type}
+                                    <Badge variant="outline" className={`
+                                        ${session.session_type === 'Emergency' ? 'border-amber-500 bg-amber-500 text-white' :
+                                            session.session_type === 'Holiday' ? 'border-blue-500 bg-blue-500 text-white' :
+                                                'border-slate-800 bg-slate-800 text-white'}
+                                        text-[10px] px-2 py-0 h-5
+                                    `}>
+                                        {session.session_type} Day
                                     </Badge>
                                 )}
                             </CardTitle>
                         </CardHeader>
-                        <CardContent>
-                            <div className="grid gap-4 md:grid-cols-2">
-                                <div className="space-y-1">
-                                    <p className="text-xs font-medium text-muted-foreground">Attendance Required</p>
-                                    <div className="flex items-center gap-2 text-sm">
+                        <CardContent className="pt-5 pb-5">
+                            <div className="grid gap-6 md:grid-cols-2">
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Attendance Required</p>
+                                    </div>
+                                    <div className="flex items-center gap-3">
                                         {session.status === 'locked' ? (
                                             session.attendance_required ? (
-                                                <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 h-6">✅ Yes</Badge>
+                                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">
+                                                    <CheckCircle2 className="h-4 w-4" />
+                                                    MANDATORY
+                                                </div>
                                             ) : (
-                                                <Badge variant="destructive" className="bg-red-100 text-red-800 hover:bg-red-100 border-red-200 h-6">❌ No</Badge>
+                                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold">
+                                                    <AlertTriangle className="h-4 w-4" />
+                                                    SUSPENDED / VOLUNTARY
+                                                </div>
                                             )
                                         ) : (
-                                            <span className="italic text-muted-foreground">Awaiting review...</span>
+                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 text-slate-500 border border-slate-200 text-xs italic">
+                                                <Clock className="h-3.5 w-3.5" />
+                                                Decision Pending
+                                            </div>
                                         )}
                                     </div>
                                 </div>
-                                <div className="space-y-1">
-                                    <p className="text-xs font-medium text-muted-foreground">
-                                        {session.status === 'locked' ? 'Finalized By' : 'Review Status'}
+                                <div className="space-y-2">
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                                        {session.status === 'locked' ? 'Finalized By' : 'Review Responsibility'}
                                     </p>
-                                    <div className="flex items-center gap-2 text-sm">
-                                        <User className="h-4 w-4 text-muted-foreground" />
-                                        <span className="font-semibold">
-                                            {session.status === 'locked' ? (session.locked_by_user?.name || "Administrator") : "Pending Review"}
-                                        </span>
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-2 text-sm">
+                                            <div className="h-7 w-7 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden border border-slate-300">
+                                                {session.locked_by_user?.avatar ? (
+                                                    <img src={session.locked_by_user.avatar} className="object-cover h-full w-full" />
+                                                ) : (
+                                                    <User className="h-4 w-4 text-slate-500" />
+                                                )}
+                                            </div>
+                                            <span className="font-bold underline decoration-slate-300 underline-offset-4">
+                                                {session.status === 'locked' ? (session.locked_by_user?.name || "Administrator") : "Admin Group"}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div className="md:col-span-2 space-y-1">
-                                    <p className="text-xs font-medium text-muted-foreground">Reason / Context</p>
-                                    <div className="p-2 rounded bg-muted min-h-[40px] text-sm">
-                                        {session.completion_reason || (session.status === 'locked' ? "No protocol notes provided." : "Attendance finalized by system time policy. Waiting for admin verdict.")}
+                                <div className="md:col-span-2 space-y-2">
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Reason / Incident Report</p>
+                                    <div className={`p-4 rounded-lg border text-sm italic leading-relaxed shadow-inner ${session.session_type === 'Emergency' ? 'bg-white border-amber-200 text-amber-900' : 'bg-slate-50/50 border-slate-200 text-slate-700'
+                                        }`}>
+                                        "{session.completion_reason || (session.status === 'locked' ? "Closure protocol activated without specific incident notes." : "Current session is active or completed. Admin has not yet authorized the final attendance lock or provided the decision context.")}"
                                     </div>
                                 </div>
                             </div>
@@ -451,7 +487,7 @@ export default function SessionDetailsPage() {
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger asChild>
                                                             <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                                <MoreVertical className="h-4 w-4" />
+                                                                <MoreHorizontal className="h-4 w-4" />
                                                             </Button>
                                                         </DropdownMenuTrigger>
                                                         <DropdownMenuContent align="end">
@@ -635,26 +671,31 @@ export default function SessionDetailsPage() {
                                                         )}
                                                     </TableCell>
                                                     <TableCell className="text-right">
-                                                        <div className="flex items-center justify-end gap-2">
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                onClick={() => {
-                                                                    setRecordToEdit(record);
-                                                                    setEditDialogOpen(true);
-                                                                }}
-                                                            >
-                                                                <Pencil className="h-4 w-4 text-muted-foreground hover:text-primary" />
-                                                            </Button>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                onClick={() => handleDeleteRecord(record)}
-                                                                title="Delete record"
-                                                            >
-                                                                <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-                                                            </Button>
-                                                        </div>
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                                    <MoreHorizontal className="h-4 w-4" />
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end" className="w-[160px]">
+                                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                                <DropdownMenuItem
+                                                                    onClick={() => {
+                                                                        setRecordToEdit(record);
+                                                                        setEditDialogOpen(true);
+                                                                    }}
+                                                                >
+                                                                    <Pencil className="mr-2 h-4 w-4" /> Edit Record
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuSeparator />
+                                                                <DropdownMenuItem
+                                                                    className="text-destructive focus:text-destructive"
+                                                                    onClick={() => handleDeleteRecord(record)}
+                                                                >
+                                                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                                </DropdownMenuItem>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
                                                     </TableCell>
                                                 </TableRow>
                                             ))}

@@ -29,29 +29,75 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
-        status: record?.status || "present",
+        status: record?.status || "pending",
         time_in: record?.time_in ? format(new Date(record.time_in), "yyyy-MM-dd'T'HH:mm") : "",
         time_out: record?.time_out ? format(new Date(record.time_out), "yyyy-MM-dd'T'HH:mm") : "",
         break_start: record?.break_start ? format(new Date(record.break_start), "yyyy-MM-dd'T'HH:mm") : "",
         break_end: record?.break_end ? format(new Date(record.break_end), "yyyy-MM-dd'T'HH:mm") : "",
         excuse_reason: record?.excuse_reason || "",
+        correction_type: "Missing time-in",
         reason: "",
     });
+
+    const [totals, setTotals] = useState({ hours: 0, overtime: 0, autoStatus: "pending" });
 
     // CRITICAL FIX: Reset form when record changes
     useEffect(() => {
         if (record) {
             setFormData({
-                status: record.status || "present",
+                status: record.status || "pending",
                 time_in: record.time_in ? format(new Date(record.time_in), "yyyy-MM-dd'T'HH:mm") : "",
                 time_out: record.time_out ? format(new Date(record.time_out), "yyyy-MM-dd'T'HH:mm") : "",
                 break_start: record.break_start ? format(new Date(record.break_start), "yyyy-MM-dd'T'HH:mm") : "",
                 break_end: record.break_end ? format(new Date(record.break_end), "yyyy-MM-dd'T'HH:mm") : "",
                 excuse_reason: record.excuse_reason || "",
+                correction_type: "Missing time-in",
                 reason: "",
             });
         }
     }, [record, open]);
+
+    // Auto-calculate totals and status
+    useEffect(() => {
+        if (!formData.time_in) {
+            setTotals({ hours: 0, overtime: 0, autoStatus: formData.status === 'excused' ? 'excused' : 'absent' });
+            return;
+        }
+
+        const tIn = new Date(formData.time_in);
+        const tOut = formData.time_out ? new Date(formData.time_out) : null;
+        const bStart = formData.break_start ? new Date(formData.break_start) : null;
+        const bEnd = formData.break_end ? new Date(formData.break_end) : null;
+
+        let diffMs = tOut ? (tOut - tIn) : 0;
+        if (diffMs < 0) diffMs += 24 * 60 * 60 * 1000; // Overnight
+
+        let breakMs = (bStart && bEnd) ? (bEnd - bStart) : 0;
+        if (breakMs < 0) breakMs += 24 * 60 * 60 * 1000;
+
+        const totalMinutes = Math.max(0, (diffMs - breakMs) / (1000 * 60));
+        const hours = (totalMinutes / 60).toFixed(2);
+
+        // Simple OT calc (anything > 8h for example - can be adjusted)
+        const overtime = Math.max(0, parseFloat(hours) - 8).toFixed(2);
+
+        // Determine status
+        let autoStatus = "present";
+        if (record?.session?.schedule?.time_in) {
+            const [h, m] = record.session.schedule.time_in.split(':').map(Number);
+            const refTime = new Date(tIn);
+            refTime.setHours(h, m, 0);
+            if (tIn > refTime) autoStatus = "late";
+        }
+        if (formData.status === 'excused') autoStatus = 'excused';
+
+        setTotals({ hours, overtime, autoStatus });
+
+        // Auto-update internal status if not locked to excused
+        if (formData.status !== 'excused' && formData.status !== 'absent') {
+            setFormData(prev => ({ ...prev, status: autoStatus }));
+        }
+    }, [formData.time_in, formData.time_out, formData.break_start, formData.break_end, formData.status, record]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -69,32 +115,26 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
             setLoading(true);
             const payload = {
                 ...formData,
-                // Ensure empty strings are null
                 time_in: formData.time_in || null,
                 time_out: formData.time_out || null,
                 break_start: formData.break_start || null,
                 break_end: formData.break_end || null,
             };
 
-            // Check if this is a "Virtual" record (placeholder for missing attendance)
-            // Virtual IDs format: "virtual_{USER_ID}"
             const isVirtual = typeof record.id === 'string' && record.id.startsWith('virtual_');
 
             if (isVirtual) {
-                // For virtual records, we must CREATE a new record
-                payload.user_id = record.user_id; // Extracted from session.records mapping
+                payload.user_id = record.user_id;
                 payload.session_id = record.session_id;
                 payload.attendance_date = record.attendance_date;
-
                 await attendanceApi.create(payload);
             } else {
-                // Normal update
                 await attendanceApi.update(record.id, payload);
             }
 
             toast({
                 title: "Success",
-                description: `Attendance record ${isVirtual ? 'created' : 'updated'} successfully`,
+                description: "Attendance record updated successfully",
                 variant: "success",
             });
 
@@ -102,21 +142,11 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
             onOpenChange(false);
         } catch (error) {
             console.error("Update failed:", error);
-
-            // Handle duplicate error specifically
-            if (error.error_code === 'DUPLICATE_RECORD') {
-                toast({
-                    title: "Duplicate Record",
-                    description: "A record already exists for this user. Please refresh.",
-                    variant: "destructive",
-                });
-            } else {
-                toast({
-                    title: "Error",
-                    description: "Failed to save record",
-                    variant: "destructive",
-                });
-            }
+            toast({
+                title: "Error",
+                description: error.message || "Failed to save record",
+                variant: "destructive",
+            });
         } finally {
             setLoading(false);
         }
@@ -124,37 +154,42 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-md w-full max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle>Edit Attendance Record</DialogTitle>
+            <DialogContent className="max-w-lg w-full max-h-[90vh] overflow-y-auto">
+                <DialogHeader className="border-b pb-4">
+                    <DialogTitle className="text-xl">Edit Attendance Record</DialogTitle>
                     <DialogDescription>
-                        Modify attendance details. All changes are logged.
+                        Professional correction tool for employee attendance.
                     </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-3 py-2">
-                    {/* ... form fields ... */}
-                    <div className="grid gap-2">
-                        <Label htmlFor="status">Status</Label>
-                        <Select
-                            value={formData.status}
-                            onValueChange={(val) => setFormData({ ...formData, status: val })}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="present">Present</SelectItem>
-                                <SelectItem value="late">Late</SelectItem>
-                                <SelectItem value="absent">Absent</SelectItem>
-                                <SelectItem value="excused">Excused</SelectItem>
-                                <SelectItem value="left_early">Left Early</SelectItem>
-                            </SelectContent>
-                        </Select>
+
+                <form onSubmit={handleSubmit} className="space-y-6 pt-4">
+                    {/* Header: Status and Employee */}
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border">
+                        <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary">
+                                {record?.user?.name?.charAt(0) || "U"}
+                            </div>
+                            <div>
+                                <p className="font-bold">{record?.user?.name || "Employee"}</p>
+                                <p className="text-xs text-muted-foreground">{record?.attendance_date ? format(new Date(record.attendance_date), "MMMM d, yyyy") : ""}</p>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase">Current Status</p>
+                            <Badge variant="outline" className={`capitalize ${totals.autoStatus === 'present' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                    totals.autoStatus === 'late' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                        totals.autoStatus === 'absent' ? 'bg-red-50 text-red-700 border-red-200' :
+                                            'bg-blue-50 text-blue-700 border-blue-200'
+                                }`}>
+                                {totals.autoStatus}
+                            </Badge>
+                        </div>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-3">
+                    {/* Time Inputs */}
+                    <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="time_in">Time In</Label>
+                            <Label htmlFor="time_in" className="text-xs font-bold uppercase text-muted-foreground">Time In</Label>
                             <DateTimePicker
                                 value={formData.time_in}
                                 onChange={(val) => setFormData({ ...formData, time_in: val })}
@@ -162,7 +197,7 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="time_out">Time Out</Label>
+                            <Label htmlFor="time_out" className="text-xs font-bold uppercase text-muted-foreground">Time Out</Label>
                             <DateTimePicker
                                 value={formData.time_out}
                                 onChange={(val) => setFormData({ ...formData, time_out: val })}
@@ -171,9 +206,9 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-3">
+                    <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="break_start">Break Start</Label>
+                            <Label htmlFor="break_start" className="text-xs font-bold uppercase text-muted-foreground">Break Start</Label>
                             <DateTimePicker
                                 value={formData.break_start}
                                 onChange={(val) => setFormData({ ...formData, break_start: val })}
@@ -181,7 +216,7 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="break_end">Break End</Label>
+                            <Label htmlFor="break_end" className="text-xs font-bold uppercase text-muted-foreground">Break End</Label>
                             <DateTimePicker
                                 value={formData.break_end}
                                 onChange={(val) => setFormData({ ...formData, break_end: val })}
@@ -190,45 +225,75 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                         </div>
                     </div>
 
-                    {formData.status === 'excused' && (
-                        <div className="grid gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                            <Label htmlFor="excuse_reason">Excuse Reason / Incident</Label>
-                            <Input
-                                id="excuse_reason"
-                                placeholder="e.g. Natural Disaster, Sick Leave..."
-                                value={formData.excuse_reason}
-                                onChange={(e) => setFormData({ ...formData, excuse_reason: e.target.value })}
-                            />
-                            <p className="text-[10px] text-muted-foreground">
-                                This will be displayed in attendance reports.
-                            </p>
+                    {/* Calculated Totals */}
+                    <div className="grid grid-cols-2 gap-4 p-4 rounded-lg bg-primary/5 border border-primary/20">
+                        <div>
+                            <p className="text-[10px] font-bold text-primary uppercase">Total Worked</p>
+                            <p className="text-2xl font-mono font-bold text-primary">{totals.hours}h</p>
                         </div>
-                    )}
-
-                    <div className="grid gap-2">
-                        <Label htmlFor="reason">Reason for Correction <span className="text-red-500">*</span></Label>
-                        <Textarea
-                            id="reason"
-                            placeholder="Explain why you are modifying this record..."
-                            value={formData.reason}
-                            onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-                            required
-                        />
+                        <div>
+                            <p className="text-[10px] font-bold text-primary uppercase">Overtime (Est.)</p>
+                            <p className="text-2xl font-mono font-bold text-primary">{totals.overtime}h</p>
+                        </div>
                     </div>
 
-                    <DialogFooter className="sm:justify-center gap-2">
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                    {/* Correction Details */}
+                    <div className="space-y-4 pt-2 border-t">
+                        <div className="grid gap-2">
+                            <Label htmlFor="correction_type">Correction Type</Label>
+                            <Select
+                                value={formData.correction_type}
+                                onValueChange={(val) => {
+                                    setFormData({
+                                        ...formData,
+                                        correction_type: val,
+                                        status: val === 'Excused day' ? 'excused' : formData.status
+                                    })
+                                }}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Missing time-in">Missing time-in</SelectItem>
+                                    <SelectItem value="Wrong time-out">Wrong time-out</SelectItem>
+                                    <SelectItem value="Excused day">Mark as Excused</SelectItem>
+                                    <SelectItem value="System error">System Error / Glitch</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {formData.status === 'excused' && (
+                            <div className="grid gap-2 animate-in fade-in slide-in-from-top-2">
+                                <Label htmlFor="excuse_reason">Excuse Reason</Label>
+                                <Input
+                                    id="excuse_reason"
+                                    placeholder="e.g. Severe Rainfall, Medical Leave..."
+                                    value={formData.excuse_reason}
+                                    onChange={(e) => setFormData({ ...formData, excuse_reason: e.target.value })}
+                                />
+                            </div>
+                        )}
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="reason">Reason for Correction <span className="text-red-500">*</span></Label>
+                            <Textarea
+                                id="reason"
+                                className="min-h-[100px] resize-none"
+                                placeholder="Provide a detailed explanation for the audit trail..."
+                                value={formData.reason}
+                                onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <DialogFooter className="border-t pt-4">
+                        <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={loading}>
-                            {loading ? (
-                                <>
-                                    <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                                    Saving...
-                                </>
-                            ) : (
-                                "Save Changes"
-                            )}
+                        <Button type="submit" disabled={loading} className="px-8">
+                            {loading ? "Saving..." : "Apply Correction"}
                         </Button>
                     </DialogFooter>
                 </form>

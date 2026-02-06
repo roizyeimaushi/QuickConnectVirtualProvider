@@ -182,12 +182,12 @@ export default function AttendanceSessionsPage() {
 
     const statusConfig = {
         active: {
-            label: "Active",
+            label: "Live",
             color: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 shadow-sm font-semibold",
             icon: Timer,
         },
         completed: {
-            label: "Completed",
+            label: "Awaiting Review",
             color: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 font-medium",
             icon: CheckCircle2,
         },
@@ -197,8 +197,8 @@ export default function AttendanceSessionsPage() {
             icon: Lock,
         },
         pending: {
-            label: "Scheduled",
-            color: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400 border-gray-200",
+            label: "Upcoming",
+            color: "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200",
             icon: Calendar,
         },
     };
