@@ -362,11 +362,12 @@ class ReportController extends Controller
         $mergedData = $allEmployees->map(function($employee) use ($existingRecords) {
             if ($existingRecords->has($employee->id)) {
                 $record = $existingRecords->get($employee->id);
+                $u = $record->user ?? $employee; // Fallback to current employee object if record's user relation is null
                 return [
                     'id' => $record->id,
                     'user_id' => $record->user_id,
-                    'employee_id' => $record->user->employee_id,
-                    'name' => "{$record->user->first_name} {$record->user->last_name}",
+                    'employee_id' => $u->employee_id,
+                    'name' => "{$u->first_name} {$u->last_name}",
                     'schedule' => $record->session?->schedule?->name ?? 'Default',
                     'time_in' => $record->time_in ? $record->time_in->format('H:i') : null,
                     'break_start' => $record->break_start ? $record->break_start->format('H:i') : null,
@@ -400,8 +401,8 @@ class ReportController extends Controller
         if ($request->has('search')) {
             $search = strtolower($request->input('search'));
             $mergedData = $mergedData->filter(function($item) use ($search) {
-                return str_contains(strtolower($item['name']), $search) || 
-                       str_contains(strtolower($item['employee_id']), $search);
+                return (stripos($item['name'], $search) !== false) || 
+                       (stripos($item['employee_id'], $search) !== false);
             });
         }
 
@@ -480,33 +481,42 @@ class ReportController extends Controller
 
     public function employeeReport($employeeId, Request $request)
     {
-        $employee = User::where('employee_id', $employeeId)->firstOrFail();
-        $perPage = $request->input('per_page', 10);
+        try {
+            $employee = User::where('employee_id', $employeeId)->firstOrFail();
+            $perPage = (int)$request->input('per_page', 10);
 
-        $recordsQuery = AttendanceRecord::with(['session.schedule'])
-            ->where('user_id', $employee->id)
-            ->orderBy('attendance_date', 'desc');
+            $recordsQuery = AttendanceRecord::with(['session.schedule'])
+                ->where('user_id', $employee->id)
+                ->orderBy('attendance_date', 'desc');
 
-        $paginatedRecords = $recordsQuery->paginate($perPage);
+            $paginatedRecords = $recordsQuery->paginate($perPage);
 
-        // Calculate overall stats for this employee
-        $allRecords = AttendanceRecord::where('user_id', $employee->id)->get();
-        $presentCount = $allRecords->whereIn('status', ['present', 'left_early', 'late'])->count();
-        
-        // Use total attendance records as the base for rate or a fixed period
-        $totalPotentialDays = max(1, $allRecords->count());
-        $rate = round(($presentCount / $totalPotentialDays) * 100);
+            // Calculate overall stats for this employee
+            $allRecords = AttendanceRecord::where('user_id', $employee->id)->get();
+            $presentCount = $allRecords->whereIn('status', ['present', 'left_early', 'late'])->count();
+            
+            $totalPotentialDays = max(1, $allRecords->count());
+            $rate = round(($presentCount / $totalPotentialDays) * 100);
 
-        return response()->json([
-            'employee' => $employee,
-            'stats' => [
-                'present' => $presentCount,
-                'late' => $allRecords->where('status', 'late')->count(),
-                'absent' => $allRecords->where('status', 'absent')->count(),
-                'attendance_rate' => min(100, $rate),
-            ],
-            'records' => $paginatedRecords
-        ]);
+            return response()->json([
+                'employee' => $employee,
+                'stats' => [
+                    'present' => (int)$presentCount,
+                    'late' => (int)$allRecords->where('status', 'late')->count(),
+                    'absent' => (int)$allRecords->where('status', 'absent')->count(),
+                    'attendance_rate' => (int)min(100, $rate),
+                ],
+                'records' => $paginatedRecords
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Employee Report Error for {$employeeId}: " . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'status' => 500,
+                'message' => 'Failed to load employee report: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function personalReport(Request $request)
