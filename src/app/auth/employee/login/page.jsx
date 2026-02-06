@@ -119,11 +119,10 @@ export default function EmployeeLoginPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* Layout - Responsive: side-by-side on desktop, stacked on mobile */}
-            <div className="min-h-screen w-full flex flex-col md:flex-row bg-[#f8f8ff]">
-
-                {/* Left Side (Desktop) - Welcome Banner (Hidden on Mobile) */}
-                <div className="hidden md:block md:w-1/2 h-screen relative overflow-hidden flex-shrink-0">
+            {/* Layout - Deterministic: Hidden on all mobile (including landscape), split ONLY on desktop (1024px+) */}
+            <div className="login-container">
+                {/* Left Side (Decorative) - Hidden on all mobile */}
+                <div className="left-section">
                     <img
                         src="/employee-login-side.png"
                         alt="Welcome"
@@ -144,10 +143,10 @@ export default function EmployeeLoginPage() {
                     </div>
                 </div>
 
-                {/* Right Side (Desktop) / Bottom Side (Mobile) - Login Form */}
-                <div className="flex-1 flex flex-col justify-center p-6 sm:p-10 md:p-12 lg:p-16 bg-[#f8f8ff] overflow-y-auto">
+                {/* Right Side (Functional) - Full width on all mobile */}
+                <div className="right-section p-6 sm:p-10 md:p-12 lg:p-16">
                     <div className="w-full max-w-md mx-auto">
-                        <div className="md:hidden text-center mb-8">
+                        <div className="login-header-mobile-top text-center mb-8">
                             <h2 className="text-2xl font-extrabold text-slate-800 tracking-tight">
                                 Welcome to <span className="text-[#22c55e]">QuickConn Virtual</span>
                             </h2>

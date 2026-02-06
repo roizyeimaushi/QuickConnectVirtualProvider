@@ -99,7 +99,7 @@ export default function AdminLoginPage() {
     };
 
     return (
-        <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden">
+        <div className="login-container relative overflow-hidden">
             {/* Background Image */}
             <div
                 className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -109,17 +109,7 @@ export default function AdminLoginPage() {
             {/* Dark Overlay */}
             <div className="absolute inset-0 bg-black/70 backdrop-blur-[2px]" />
 
-            {/* Decorative Curved Shapes */}
-            <div
-                className="absolute -left-32 top-1/4 w-96 h-96 rounded-full opacity-10"
-                style={{ background: '#2e8b57' }}
-            />
-            <div
-                className="absolute -right-48 -bottom-32 w-[500px] h-[500px] rounded-full opacity-10"
-                style={{ background: '#3da36e' }}
-            />
-
-            {/* Error Modal - Updated to match screenshot style */}
+            {/* Error Modal */}
             <Dialog open={showErrorModal} onOpenChange={setShowErrorModal}>
                 <DialogContent className="sm:max-w-md bg-[#0a1410]/95 backdrop-blur-xl border-white/10 text-white">
                     <DialogHeader className="text-center">
@@ -142,8 +132,8 @@ export default function AdminLoginPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* Login Form */}
-            <div className="relative z-10 w-full max-w-sm px-6 sm:px-8 flex flex-col items-center">
+            {/* Functional area */}
+            <div className="right-section relative z-10 w-full flex flex-col items-center justify-center p-6">
                 {/* Logo */}
                 <div className="flex justify-center mb-8">
                     <img
@@ -157,14 +147,16 @@ export default function AdminLoginPage() {
                     />
                 </div>
 
-                {/* Title */}
-                <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-white text-center mb-2 tracking-tight drop-shadow-lg flex flex-col md:block">
-                    <span className="block md:inline">Welcome to </span>
-                    <span className="text-[#22c55e]">QuickConn Virtual</span>
-                </h1>
-                <p className="text-white/80 text-sm font-medium text-center mb-10 drop-shadow-md">
-                    Sign in to access your administrator account
-                </p>
+                {/* Title and header - Hidden on mobile by the new class */}
+                <div className="login-header-mobile-top">
+                    <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-white text-center mb-2 tracking-tight drop-shadow-lg flex flex-col md:block">
+                        <span className="block md:inline">Welcome to </span>
+                        <span className="text-[#22c55e]">QuickConn Virtual</span>
+                    </h1>
+                    <p className="text-white/80 text-sm font-medium text-center mb-10 drop-shadow-md">
+                        Sign in to access your administrator account
+                    </p>
+                </div>
 
                 <form onSubmit={handleSubmit} className="w-full space-y-4">
                     {/* Email Input */}
