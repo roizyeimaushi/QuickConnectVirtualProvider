@@ -81,6 +81,26 @@ export const getLogoUrl = (settingsLogo) => {
     return "/quickconnect-logo.png";
 };
 
+/**
+ * Helper to resolve the correct avatar URL
+ * @param {string} avatarPath - Avatar path from user data
+ * @returns {string} Resolved avatar URL or null
+ */
+export const getAvatarUrl = (avatarPath) => {
+    if (!avatarPath) return null;
+    if (avatarPath.startsWith("http") || avatarPath.startsWith("data:") || avatarPath.startsWith("blob:")) return avatarPath;
+
+    // Handle Laravel storage paths
+    const backendRoot = API_BASE_URL.replace("/api", "").replace(/\/$/, "");
+    if (backendRoot && backendRoot !== "" && backendRoot !== "/") {
+        // Remove 'storage/' prefix if it's already there to avoid duplication
+        const cleanPath = avatarPath.replace(/^\/?storage\//, "");
+        return `${backendRoot}/storage/${cleanPath}`;
+    }
+
+    return avatarPath;
+};
+
 export const USER_ROLES = {
     ADMIN: 'admin',
     EMPLOYEE: 'employee',

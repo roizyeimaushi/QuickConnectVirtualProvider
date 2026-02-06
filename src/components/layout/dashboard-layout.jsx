@@ -62,7 +62,7 @@ import {
     Timer,
 } from "lucide-react";
 import { getInitials } from "@/lib/utils";
-import { getLogoUrl } from "@/lib/constants";
+import { getLogoUrl, getAvatarUrl } from "@/lib/constants";
 import { NotificationsPopover } from "@/components/notifications-popover";
 
 const iconMap = {
@@ -110,7 +110,7 @@ export function AppSidebar() {
             className="data-[state=open]:bg-white/5 rounded-lg transition-all p-2 h-12"
         >
             <Avatar className="h-8 w-8 rounded-full border border-white/10 shrink-0">
-                <AvatarImage src={user?.avatar} alt={user?.first_name} />
+                <AvatarImage src={getAvatarUrl(user?.avatar)} alt={user?.first_name} />
                 <AvatarFallback className="rounded-full bg-white/10 text-white text-xs font-bold">
                     {loading ? "?" : getInitials(user?.first_name, user?.last_name)}
                 </AvatarFallback>

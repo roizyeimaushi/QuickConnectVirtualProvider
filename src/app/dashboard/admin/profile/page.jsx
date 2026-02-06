@@ -11,6 +11,7 @@ import { useAuth } from "@/components/providers/auth-provider";
 import { useToast } from "@/hooks/use-toast";
 import { getInitials } from "@/lib/utils";
 import { authApi } from "@/lib/api";
+import { getAvatarUrl } from "@/lib/constants";
 import {
     User,
     Mail,
@@ -163,7 +164,7 @@ export default function AdminProfilePage() {
                         <div className="flex items-center gap-4">
                             <div className="relative group">
                                 <Avatar className="h-20 w-20 rounded-full border-2 border-primary/20 cursor-pointer">
-                                    <AvatarImage src={avatarPreview || user?.avatar} alt={user?.first_name} />
+                                    <AvatarImage src={avatarPreview || getAvatarUrl(user?.avatar)} alt={user?.first_name} />
                                     <AvatarFallback className="rounded-full bg-primary/10 text-primary text-2xl font-semibold">
                                         {getInitials(user?.first_name, user?.last_name)}
                                     </AvatarFallback>
