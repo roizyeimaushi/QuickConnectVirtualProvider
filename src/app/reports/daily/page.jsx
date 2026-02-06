@@ -189,6 +189,7 @@ export default function DailyReportsPage() {
                                 align="center"
                                 side="bottom"
                                 sideOffset={4}
+                                avoidCollisions={false}
                             >
                                 <Calendar
                                     mode="single"
