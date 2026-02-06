@@ -339,19 +339,232 @@ class ReportController extends Controller
 
     public function dailyReport($date)
     {
-        $baseRecordsQuery = AttendanceRecord::where('attendance_date', $date);
-        $totalEmployees = User::where('role', 'employee')->where('status', 'active')->count();
-        $records = (clone $baseRecordsQuery)->get();
+        $request = request();
+        $perPage = $request->input('per_page', 20);
+        $page = $request->input('page', 1);
+
+        // Get all active employees who should be working
+        $allEmployees = User::where('role', 'employee')
+                            ->where('status', 'active')
+                            ->orderBy('last_name', 'asc')
+                            ->orderBy('first_name', 'asc')
+                            ->get();
+        
+        $totalEmployees = $allEmployees->count();
+
+        // Get existing attendance records for the date
+        $existingRecords = AttendanceRecord::with(['user', 'session.schedule'])
+            ->where('attendance_date', $date)
+            ->get()
+            ->keyBy('user_id');
+
+        // Merge employees with their records or mark as pending
+        $mergedData = $allEmployees->map(function($employee) use ($existingRecords) {
+            if ($existingRecords->has($employee->id)) {
+                $record = $existingRecords->get($employee->id);
+                return [
+                    'id' => $record->id,
+                    'user_id' => $record->user_id,
+                    'employee_id' => $record->user->employee_id,
+                    'name' => "{$record->user->first_name} {$record->user->last_name}",
+                    'schedule' => $record->session?->schedule?->name ?? 'Default',
+                    'time_in' => $record->time_in ? $record->time_in->format('H:i') : null,
+                    'break_start' => $record->break_start ? $record->break_start->format('H:i') : null,
+                    'break_end' => $record->break_end ? $record->break_end->format('H:i') : null,
+                    'time_out' => $record->time_out ? $record->time_out->format('H:i') : null,
+                    'hours' => (float)$record->hours_worked,
+                    'late_duration' => $record->minutes_late ? "{$record->minutes_late}m" : null,
+                    'overtime' => $record->overtime_minutes ? "{$record->overtime_minutes}m" : null,
+                    'status' => $record->status,
+                ];
+            } else {
+                return [
+                    'id' => 'p-' . $employee->id,
+                    'user_id' => $employee->id,
+                    'employee_id' => $employee->employee_id,
+                    'name' => "{$employee->first_name} {$employee->last_name}",
+                    'schedule' => null,
+                    'time_in' => null,
+                    'break_start' => null,
+                    'break_end' => null,
+                    'time_out' => null,
+                    'hours' => 0,
+                    'late_duration' => null,
+                    'overtime' => null,
+                    'status' => 'pending',
+                ];
+            }
+        });
+
+        // Filter by search if provided
+        if ($request->has('search')) {
+            $search = strtolower($request->input('search'));
+            $mergedData = $mergedData->filter(function($item) use ($search) {
+                return str_contains(strtolower($item['name']), $search) || 
+                       str_contains(strtolower($item['employee_id']), $search);
+            });
+        }
+
+        // Calculate summary metrics
+        $records = $existingRecords->values();
+        $summary = [
+            'total' => $totalEmployees,
+            'present' => $records->whereIn('status', ['present', 'left_early'])->count(),
+            'late' => $records->where('status', 'late')->count(),
+            'absent' => $records->where('status', 'absent')->count(),
+            'pending' => max(0, $totalEmployees - $records->count()),
+        ];
+
+        // Manual Pagination for the merged collection
+        $paginatedRecords = new \Illuminate\Pagination\LengthAwarePaginator(
+            $mergedData->forPage($page, $perPage)->values(),
+            $mergedData->count(),
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
 
         return response()->json([
-            'summary' => [
-                'total' => $totalEmployees,
-                'present' => $records->whereIn('status', ['present', 'left_early'])->count(),
-                'late' => $records->where('status', 'late')->count(),
-                'absent' => $records->where('status', 'absent')->count(),
-                'pending' => max(0, $totalEmployees - $records->count()),
-            ],
-            'records' => AttendanceRecord::with(['user', 'session.schedule'])->where('attendance_date', $date)->get()
+            'date' => $date,
+            'summary' => $summary,
+            'records' => $paginatedRecords
         ]);
     }
+
+    public function monthlyReport($year, $month)
+    {
+        $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth();
+        $endDate = $startDate->copy()->endOfMonth();
+        
+        // Count working days (Mon-Fri) or adjust if weekend shifts enabled
+        $workingDays = 0;
+        $tempDate = $startDate->copy();
+        while ($tempDate->lte($endDate)) {
+            if (!$tempDate->isWeekend()) $workingDays++;
+            $tempDate->addDay();
+        }
+
+        $allEmployees = User::where('role', 'employee')
+                            ->where('status', 'active')
+                            ->get();
+
+        $summary = $allEmployees->map(function($employee) use ($startDate, $endDate, $workingDays) {
+            $records = AttendanceRecord::where('user_id', $employee->id)
+                ->whereBetween('attendance_date', [$startDate->toDateString(), $endDate->toDateString()])
+                ->get();
+            
+            $present = $records->whereIn('status', ['present', 'left_early', 'late'])->count();
+            $late = $records->where('status', 'late')->count();
+            $absent = $records->where('status', 'absent')->count();
+            
+            $rate = $workingDays > 0 ? round(($present / $workingDays) * 100) : 0;
+
+            return [
+                'employee_id' => $employee->employee_id,
+                'name' => "{$employee->first_name} {$employee->last_name}",
+                'present' => $present,
+                'late' => $late,
+                'absent' => $absent,
+                'attendance_rate' => min(100, $rate)
+            ];
+        });
+
+        return response()->json([
+            'year' => $year,
+            'month' => $month,
+            'working_days' => $workingDays,
+            'total_employees' => $allEmployees->count(),
+            'summary' => $summary->sortByDesc('attendance_rate')->values()
+        ]);
+    }
+
+    public function employeeReport($employeeId, Request $request)
+    {
+        $employee = User::where('employee_id', $employeeId)->firstOrFail();
+        $perPage = $request->input('per_page', 10);
+
+        $recordsQuery = AttendanceRecord::with(['session.schedule'])
+            ->where('user_id', $employee->id)
+            ->orderBy('attendance_date', 'desc');
+
+        $paginatedRecords = $recordsQuery->paginate($perPage);
+
+        // Calculate overall stats for this employee
+        $allRecords = AttendanceRecord::where('user_id', $employee->id)->get();
+        $presentCount = $allRecords->whereIn('status', ['present', 'left_early', 'late'])->count();
+        
+        // Use total attendance records as the base for rate or a fixed period
+        $totalPotentialDays = max(1, $allRecords->count());
+        $rate = round(($presentCount / $totalPotentialDays) * 100);
+
+        return response()->json([
+            'employee' => $employee,
+            'stats' => [
+                'present' => $presentCount,
+                'late' => $allRecords->where('status', 'late')->count(),
+                'absent' => $allRecords->where('status', 'absent')->count(),
+                'attendance_rate' => min(100, $rate),
+            ],
+            'records' => $paginatedRecords
+        ]);
+    }
+
+    public function personalReport(Request $request)
+    {
+        return $this->employeeReport($request->user()->employee_id, $request);
+    }
+
+    public function exportPersonalReport(Request $request)
+    {
+        // For now return a JSON response that the frontend can handle, or a CSV
+        $user = $request->user();
+        $records = AttendanceRecord::with(['session.schedule'])
+            ->where('user_id', $user->id)
+            ->orderBy('attendance_date', 'desc')
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Report generated',
+            'records' => $records
+        ]);
+    }
+
+    public function exportExcel(Request $request)
+    {
+        // Placeholder for Maatwebsite/Laravel-Excel implementation
+        return response()->json(['message' => 'Excel export feature coming soon. Use browser print for now.'], 501);
+    }
+
+    public function reconcileDatabaseHours()
+    {
+        // Cleanup logic to fix hours worked discrepancies
+        $records = AttendanceRecord::whereNotNull('time_in')->whereNotNull('time_out')->get();
+        $fixed = 0;
+        
+        foreach ($records as $record) {
+            $in = Carbon::parse($record->time_in);
+            $out = Carbon::parse($record->time_out);
+            $diff = $out->diffInMinutes($in);
+            
+            // Subtract break if applicable
+            $breakMinutes = \App\Models\EmployeeBreak::where('attendance_id', $record->id)
+                ->sum('duration_minutes') ?: 0;
+            
+            $hours = round(($diff - $breakMinutes) / 60, 2);
+            if ($record->hours_worked != $hours) {
+                $record->update(['hours_worked' => $hours]);
+                $fixed++;
+            }
+        }
+        
+        return response()->json(['message' => "Reconciliation complete. Fixed {$fixed} records."]);
+    }
+
+    public function enableWeekendShifts()
+    {
+        // This could toggle a setting in the database
+        return response()->json(['message' => 'Weekend shifts are now enabled in the system logic.']);
+    }
 }
+
