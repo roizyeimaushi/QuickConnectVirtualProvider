@@ -133,8 +133,8 @@ export default function EmployeeLoginPage() {
 
                     <div className="absolute inset-0 z-10 flex items-center justify-center p-6 text-center">
                         <div className="max-w-md">
-                            <h2 className="text-2xl sm:text-3xl lg:text-3xl font-bold leading-tight text-white drop-shadow-lg mb-2 sm:mb-4">
-                                Welcome to <span className="text-[#22c55e]">QuickConn Virtual</span>
+                            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white drop-shadow-lg mb-2 sm:mb-4 whitespace-nowrap">
+                                Welcome to QuickConn Virtual
                             </h2>
                             <p className="text-white/90 text-sm sm:text-base lg:text-lg leading-relaxed max-w-sm sm:max-w-md mx-auto drop-shadow-md">
                                 Track your attendance, view schedules, and manage your work records in one convenient portal.
