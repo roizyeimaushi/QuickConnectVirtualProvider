@@ -138,47 +138,23 @@ export function AppSidebar() {
 
     const ProfileMenuItems = ({ isCollapsible = false }) => (
         <div className={isCollapsible ? "space-y-1 mb-2" : "space-y-1"}>
-            {!isCollapsible && (
-                <>
-                    <DropdownMenuLabel className="px-3 py-3 font-normal text-white/90">
-                        <div className="flex items-center gap-3 mb-2">
-                            <Avatar className="h-10 w-10 rounded-full border border-emerald-500/20 shadow-lg shrink-0">
-                                <AvatarImage src={user?.avatar} alt={user?.first_name} />
-                                <AvatarFallback className="rounded-full bg-emerald-950 text-emerald-400 text-sm font-bold">
-                                    {getInitials(user?.first_name, user?.last_name)}
-                                </AvatarFallback>
-                            </Avatar>
-                            <div className="flex flex-col min-w-0">
-                                <span className="text-sm font-bold text-white truncate">
-                                    {user?.first_name} {user?.last_name}
-                                </span>
-                                <span className="text-[10px] text-emerald-500/70 font-bold uppercase tracking-widest">
-                                    {isAdmin ? "Administrator" : "Staff Member"}
-                                </span>
-                            </div>
-                        </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator className="bg-white/5" />
-                </>
-            )}
+
 
             <Link
                 href={isAdmin ? "/dashboard/admin/profile" : "/dashboard/employee/profile"}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${isCollapsible ? 'hover:bg-white/5 text-white/60 hover:text-white' : 'hover:bg-white/5 text-white/70 focus:bg-white/5 focus:text-white'}`}
             >
                 <User className="h-4 w-4 text-emerald-500 shrink-0" />
-                <span className="text-[13px] font-medium">Profile Overview</span>
+                <span className="text-[13px] font-medium">Profile</span>
             </Link>
 
-            {isAdmin && (
-                <Link
-                    href="/settings/general"
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${isCollapsible ? 'hover:bg-white/5 text-white/60 hover:text-white' : 'hover:bg-white/5 text-white/70 focus:bg-white/5 focus:text-white'}`}
-                >
-                    <Settings className="h-4 w-4 text-emerald-500 shrink-0" />
-                    <span className="text-[13px] font-medium">System Settings</span>
-                </Link>
-            )}
+            <Link
+                href={isAdmin ? "/settings/general" : "/dashboard/employee/profile"}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${isCollapsible ? 'hover:bg-white/5 text-white/60 hover:text-white' : 'hover:bg-white/5 text-white/70 focus:bg-white/5 focus:text-white'}`}
+            >
+                <Settings className="h-4 w-4 text-emerald-500 shrink-0" />
+                <span className="text-[13px] font-medium">Settings</span>
+            </Link>
 
             {isCollapsible && <div className="h-px bg-white/5 my-1 mx-2" />}
 
@@ -187,7 +163,7 @@ export function AppSidebar() {
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all w-full text-left ${isCollapsible ? 'hover:bg-red-500/10 text-red-400/80 hover:text-red-400' : 'hover:bg-red-500/10 text-red-400 focus:bg-red-500/10 focus:text-red-400'}`}
             >
                 <LogOut className="h-4 w-4 shrink-0" />
-                <span className="text-[13px] font-bold">Log Out Securely</span>
+                <span className="text-[13px] font-bold">Logout</span>
             </button>
         </div>
     );
@@ -399,8 +375,8 @@ export function DashboardLayout({ children, title }) {
     return (
         <SidebarProvider>
             <div className="flex min-h-screen w-full bg-[#f8f8ff] dark:bg-slate-950 overflow-hidden">
-                <AppSidebar />
-                <SidebarInset className="flex flex-col flex-1 min-w-0 bg-transparent lg:border-l border-border/10">
+                {!hideHeader && <AppSidebar />}
+                <SidebarInset className={`flex flex-col flex-1 min-w-0 bg-transparent ${!hideHeader ? 'lg:border-l' : ''} border-border/10`}>
                     {!hideHeader && <DashboardHeader title={title} />}
                     <main className="flex-1 overflow-y-auto scrollbar-hidden">
                         <div className="mx-auto w-full max-w-[1600px] min-h-[calc(100vh-64px)] flex flex-col">
