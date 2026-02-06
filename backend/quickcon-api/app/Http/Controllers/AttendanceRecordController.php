@@ -290,7 +290,7 @@ class AttendanceRecordController extends Controller
         // Define Windows Relative to Shift Start
         // Mimic legacy logic: 23:00 Start -> 18:00 Open (-5h), 01:00 Close (+2h)
         $windowStart = $shiftStart->copy()->subHours(5);
-        $windowClose = $shiftStart->copy()->addHours(2);
+        $windowClose = $shiftStart->copy()->addHours(2)->addMinutes(30);
         
         // Grace Period
         $gracePeriodEnd = $shiftStart->copy()->addMinutes($globalGracePeriod);
@@ -369,12 +369,13 @@ class AttendanceRecordController extends Controller
         }
 
         // ============================================================
-        // RULE 2: Session must be active
+        // RULE 2: Session must be active or pending (within window)
         // ============================================================
-        if ($session->status !== 'active') {
+        if (!in_array($session->status, ['active', 'pending'])) {
             return response()->json([
                 'message' => 'This session is not accepting attendance confirmations.',
-                'error_code' => 'SESSION_INACTIVE'
+                'error_code' => 'SESSION_INACTIVE',
+                'current_status' => $session->status
             ], 403);
         }
 
@@ -676,11 +677,11 @@ class AttendanceRecordController extends Controller
             ]);
         }
 
-        if ($session->status !== 'active') {
+        if (!in_array($session->status, ['active', 'pending'])) {
             return response()->json([
                 'can_confirm' => false, 
                 'reason' => 'session_inactive',
-                'message' => 'Session is not active'
+                'message' => 'Session is not active (Status: ' . $session->status . ')'
             ]);
         }
 

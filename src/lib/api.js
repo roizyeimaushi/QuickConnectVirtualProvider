@@ -129,10 +129,16 @@ class ApiClient {
 
             // Handle 403 Forbidden (insufficient permissions)
             if (response.status === 403) {
+                let data = {};
+                try {
+                    data = await response.json();
+                } catch (_) { }
+
                 throw {
                     status: 403,
-                    message: 'Access denied - You do not have permission to access this resource',
-                    errors: {},
+                    message: data.message || 'Access denied - You do not have permission to access this resource',
+                    errors: data.errors || {},
+                    ...data
                 };
             }
 
