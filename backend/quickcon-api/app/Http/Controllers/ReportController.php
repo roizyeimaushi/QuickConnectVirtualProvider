@@ -19,44 +19,60 @@ class ReportController extends Controller
 {
     public function dashboard()
     {
-        $today = Carbon::today()->toDateString();
+        $now = Carbon::now();
+        $boundary = (int) (Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
+        $today = $now->hour < $boundary ? Carbon::yesterday()->toDateString() : Carbon::today()->toDateString();
+        $realToday = Carbon::today()->toDateString();
         
-        // Cache dashboard data for 30 seconds to reduce database load
+        // Performance: Cache dashboard data for 30 seconds
         $cacheKey = 'admin_dashboard_' . $today . '_' . floor(time() / 30);
         
-        return Cache::remember($cacheKey, 30, function() use ($today) {
+        return Cache::remember($cacheKey, 30, function() use ($today, $realToday, $now) {
+            // 1. Sync statuses for today's sessions to ensure they reflect current time
+            $this->syncAllSessionStatuses();
+
             $totalEmployees = User::where('role', 'employee')
                                   ->where('status', 'active')
                                   ->count();
 
-            $todaySession = AttendanceSession::with('schedule')
-                                             ->whereDate('date', $today)
-                                             ->whereIn('status', ['active', 'locked'])
-                                             ->first();
+            // 2. Find the most relevant session for the dashboard focus
+            // Priority: Active > Locked > Pending > Completed
+            $allTodaySessions = AttendanceSession::with(['schedule', 'creator'])
+                ->whereDate('date', $today)
+                ->get();
+                
+            $todaySession = $allTodaySessions->where('status', 'active')->first()
+                         ?? $allTodaySessions->where('status', 'locked')->first()
+                         ?? $allTodaySessions->where('status', 'pending')->first()
+                         ?? $allTodaySessions->where('status', 'completed')->first();
 
-            // Check for active overnight session from yesterday if no session today
+            // Fallback: Check if there's an active session on REAL today if logical today is yesterday (overnight)
+            if (!$todaySession && $today !== $realToday) {
+                $realTodaySessions = AttendanceSession::with(['schedule', 'creator'])
+                    ->whereDate('date', $realToday)
+                    ->get();
+                $todaySession = $realTodaySessions->where('status', 'active')->first() 
+                             ?? $realTodaySessions->where('status', 'pending')->first();
+            }
+
+            // Check for active overnight session from yesterday if still no session
             if (!$todaySession) {
                 $yesterday = Carbon::yesterday();
-                $yesterdayDayOfWeek = $yesterday->dayOfWeek;
-                $isYesterdayWeekend = ($yesterdayDayOfWeek === Carbon::SATURDAY || $yesterdayDayOfWeek === Carbon::SUNDAY);
-                
-                if (!$isYesterdayWeekend) {
-                    $overnightSession = AttendanceSession::with('schedule')
-                        ->whereDate('date', $yesterday->toDateString())
-                        ->whereIn('status', ['active', 'locked'])
-                        ->whereHas('schedule', function ($q) {
-                            $q->where('is_overnight', true);
-                        })
-                        ->first();
+                $overnightSession = AttendanceSession::with('schedule')
+                    ->whereDate('date', $yesterday->toDateString())
+                    ->whereIn('status', ['active', 'locked'])
+                    ->whereHas('schedule', function ($q) {
+                        $q->where('is_overnight', true);
+                    })
+                    ->first();
 
-                    if ($overnightSession) {
-                        $schedule = $overnightSession->schedule;
-                        $sessionEnd = Carbon::parse($overnightSession->date->format('Y-m-d') . ' ' . $schedule->time_out)->addDay();
-                        $cutoffTime = $sessionEnd->copy()->addHours(4); 
-                        
-                        if (Carbon::now()->lt($cutoffTime)) {
-                            $todaySession = $overnightSession;
-                        }
+                if ($overnightSession) {
+                    $schedule = $overnightSession->schedule;
+                    $sessionEnd = Carbon::parse($overnightSession->date->format('Y-m-d') . ' ' . $schedule->time_out)->addDay();
+                    $cutoffTime = $sessionEnd->copy()->addHours(4); 
+                    
+                    if (Carbon::now()->lt($cutoffTime)) {
+                        $todaySession = $overnightSession;
                     }
                 }
             }
@@ -575,6 +591,57 @@ class ReportController extends Controller
     {
         // This could toggle a setting in the database
         return response()->json(['message' => 'Weekend shifts are now enabled in the system logic.']);
+    }
+
+    /**
+     * Internal utility to sync session statuses based on current time.
+     * Replicates logic from AttendanceSessionController to ensure dashboard is always accurate.
+     */
+    private function syncAllSessionStatuses()
+    {
+        $now = Carbon::now();
+        $boundary = (int) (Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
+        $today = ($now->hour < $boundary ? Carbon::yesterday() : Carbon::today())->startOfDay();
+
+        // Sync non-locked sessions for today or earlier
+        $sessions = AttendanceSession::whereIn('status', ['pending', 'active'])
+            ->where('date', '<=', $today)
+            ->with('schedule')
+            ->get();
+
+        foreach ($sessions as $session) {
+            if (!$session->schedule) {
+                if ($session->status === 'active' && $session->date->addDay()->isPast()) {
+                    $session->update(['status' => 'completed']);
+                }
+                continue;
+            }
+
+            $schedule = $session->schedule;
+            $sessionDate = $session->date->format('Y-m-d');
+            
+            $shiftStart = Carbon::parse("$sessionDate {$schedule->time_in}");
+            $shiftEnd = Carbon::parse("$sessionDate {$schedule->time_out}");
+            
+            if ($shiftEnd->lt($shiftStart)) {
+                $shiftEnd->addDay();
+            }
+
+            $oldStatus = $session->status;
+            $newStatus = $oldStatus;
+
+            if ($now->lt($shiftStart)) {
+                $newStatus = 'pending';
+            } elseif ($now->gte($shiftStart) && $now->lte($shiftEnd)) {
+                $newStatus = 'active';
+            } else {
+                $newStatus = 'completed';
+            }
+
+            if ($newStatus !== $oldStatus) {
+                $session->update(['status' => $newStatus]);
+            }
+        }
     }
 }
 
