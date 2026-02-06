@@ -16,7 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Loader2, AlertCircle, User, KeyRound } from "lucide-react";
 import { useSettingsContext } from "@/components/providers/settings-provider";
-import { getLogoUrl } from "@/lib/constants";
+import { getLogoUrl, API_BASE_URL } from "@/lib/constants";
 
 export default function AdminLoginPage() {
     const { settings } = useSettingsContext();
@@ -84,7 +84,7 @@ export default function AdminLoginPage() {
             let errorMessage = "The provided credentials are incorrect.";
 
             if (err?.status === 0 || (err?.message && err.message.includes("Cannot reach the server"))) {
-                errorMessage = "Cannot reach the API server. Start the Laravel backend (e.g. in backend/quickcon-api run: php artisan serve) and ensure it is reachable at the URL in NEXT_PUBLIC_API_URL (default: http://localhost:8000/api).";
+                errorMessage = `Cannot reach the API server. Please ensure the backend is running at ${API_BASE_URL}. If you are on Vercel, make sure NEXT_PUBLIC_API_URL is set in your project settings.`;
             } else if (err?.errors?.email?.[0]) {
                 errorMessage = err.errors.email[0];
             } else if (err?.message && err.message !== "An error occurred" && err.message !== "Request failed") {
