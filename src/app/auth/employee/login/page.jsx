@@ -133,7 +133,7 @@ export default function EmployeeLoginPage() {
 
                     <div className="absolute inset-0 z-10 flex items-center justify-center p-6 text-center">
                         <div className="max-w-md">
-                            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white drop-shadow-lg mb-2 sm:mb-4 whitespace-nowrap">
+                            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white drop-shadow-lg mb-2 sm:mb-4 md:whitespace-nowrap">
                                 Welcome to QuickConn Virtual
                             </h2>
                             <p className="text-white/90 text-sm sm:text-base lg:text-lg leading-relaxed max-w-sm sm:max-w-md mx-auto drop-shadow-md">
@@ -144,8 +144,14 @@ export default function EmployeeLoginPage() {
                 </div>
 
                 {/* Right Side (Desktop) / Bottom Side (Mobile) - Login Form */}
-                <div className="flex-1 flex flex-col justify-center p-6 sm:p-10 md:p-12 lg:p-16 bg-[#f8f8ff]">
+                <div className="flex-1 flex flex-col justify-center p-6 sm:p-10 md:p-12 lg:p-16 bg-[#f8f8ff] overflow-y-auto">
                     <div className="w-full max-w-md mx-auto">
+                        <div className="md:hidden text-center mb-8">
+                            <h2 className="text-2xl font-extrabold text-[#2e8b57] tracking-tight">
+                                Welcome to QuickConn Virtual
+                            </h2>
+                        </div>
+
                         <div className="flex justify-center mb-6">
                             <img
                                 src={getLogoUrl(settings?.system_logo)}
