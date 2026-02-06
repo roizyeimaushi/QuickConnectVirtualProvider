@@ -44,7 +44,7 @@ class AttendanceSession extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function lockedBy()
+    public function lockedByUser()
     {
         return $this->belongsTo(User::class, 'locked_by');
     }

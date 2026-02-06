@@ -24,6 +24,7 @@ import { attendanceApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
+import { Badge } from "@/components/ui/badge";
 
 export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
     const { toast } = useToast();

@@ -136,7 +136,13 @@ class AuditLog extends Model
         $deviceInfo = self::parseUserAgent($userAgent);
         
         // Get or create session ID for tracking
-        $sessionId = session()->getId() ?: ($request->header('X-Session-ID') ?: null);
+        $sessionId = null;
+        try {
+            $sessionId = $request->hasSession() ? $request->session()->getId() : null;
+        } catch (\Exception $e) {
+            // Context: API routes may not have a session store bound
+        }
+        $sessionId = $sessionId ?: ($request->header('X-Session-ID') ?: null);
         
         // Auto-detect severity if not provided
         $severity = $severity ?? (self::$actionSeverityMap[$action] ?? self::SEVERITY_INFO);

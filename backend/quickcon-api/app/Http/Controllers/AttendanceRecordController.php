@@ -1188,7 +1188,7 @@ class AttendanceRecordController extends Controller
         }
 
         $request->validate([
-            'status' => 'nullable|string|in:present,late,absent,excused,left_early',
+            'status' => 'nullable|string|in:present,late,absent,excused,left_early,pending',
             'time_in' => 'nullable|date',
             'time_out' => 'nullable|date',
             'break_start' => 'nullable|date',

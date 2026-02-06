@@ -388,10 +388,7 @@ export default function EmployeesPage() {
                                                         {employee.status}
                                                     </Badge>
                                                 </div>
-                                                <div className="bg-muted/50 rounded p-2 text-left">
-                                                    <p className="text-xs text-muted-foreground">Type</p>
-                                                    <p className="font-medium">{employee.employee_type || "—"}</p>
-                                                </div>
+
                                                 <div className="col-span-2 bg-muted/50 rounded p-2 flex items-center justify-between">
                                                     <div>
                                                         <p className="text-xs text-muted-foreground">Last Attendance</p>
@@ -426,7 +423,7 @@ export default function EmployeesPage() {
                                                 <TableHead className="text-center">Employee ID</TableHead>
                                                 <TableHead className="text-center">Position</TableHead>
                                                 <TableHead className="text-center">Status</TableHead>
-                                                <TableHead className="text-center">Type</TableHead>
+
                                                 <TableHead className="text-center">Last Attendance</TableHead>
                                                 <TableHead className="w-[70px] text-center">Actions</TableHead>
                                             </TableRow>
@@ -470,9 +467,7 @@ export default function EmployeesPage() {
                                                             {employee.status}
                                                         </Badge>
                                                     </TableCell>
-                                                    <TableCell className="text-center">
-                                                        <span className="text-sm font-medium">{employee.employee_type || "—"}</span>
-                                                    </TableCell>
+
                                                     <TableCell className="text-center">
                                                         {employee.last_attendance_date ? (
                                                             <div className="flex flex-col items-center">

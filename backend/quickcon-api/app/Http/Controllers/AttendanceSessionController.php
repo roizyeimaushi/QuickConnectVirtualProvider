@@ -124,7 +124,7 @@ class AttendanceSessionController extends Controller
 
     public function show(AttendanceSession $attendanceSession)
     {
-        $attendanceSession->load(['schedule', 'creator', 'records.user' => function ($query) {
+        $attendanceSession->load(['schedule', 'creator', 'lockedByUser', 'records.user' => function ($query) {
             $query->withTrashed();
         }, 'records.breaks']);
 
@@ -305,7 +305,7 @@ class AttendanceSessionController extends Controller
         // Broadcast real-time session update
         event(new SessionUpdated($attendanceSession, 'locked'));
 
-        return response()->json($attendanceSession->load(['schedule', 'creator', 'lockedBy']));
+        return response()->json($attendanceSession->load(['schedule', 'creator', 'lockedByUser']));
     }
 
     public function unlock(AttendanceSession $attendanceSession)
