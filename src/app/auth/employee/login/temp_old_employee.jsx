@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/auth-provider";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -14,7 +15,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, AlertCircle, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, Loader2, AlertCircle, Mail, Lock } from "lucide-react";
 import { useSettingsContext } from "@/components/providers/settings-provider";
 import { getLogoUrl, API_BASE_URL } from "@/lib/constants";
 
@@ -28,7 +29,7 @@ export default function EmployeeLoginPage() {
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [remember, setRemember] = useState(false);
 
-    const { login, isAuthenticated, isAdmin, isEmployee } = useAuth();
+    const { login, isAuthenticated, isAdmin, isEmployee, loading: authLoading } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
 
@@ -60,12 +61,14 @@ export default function EmployeeLoginPage() {
         try {
             const result = await login({ email, password, remember, login_type: 'employee' });
 
+            // Check if user is employee
             if (result.role !== 'employee') {
                 setError("Access denied. This login is for employees only.");
                 setShowErrorModal(true);
                 return;
             }
 
+            // Save to localStorage if Remember me is checked
             if (remember) {
                 localStorage.setItem("employee_remembered_email", email);
                 localStorage.setItem("employee_remember_me", "true");
@@ -82,8 +85,9 @@ export default function EmployeeLoginPage() {
         } catch (err) {
             let errorMessage = "The provided credentials are incorrect.";
 
+            // Network / server unreachable: guide user to start backend
             if (err?.status === 0 || (err?.message && err.message.includes("Cannot reach the server"))) {
-                errorMessage = `Cannot reach the API server. Please ensure the backend is running at ${API_BASE_URL}.`;
+                errorMessage = `Cannot reach the API server. Please ensure the backend is running at ${API_BASE_URL}. If you are on Vercel, make sure NEXT_PUBLIC_API_URL is set in your project settings.`;
             } else if (err?.errors?.email?.[0]) {
                 errorMessage = err.errors.email[0];
             } else if (err?.message && err.message !== "An error occurred" && err.message !== "Request failed") {
@@ -119,40 +123,43 @@ export default function EmployeeLoginPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* Main Layout Container - Full Height, Responsive */}
-            {/* Mobile: Image TOP (Child 1), Login BOTTOM (Child 2) */}
-            {/* Desktop: Login LEFT (Child 2 moves left), Image RIGHT (Child 1 moves right) */}
-            <div className="min-h-screen w-full flex flex-col md:flex-row-reverse bg-[#f8f8ff] overflow-x-hidden">
+            {/* Full Screen Layout - Responsive: stacked on mobile, side-by-side on larger screens */}
+            <div className="min-h-screen h-screen w-full flex flex-col md:flex-row overflow-hidden">
 
-                {/* Left Side (on md) / Top Side (on mobile) - Welcome Image */}
-                <div className="w-full md:w-1/2 h-[35vh] sm:h-[40vh] md:h-screen relative overflow-hidden flex-shrink-0">
+                {/* Left Side - Full Image with Centered Message Overlay (hidden on mobile) */}
+                <div className="hidden md:block md:w-1/2 h-full relative overflow-hidden">
+                    {/* Full Background Image */}
                     <img
                         src="/employee-login-side.png"
-                        alt="Welcome"
+                        alt="Customer Service Representative"
                         className="absolute inset-0 w-full h-full object-cover object-center"
                     />
+
+                    {/* Dark Overlay for text readability */}
                     <div className="absolute inset-0 bg-black/40" />
 
-                    <div className="absolute inset-0 z-10 flex items-center justify-center p-6 text-center">
-                        <div className="max-w-md">
-                            <h2 className="text-2xl sm:text-3xl lg:text-3xl font-bold leading-tight text-white drop-shadow-lg mb-2 sm:mb-4">
+                    {/* Centered Welcome Message Overlay */}
+                    <div className="absolute inset-0 z-10 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+                        <div className="text-center px-4 sm:px-8 lg:px-12">
+                            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-3xl font-bold leading-tight text-white drop-shadow-lg mb-2 sm:mb-4 lg:mb-6">
                                 Welcome to <span className="text-[#22c55e]">QuickConn Virtual</span>
                             </h2>
-                            <p className="text-white/90 text-sm sm:text-base lg:text-lg leading-relaxed max-w-sm sm:max-w-md mx-auto drop-shadow-md">
+                            <p className="text-white/90 text-xs sm:text-sm md:text-base lg:text-lg leading-relaxed max-w-sm sm:max-w-md mx-auto drop-shadow-md">
                                 Track your attendance, view schedules, and manage your work records in one convenient portal.
                             </p>
                         </div>
                     </div>
                 </div>
 
-                {/* Right Side (on md) / Bottom Side (on mobile) - Login Form */}
-                <div className="flex-1 flex flex-col justify-center p-6 sm:p-10 md:p-12 lg:p-16 bg-[#f8f8ff]">
+                {/* Right Side - Login Form (full width on mobile, half on larger screens) */}
+                <div className="w-full md:w-1/2 h-full flex flex-col justify-center p-6 sm:p-8 md:p-12 lg:p-16 bg-[#f8f8ff]">
                     <div className="w-full max-w-md mx-auto">
-                        <div className="flex justify-center mb-6">
+                        {/* Logo - using max-w to prevent stretching */}
+                        <div className="flex justify-center mb-4 sm:mb-6">
                             <img
                                 src={getLogoUrl(settings?.system_logo)}
                                 alt="QuickConn Logo"
-                                className="h-auto max-h-16 md:max-h-24 w-auto object-contain"
+                                className="h-auto max-h-16 md:max-h-24 w-auto max-w-[300px] sm:max-w-[350px] object-contain"
                                 onError={(e) => {
                                     e.currentTarget.src = "/quickconnect-logo.png";
                                     e.currentTarget.onerror = null;
@@ -160,53 +167,56 @@ export default function EmployeeLoginPage() {
                             />
                         </div>
 
-                        <p className="text-muted-foreground text-sm text-center mb-8">
+                        {/* Subtitle */}
+                        <p className="text-muted-foreground text-xs sm:text-sm lg:text-base text-center mb-6 sm:mb-8">
                             Sign in to access your QuickConn Virtual account
                         </p>
 
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="space-y-4">
-                                <div className="space-y-1.5">
-                                    <Label htmlFor="email" className="text-xs font-bold text-slate-700 uppercase ml-1">Email Address</Label>
-                                    <div className="relative">
-                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
-                                            <Mail className="h-5 w-5" />
-                                        </div>
-                                        <input
-                                            id="email"
-                                            type="email"
-                                            placeholder="Enter your email address"
-                                            value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
-                                            required
-                                            className="w-full h-12 pl-12 pr-4 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-                                        />
+                        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+                            <div className="space-y-3 sm:space-y-4">
+                                {/* Email Input with Icon */}
+                                <div className="relative">
+                                    <div className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
+                                        <Mail className="h-4 w-4 sm:h-5 sm:w-5" />
                                     </div>
+                                    <input
+                                        id="email"
+                                        type="email"
+                                        placeholder="Enter your email address"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        required
+                                        autoComplete="email"
+                                        className="w-full h-11 sm:h-12 pl-10 sm:pl-12 pr-4 bg-white border border-gray-200 rounded-lg text-sm sm:text-base placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                                    />
                                 </div>
 
-                                <div className="space-y-1.5">
-                                    <Label htmlFor="password" className="text-xs font-bold text-slate-700 uppercase ml-1">Password</Label>
-                                    <div className="relative">
-                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
-                                            <Lock className="h-5 w-5" />
-                                        </div>
-                                        <input
-                                            id="password"
-                                            type={showPassword ? "text" : "password"}
-                                            placeholder="Enter your password"
-                                            value={password}
-                                            onChange={(e) => setPassword(e.target.value)}
-                                            required
-                                            className="w-full h-12 pl-12 pr-12 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground"
-                                        >
-                                            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                                        </button>
+                                {/* Password Input with Icon */}
+                                <div className="relative">
+                                    <div className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
+                                        <Lock className="h-4 w-4 sm:h-5 sm:w-5" />
                                     </div>
+                                    <input
+                                        id="password"
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder="Enter your password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        required
+                                        autoComplete="current-password"
+                                        className="w-full h-11 sm:h-12 pl-10 sm:pl-12 pr-10 sm:pr-12 bg-white border border-gray-200 rounded-lg text-sm sm:text-base placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                    >
+                                        {showPassword ? (
+                                            <EyeOff className="h-4 w-4 sm:h-5 sm:w-5" />
+                                        ) : (
+                                            <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
+                                        )}
+                                    </button>
                                 </div>
                             </div>
 
@@ -214,11 +224,14 @@ export default function EmployeeLoginPage() {
                                 <div className="flex items-center space-x-2">
                                     <Checkbox
                                         id="remember"
+                                        className="border-gray-300 h-4 w-4"
                                         checked={remember}
                                         onCheckedChange={setRemember}
-                                        className="border-gray-300"
                                     />
-                                    <Label htmlFor="remember" className="text-sm text-muted-foreground">
+                                    <Label
+                                        htmlFor="remember"
+                                        className="text-xs sm:text-sm text-muted-foreground leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                    >
                                         Remember me
                                     </Label>
                                 </div>
@@ -226,7 +239,7 @@ export default function EmployeeLoginPage() {
 
                             <Button
                                 type="submit"
-                                className="w-full h-12 text-base font-semibold rounded-lg shadow-lg"
+                                className="w-full h-10 sm:h-11 lg:h-12 text-sm sm:text-base font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
                                 loading={loading}
                                 style={{
                                     background: 'linear-gradient(135deg, #2e8b57 0%, #236b43 100%)'
@@ -236,7 +249,8 @@ export default function EmployeeLoginPage() {
                             </Button>
                         </form>
 
-                        <p className="mt-8 text-center text-sm text-muted-foreground">
+                        {/* Footer text */}
+                        <p className="mt-6 sm:mt-8 text-center text-xs sm:text-sm text-muted-foreground">
                             QuickConn Virtual Attendance System
                         </p>
                     </div>
