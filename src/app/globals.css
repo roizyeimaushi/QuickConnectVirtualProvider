@@ -106,14 +106,14 @@
   --chart-4: #f59e0b;
   --chart-5: #ef4444;
 
-  /* Sidebar - Classic Forest Green */
-  --sidebar: #1a3328;
-  --sidebar-foreground: #8ba898;
+  /* Sidebar - 2nd Image Reference Design */
+  --sidebar: #102a1e;
+  --sidebar-foreground: #ffffff;
   --sidebar-primary: #3da36e;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #2a4d3a;
+  --sidebar-accent: #204533;
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #2a4d3a;
+  --sidebar-border: rgba(255, 255, 255, 0.05);
   --sidebar-ring: #3da36e;
 }
 
