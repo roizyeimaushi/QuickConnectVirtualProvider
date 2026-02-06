@@ -294,7 +294,7 @@ export default function AttendanceHistoryPage() {
                                         </div>
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="all">All Statuses</SelectItem>
+                                        <SelectItem value="all">All</SelectItem>
                                         <SelectItem value="present">Present</SelectItem>
                                         <SelectItem value="late">Late</SelectItem>
                                         <SelectItem value="absent">Absent</SelectItem>

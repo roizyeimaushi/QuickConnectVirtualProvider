@@ -42,12 +42,20 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
     });
 
     const [totals, setTotals] = useState({ hours: 0, overtime: 0, autoStatus: "pending" });
+    const [isManual, setIsManual] = useState(false);
+
+    // Get normalized employee info
+    const employee = record?.user || record?.employee || {};
+    const employeeName = employee.name || (employee.first_name ? `${employee.first_name} ${employee.last_name}` : "Unknown User");
+    const employeeId = employee.employee_id || record?.employee_id || "N/A";
+    const employeeAvatar = employee.avatar;
+    const initials = employee.first_name ? employee.first_name.charAt(0) : (employee.name?.charAt(0) || "U");
 
     // CRITICAL FIX: Reset form when record changes
     useEffect(() => {
         if (record) {
             setFormData({
-                status: record.status || "auto", // Default to auto if new record
+                status: record.status || "pending",
                 time_in: record.time_in ? format(new Date(record.time_in), "yyyy-MM-dd'T'HH:mm") : "",
                 time_out: record.time_out ? format(new Date(record.time_out), "yyyy-MM-dd'T'HH:mm") : "",
                 break_start: record.break_start ? format(new Date(record.break_start), "yyyy-MM-dd'T'HH:mm") : "",
@@ -56,6 +64,7 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                 correction_type: "Time In Correction",
                 reason: "",
             });
+            setIsManual(false); // Reset manual flag on new record
         }
     }, [record, open]);
 
@@ -95,11 +104,11 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
 
         setTotals({ hours, overtime, autoStatus });
 
-        // ONLY update status if user has selected "auto"
-        if (formData.status === 'auto') {
-            setFormData(prev => ({ ...prev, status: 'auto' })); // Stay in auto mode
+        // Auto-follow status if not manual
+        if (!isManual) {
+            setFormData(prev => ({ ...prev, status: autoStatus }));
         }
-    }, [formData.time_in, formData.time_out, formData.break_start, formData.break_end, formData.status, record]);
+    }, [formData.time_in, formData.time_out, formData.break_start, formData.break_end, formData.status, record, isManual]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -108,7 +117,7 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
             setLoading(true);
             const payload = {
                 ...formData,
-                status: formData.status === 'auto' ? totals.autoStatus : formData.status,
+                status: formData.status,
                 time_in: formData.time_in || null,
                 time_out: formData.time_out || null,
                 break_start: formData.break_start || null,
@@ -161,19 +170,18 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                     <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border">
                         <div className="flex items-center gap-3">
                             <Avatar className="h-12 w-12 sm:h-14 sm:w-14 border-2 border-primary/20 shadow-sm">
-                                <AvatarImage src={record?.user?.avatar} alt={record?.user?.first_name || "Employee"} />
+                                <AvatarImage src={employeeAvatar} alt={employeeName} />
                                 <AvatarFallback className="bg-primary/10 text-primary font-bold text-lg">
-                                    {record?.user?.first_name ? record.user.first_name.charAt(0) : (record?.user?.name?.charAt(0) || "U")}
-                                    {record?.user?.last_name ? record.user.last_name.charAt(0) : ""}
+                                    {initials}
                                 </AvatarFallback>
                             </Avatar>
                             <div className="flex flex-col min-w-0">
                                 <p className="font-bold text-base sm:text-lg leading-tight truncate">
-                                    {record?.user?.first_name ? `${record.user.first_name} ${record.user.last_name}` : (record?.user?.name || "Unknown User")}
+                                    {employeeName}
                                 </p>
                                 <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider font-semibold flex flex-wrap gap-1 items-center">
                                     <span className="bg-primary/10 px-1.5 py-0.5 rounded text-primary">
-                                        ID: {record?.user?.employee_id || "N/A"}
+                                        ID: {employeeId}
                                     </span>
                                     <span className="hidden sm:inline-block opacity-40">•</span>
                                     <span className="opacity-80">
@@ -190,13 +198,15 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                             <Label htmlFor="status" className="text-xs font-bold uppercase text-muted-foreground">Status Override</Label>
                             <Select
                                 value={formData.status}
-                                onValueChange={(val) => setFormData({ ...formData, status: val })}
+                                onValueChange={(val) => {
+                                    setFormData({ ...formData, status: val });
+                                    setIsManual(true);
+                                }}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select status" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="auto">System (Auto-Calculate)</SelectItem>
                                     <SelectItem value="present">Present</SelectItem>
                                     <SelectItem value="late">Late</SelectItem>
                                     <SelectItem value="absent">Absent</SelectItem>
