@@ -26,13 +26,13 @@ import {
 } from "@/components/ui/sidebar";
 import { useSettingsContext } from "@/components/providers/settings-provider";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+    DialogDescription,
+} from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
@@ -211,8 +211,8 @@ export function AppSidebar() {
             <SidebarFooter className="p-3 border-t border-white/5">
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
+                        <Dialog>
+                            <DialogTrigger asChild>
                                 <SidebarMenuButton
                                     size="lg"
                                     className="data-[state=open]:bg-white/5 rounded-lg transition-all p-2 h-12"
@@ -242,41 +242,77 @@ export function AppSidebar() {
                                     </div>
                                     <ChevronRight className="ml-auto size-3.5 text-white/20 group-data-[collapsible=icon]:hidden shrink-0" />
                                 </SidebarMenuButton>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                                className="w-64 rounded-xl shadow-2xl border-white/10 p-2 bg-[#0a1f16] text-white"
-                                side="right"
-                                align="end"
-                                sideOffset={8}
-                            >
-                                <DropdownMenuLabel className="px-3 py-4 font-normal text-white/90">
-                                    <div className="flex flex-col gap-1">
-                                        <p className="text-[9px] font-bold text-emerald-500/70 uppercase tracking-widest mb-1">Authenticated As</p>
-                                        <p className="text-sm font-bold truncate">{user?.email}</p>
-                                    </div>
-                                </DropdownMenuLabel>
-                                <DropdownMenuSeparator className="bg-white/5" />
-                                <DropdownMenuItem className="cursor-pointer rounded-lg py-3 focus:bg-white/5 focus:text-white text-white/70" asChild>
-                                    <Link href={isAdmin ? "/dashboard/admin/profile" : "/dashboard/employee/profile"}>
-                                        <User className="mr-3 h-4 w-4 text-emerald-500" />
-                                        Profile Overview
-                                    </Link>
-                                </DropdownMenuItem>
-                                {isAdmin && (
-                                    <DropdownMenuItem className="cursor-pointer rounded-lg py-3 focus:bg-white/5 focus:text-white text-white/70" asChild>
-                                        <Link href="/settings/general">
-                                            <Settings className="mr-3 h-4 w-4 text-emerald-500" />
-                                            System Settings
+                            </DialogTrigger>
+                            <DialogContent className="w-[calc(100%-2rem)] sm:max-w-sm rounded-2xl shadow-2xl border-white/10 p-0 bg-[#0a1f16] text-white overflow-hidden animate-zoom-in">
+                                <div className="p-6">
+                                    <DialogHeader className="text-left mb-6">
+                                        <div className="flex items-center gap-4 mb-4">
+                                            <Avatar className="h-14 w-14 rounded-full border-2 border-emerald-500/20 shadow-lg">
+                                                <AvatarImage src={user?.avatar} alt={user?.first_name} />
+                                                <AvatarFallback className="rounded-full bg-emerald-950 text-emerald-400 text-xl font-bold">
+                                                    {getInitials(user?.first_name, user?.last_name)}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <div className="flex flex-col">
+                                                <DialogTitle className="text-lg font-bold text-white">
+                                                    {user?.first_name} {user?.last_name}
+                                                </DialogTitle>
+                                                <DialogDescription className="text-emerald-500/80 font-medium text-xs uppercase tracking-widest">
+                                                    {isAdmin ? "Administrator" : "Staff Personnel"}
+                                                </DialogDescription>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-white/5 rounded-xl p-4 border border-white/5">
+                                            <p className="text-[10px] font-bold text-emerald-500/60 uppercase tracking-widest mb-1.5">Authenticated As</p>
+                                            <p className="text-sm font-medium text-white/90 break-all">{user?.email}</p>
+                                        </div>
+                                    </DialogHeader>
+
+                                    <div className="space-y-2 mt-4">
+                                        <Link
+                                            href={isAdmin ? "/dashboard/admin/profile" : "/dashboard/employee/profile"}
+                                            className="flex items-center w-full p-4 rounded-xl transition-all hover:bg-white/5 group border border-transparent hover:border-white/5"
+                                        >
+                                            <div className="h-10 w-10 rounded-lg bg-emerald-500/10 flex items-center justify-center mr-4 shrink-0 group-hover:bg-emerald-500/20 transition-colors">
+                                                <User className="h-5 w-5 text-emerald-500" />
+                                            </div>
+                                            <div className="flex-1 text-left">
+                                                <p className="font-semibold text-sm">Profile Overview</p>
+                                                <p className="text-[11px] text-white/40">Manage your personal information</p>
+                                            </div>
+                                            <ChevronRight className="h-4 w-4 text-white/20" />
                                         </Link>
-                                    </DropdownMenuItem>
-                                )}
-                                <DropdownMenuSeparator className="bg-white/5" />
-                                <DropdownMenuItem className="cursor-pointer text-red-400 focus:text-red-400 focus:bg-red-500/10 rounded-lg py-3" onClick={logout}>
-                                    <LogOut className="mr-3 h-4 w-4" />
-                                    Log Out Securely
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+
+                                        {isAdmin && (
+                                            <Link
+                                                href="/settings/general"
+                                                className="flex items-center w-full p-4 rounded-xl transition-all hover:bg-white/5 group border border-transparent hover:border-white/5"
+                                            >
+                                                <div className="h-10 w-10 rounded-lg bg-emerald-500/10 flex items-center justify-center mr-4 shrink-0 group-hover:bg-emerald-500/20 transition-colors">
+                                                    <Settings className="h-5 w-5 text-emerald-500" />
+                                                </div>
+                                                <div className="flex-1 text-left">
+                                                    <p className="font-semibold text-sm">System Settings</p>
+                                                    <p className="text-[11px] text-white/40">Configure application preferences</p>
+                                                </div>
+                                                <ChevronRight className="h-4 w-4 text-white/20" />
+                                            </Link>
+                                        )}
+                                    </div>
+
+                                    <div className="mt-8 border-t border-white/5 pt-6">
+                                        <button
+                                            onClick={logout}
+                                            className="flex items-center justify-center w-full gap-3 p-4 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-all font-bold text-sm shadow-sm"
+                                        >
+                                            <LogOut className="h-4 w-4" />
+                                            Log Out Securely
+                                        </button>
+                                    </div>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarFooter>
