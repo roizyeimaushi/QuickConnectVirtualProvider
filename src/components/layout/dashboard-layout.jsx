@@ -101,7 +101,7 @@ export function AppSidebar() {
     const logoUrl = getLogoUrl(settings?.system_logo);
 
     return (
-        <Sidebar collapsible={hideSidebar ? "offcanvas" : "icon"} className="shadow-2xl transition-all duration-300">
+        <Sidebar collapsible={hideSidebar ? "offcanvas" : "icon"} className="shadow-2xl">
             <SidebarHeader className="p-5 pb-2">
                 <SidebarMenu>
                     <SidebarMenuItem>
