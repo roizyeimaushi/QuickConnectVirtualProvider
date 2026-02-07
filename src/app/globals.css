@@ -505,6 +505,16 @@ body::-webkit-scrollbar,
     position: relative;
   }
 
+  @media (prefers-reduced-motion: reduce) {
+
+    .animate-shimmer,
+    .animate-pulse,
+    .animate-pulse-subtle {
+      animation: none !important;
+      background-position: center !important;
+    }
+  }
+
   .dark .animate-shimmer {
     background: linear-gradient(90deg,
         rgba(0, 0, 0, 0) 0%,

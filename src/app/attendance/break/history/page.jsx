@@ -30,9 +30,9 @@ export default function BreakHistoryPage() {
                         <CardHeader className="space-y-2">
                             <div className="flex items-center gap-2">
                                 <Skeleton className="h-5 w-5 bg-slate-100/60" />
-                                <Skeleton className="h-6 w-32 bg-slate-100/60" />
+                                <Skeleton className={`h-6 ${i => i % 2 === 0 ? 'w-32' : 'w-28'} bg-slate-100/60`} />
                             </div>
-                            <Skeleton className="h-4 w-64 bg-slate-100/40" />
+                            <Skeleton className={`h-4 ${i => i % 2 === 0 ? 'w-64' : 'w-56'} bg-slate-100/40`} />
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
@@ -41,11 +41,11 @@ export default function BreakHistoryPage() {
                                         <div className="flex items-center gap-3">
                                             <Skeleton className="h-9 w-9 rounded-full bg-slate-200/40" />
                                             <div className="space-y-2">
-                                                <Skeleton className="h-4 w-24 bg-slate-200/40" />
-                                                <Skeleton className="h-3 w-16 bg-slate-100/30" />
+                                                <Skeleton className={`h-4 ${i % 3 === 0 ? 'w-24' : i % 3 === 1 ? 'w-28' : 'w-20'} bg-slate-200/40`} />
+                                                <Skeleton className={`h-3 ${i % 2 === 0 ? 'w-16' : 'w-14'} bg-slate-100/30`} />
                                             </div>
                                         </div>
-                                        <Skeleton className="h-6 w-20 rounded-full bg-slate-100/30" />
+                                        <Skeleton className={`h-6 ${i % 2 === 0 ? 'w-20' : 'w-16'} rounded-full bg-slate-100/30`} />
                                     </div>
                                 ))}
                             </div>

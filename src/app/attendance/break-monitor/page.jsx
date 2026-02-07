@@ -167,17 +167,17 @@ export default function BreakMonitorPage() {
                                             <div className="flex items-center gap-3 w-1/4">
                                                 <Skeleton className="h-9 w-9 rounded-full bg-slate-200/60" />
                                                 <div className="space-y-2">
-                                                    <Skeleton className="h-4 w-24 bg-slate-200/60" />
-                                                    <Skeleton className="h-3 w-16 bg-slate-100/40" />
+                                                    <Skeleton className={`h-4 ${i % 3 === 0 ? 'w-24' : i % 3 === 1 ? 'w-28' : 'w-20'} bg-slate-200/60`} />
+                                                    <Skeleton className={`h-3 ${i % 2 === 0 ? 'w-16' : 'w-14'} bg-slate-100/40`} />
                                                 </div>
                                             </div>
-                                            <Skeleton className="h-4 w-24 bg-slate-100/40" />
-                                            <Skeleton className="h-4 w-20 bg-slate-200/40" />
+                                            <Skeleton className={`h-4 ${i % 2 === 0 ? 'w-24' : 'w-20'} bg-slate-100/40`} />
+                                            <Skeleton className={`h-4 ${i % 2 === 0 ? 'w-20' : 'w-16'} bg-slate-200/40`} />
                                             <div className="flex flex-col items-center gap-2">
-                                                <Skeleton className="h-4 w-12 bg-slate-200/60" />
+                                                <Skeleton className={`h-4 ${i % 2 === 0 ? 'w-12' : 'w-10'} bg-slate-200/60`} />
                                                 <Skeleton className="h-3 w-10 bg-slate-100/40" />
                                             </div>
-                                            <Skeleton className="h-6 w-20 rounded-full bg-slate-100/40" />
+                                            <Skeleton className={`h-6 ${i % 3 === 0 ? 'w-20' : i % 3 === 1 ? 'w-22' : 'w-18'} rounded-full bg-slate-100/40`} />
                                             <Skeleton className="h-9 w-24 rounded-md bg-slate-100/30" />
                                         </div>
                                     ))}

@@ -230,16 +230,16 @@ export default function BreakHistoryPage() {
                                                 <div className="flex items-center gap-3 w-1/4">
                                                     <Skeleton className="h-9 w-9 rounded-full bg-slate-200/60" />
                                                     <div className="space-y-2">
-                                                        <Skeleton className="h-4 w-24 bg-slate-200/60" />
-                                                        <Skeleton className="h-3 w-16 bg-slate-100/40" />
+                                                        <Skeleton className={`h-4 ${i % 3 === 0 ? 'w-24' : i % 3 === 1 ? 'w-28' : 'w-20'} bg-slate-200/60`} />
+                                                        <Skeleton className={`h-3 ${i % 2 === 0 ? 'w-16' : 'w-14'} bg-slate-100/40`} />
                                                     </div>
                                                 </div>
-                                                <Skeleton className="h-4 w-24 bg-slate-100/40" />
-                                                <Skeleton className="h-4 w-20 bg-slate-200/40" />
-                                                <Skeleton className="h-4 w-16 bg-slate-100/40" />
-                                                <Skeleton className="h-4 w-16 bg-slate-100/40" />
-                                                <Skeleton className="h-4 w-12 bg-slate-200/60" />
-                                                <Skeleton className="h-6 w-16 rounded-full bg-slate-100/40" />
+                                                <Skeleton className={`h-4 ${i % 2 === 0 ? 'w-24' : 'w-20'} bg-slate-100/40`} />
+                                                <Skeleton className={`h-4 ${i % 2 === 0 ? 'w-20' : 'w-16'} bg-slate-200/40`} />
+                                                <Skeleton className={`h-4 ${i % 3 === 0 ? 'w-16' : i % 3 === 1 ? 'w-18' : 'w-14'} bg-slate-100/40`} />
+                                                <Skeleton className={`h-4 ${i % 2 === 0 ? 'w-16' : 'w-12'} bg-slate-100/40`} />
+                                                <Skeleton className={`h-4 ${i % 2 === 0 ? 'w-12' : 'w-10'} bg-slate-200/60`} />
+                                                <Skeleton className={`h-6 ${i % 2 === 0 ? 'w-16' : 'w-14'} rounded-full bg-slate-100/40`} />
                                                 <Skeleton className="h-8 w-8 rounded-md bg-slate-100/30" />
                                             </div>
                                         ))}
@@ -253,17 +253,17 @@ export default function BreakHistoryPage() {
                                                 <div className="flex items-center gap-3">
                                                     <Skeleton className="h-10 w-10 rounded-full bg-slate-200/60" />
                                                     <div className="space-y-2">
-                                                        <Skeleton className="h-4 w-24 bg-slate-200/60" />
-                                                        <Skeleton className="h-3 w-16 bg-slate-100/40" />
+                                                        <Skeleton className={`h-4 ${i % 2 === 0 ? 'w-24' : 'w-20'} bg-slate-200/60`} />
+                                                        <Skeleton className={`h-3 ${i % 2 === 0 ? 'w-16' : 'w-14'} bg-slate-100/40`} />
                                                     </div>
                                                 </div>
-                                                <Skeleton className="h-6 w-16 rounded-full bg-slate-200/60" />
+                                                <Skeleton className={`h-6 ${i % 2 === 0 ? 'w-16' : 'w-14'} rounded-full bg-slate-200/60`} />
                                             </div>
                                             <div className="grid grid-cols-2 gap-4 pb-2 border-b">
-                                                <Skeleton className="h-8 w-full bg-slate-100/40" />
-                                                <Skeleton className="h-8 w-full bg-slate-100/40" />
+                                                <Skeleton className={`h-8 ${i % 2 === 0 ? 'w-full' : 'w-[96%]'} bg-slate-100/40`} />
+                                                <Skeleton className={`h-8 ${i % 2 === 0 ? 'w-full' : 'w-[98%]'} bg-slate-100/40`} />
                                             </div>
-                                            <Skeleton className="h-10 w-full bg-slate-100/30" />
+                                            <Skeleton className={`h-10 ${i % 2 === 0 ? 'w-full' : 'w-[94%]'} bg-slate-100/30`} />
                                         </Card>
                                     ))}
                                 </div>

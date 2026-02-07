@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import Skeleton from "@/components/ui/skeleton";
+import { StatsCardSkeleton, TableSkeleton, MobileCardSkeleton } from "@/components/ui/skeleton-patterns";
 import {
     Table,
     TableBody,
@@ -306,19 +307,7 @@ export default function AuditLogsPage() {
 
                 {/* Stats */}
                 {loading && logs.length === 0 ? (
-                    <div className="grid gap-4 md:grid-cols-4 animate-pulse">
-                        {[...Array(4)].map((_, i) => (
-                            <Card key={i}>
-                                <CardContent className="flex items-center gap-4 p-6">
-                                    <Skeleton className="h-12 w-12 rounded-lg bg-slate-200/60" />
-                                    <div className="space-y-2">
-                                        <Skeleton className="h-8 w-16 bg-slate-200/60" />
-                                        <Skeleton className="h-4 w-24 bg-slate-100/60" />
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </div>
+                    <StatsCardSkeleton count={4} />
                 ) : (
                     <div className="grid gap-4 md:grid-cols-4">
                         <Card>
@@ -437,36 +426,12 @@ export default function AuditLogsPage() {
                             </CardHeader>
                             <CardContent>
                                 {loading && logs.length === 0 ? (
-                                    <div className="space-y-4 animate-pulse">
+                                    <div className="space-y-6">
                                         <div className="hidden md:block">
-                                            <div className="border rounded-md">
-                                                <div className="p-0">
-                                                    {[...Array(10)].map((_, i) => (
-                                                        <div key={i} className="p-4 border-b last:border-0">
-                                                            <div className="grid grid-cols-6 gap-4 items-center">
-                                                                <Skeleton className="h-4 w-full bg-slate-200/40" />
-                                                                <Skeleton className="h-4 w-full bg-slate-100/40" />
-                                                                <Skeleton className="h-6 w-16 mx-auto bg-slate-200/40" />
-                                                                <Skeleton className="h-8 w-24 mx-auto bg-slate-200/60" />
-                                                                <Skeleton className="h-4 w-24 mx-auto bg-slate-100/40" />
-                                                                <Skeleton className="h-4 w-32 mx-auto bg-slate-200/40" />
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
+                                            <TableSkeleton rows={10} cols={6} />
                                         </div>
-                                        <div className="md:hidden space-y-3">
-                                            {[...Array(3)].map((_, i) => (
-                                                <div key={i} className="border rounded-lg p-4 space-y-4">
-                                                    <div className="flex justify-between">
-                                                        <Skeleton className="h-4 w-32 bg-slate-200/60" />
-                                                        <Skeleton className="h-6 w-16 bg-slate-200/60" />
-                                                    </div>
-                                                    <Skeleton className="h-10 w-full bg-slate-100/40" />
-                                                    <Skeleton className="h-8 w-full bg-slate-100/40" />
-                                                </div>
-                                            ))}
+                                        <div className="md:hidden">
+                                            <MobileCardSkeleton count={3} />
                                         </div>
                                     </div>
                                 ) : filteredLogs.length === 0 ? (

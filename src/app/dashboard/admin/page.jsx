@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import Skeleton from "@/components/ui/skeleton";
+import { StatsCardSkeleton } from "@/components/ui/skeleton-patterns";
 
 import { useAuth } from "@/components/providers/auth-provider";
 import { reportsApi } from "@/lib/api";
@@ -485,18 +486,7 @@ export default function AdminDashboard() {
                     </div>
 
                     {/* Stats Grid Skeleton */}
-                    <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-                        {[...Array(5)].map((_, i) => (
-                            <Card key={i} className="p-4 space-y-3">
-                                <div className="flex justify-between items-center">
-                                    <Skeleton className="h-4 w-20 bg-slate-100/60" />
-                                    <Skeleton className="h-10 w-10 bg-slate-100/40 rounded-lg" />
-                                </div>
-                                <Skeleton className="h-8 w-16 bg-slate-200/60" />
-                                <Skeleton className="h-3 w-24 bg-slate-100/40" />
-                            </Card>
-                        ))}
-                    </div>
+                    <StatsCardSkeleton count={5} />
 
                     {/* Main Content Grid Skeleton */}
                     <div className="grid gap-4 lg:grid-cols-3">
@@ -510,10 +500,10 @@ export default function AdminDashboard() {
                                 {[...Array(4)].map((_, i) => (
                                     <div key={i} className="space-y-2">
                                         <div className="flex justify-between">
-                                            <Skeleton className="h-4 w-20 bg-slate-100/40" />
-                                            <Skeleton className="h-4 w-10 bg-slate-100/40" />
+                                            <Skeleton className={`h-4 ${i % 2 === 0 ? 'w-20' : 'w-16'} bg-slate-100/40`} />
+                                            <Skeleton className={`h-4 ${i % 2 === 0 ? 'w-10' : 'w-8'} bg-slate-100/40`} />
                                         </div>
-                                        <Skeleton className="h-2 w-full bg-slate-100/30 rounded-full" />
+                                        <Skeleton className={`h-2 ${i === 0 ? 'w-full' : i === 1 ? 'w-[85%]' : i === 2 ? 'w-[40%]' : 'w-[15%]'} bg-slate-100/30 rounded-full`} />
                                     </div>
                                 ))}
                             </div>
@@ -536,7 +526,7 @@ export default function AdminDashboard() {
                                         <Skeleton className="h-6 w-24 bg-slate-100/60" />
                                     </div>
                                     <div className="space-y-2">
-                                        <Skeleton className="h-3 w-16 bg-slate-100/30" />
+                                        <Skeleton className="h-3 w-14 bg-slate-100/30" />
                                         <Skeleton className="h-6 w-20 bg-slate-100/60" />
                                     </div>
                                 </div>
@@ -548,7 +538,7 @@ export default function AdminDashboard() {
                                 <Skeleton className="h-6 w-32 mb-6 bg-slate-100/60" />
                                 <div className="space-y-3">
                                     {[...Array(3)].map((_, i) => (
-                                        <Skeleton key={i} className="h-14 w-full bg-slate-100/40 rounded-lg" />
+                                        <Skeleton key={i} className={`h-14 ${i === 1 ? 'w-[98%]' : 'w-full'} bg-slate-100/40 rounded-lg`} />
                                     ))}
                                 </div>
                             </Card>

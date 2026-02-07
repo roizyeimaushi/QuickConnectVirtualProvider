@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Skeleton from "@/components/ui/skeleton";
+import { StatsCardSkeleton, TableSkeleton, MobileCardSkeleton } from "@/components/ui/skeleton-patterns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -373,48 +374,12 @@ export default function AttendanceHistoryPage() {
                     </CardHeader>
                     <CardContent>
                         {loading && records.length === 0 ? (
-                            <div className="space-y-4 animate-pulse">
-                                {/* Skeleton Table */}
+                            <div className="space-y-6">
                                 <div className="hidden md:block">
-                                    <div className="border rounded-md">
-                                        <div className="p-0">
-                                            {[...Array(8)].map((_, i) => (
-                                                <div key={i} className="p-4 border-b last:border-0">
-                                                    <div className="grid grid-cols-7 gap-4 items-center">
-                                                        <Skeleton className="h-4 w-full bg-slate-100/40" />
-                                                        <Skeleton className="h-4 w-full bg-slate-200/40" />
-                                                        <Skeleton className="h-4 w-full bg-slate-100/40" />
-                                                        <Skeleton className="h-4 w-full bg-slate-100/30" />
-                                                        <Skeleton className="h-4 w-full bg-slate-100/30" />
-                                                        <Skeleton className="h-4 w-full bg-slate-200/40" />
-                                                        <Skeleton className="h-8 w-8 rounded-md mx-auto bg-slate-100/30" />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
+                                    <TableSkeleton rows={10} cols={7} />
                                 </div>
-                                {/* Skeleton Cards (Mobile) */}
-                                <div className="md:hidden space-y-3">
-                                    {[...Array(3)].map((_, i) => (
-                                        <div key={i} className="border rounded-lg p-4 space-y-4">
-                                            <div className="flex justify-between items-center">
-                                                <div className="flex items-center gap-3">
-                                                    <Skeleton className="h-10 w-10 rounded-full bg-slate-200/60" />
-                                                    <div className="space-y-2">
-                                                        <Skeleton className="h-4 w-24 bg-slate-100/60" />
-                                                        <Skeleton className="h-3 w-20 bg-slate-100/40" />
-                                                    </div>
-                                                </div>
-                                                <Skeleton className="h-6 w-16 rounded-full bg-slate-200/40" />
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <Skeleton className="h-10 w-full rounded-md bg-slate-100/30" />
-                                                <Skeleton className="h-10 w-full rounded-md bg-slate-100/30" />
-                                            </div>
-                                            <Skeleton className="h-10 w-full rounded-md bg-slate-100/30" />
-                                        </div>
-                                    ))}
+                                <div className="md:hidden">
+                                    <MobileCardSkeleton count={5} />
                                 </div>
                             </div>
                         ) : records.length === 0 ? (
