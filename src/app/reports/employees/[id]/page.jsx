@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 
 import {
     Table,
@@ -120,21 +121,7 @@ export default function EmployeeReportDetailPage() {
     if (initialLoad) {
         return (
             <DashboardLayout title="Loading Report...">
-                <div className="space-y-6 animate-pulse p-4">
-                    <div className="flex items-center gap-4">
-                        <div className="h-16 w-16 rounded-full bg-slate-200 dark:bg-slate-800" />
-                        <div className="space-y-2">
-                            <div className="h-6 w-48 bg-slate-200 dark:bg-slate-800 rounded" />
-                            <div className="h-4 w-32 bg-slate-100 dark:bg-slate-900 rounded" />
-                        </div>
-                    </div>
-                    <div className="grid gap-4 md:grid-cols-4">
-                        {[1, 2, 3, 4].map(i => (
-                            <div key={i} className="h-24 bg-slate-50 dark:bg-slate-900 border rounded-lg" />
-                        ))}
-                    </div>
-                    <div className="h-96 bg-slate-50 dark:bg-slate-900 border rounded-lg" />
-                </div>
+                <PageSkeleton cardCount={4} hasHeader={true} />
             </DashboardLayout>
         );
     }

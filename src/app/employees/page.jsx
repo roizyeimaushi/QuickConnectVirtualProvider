@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 
 import {
     Table,
@@ -201,6 +202,14 @@ export default function EmployeesPage() {
     // Full-page logo loader for initial load only
     // Full-page logo loader for initial load only
 
+
+    if (loading && employees.length === 0) {
+        return (
+            <DashboardLayout title="Employees">
+                <PageSkeleton cardCount={3} hasHeader={true} />
+            </DashboardLayout>
+        );
+    }
 
     return (
         <DashboardLayout title="Employees">

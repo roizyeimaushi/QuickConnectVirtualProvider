@@ -1336,7 +1336,10 @@ class AttendanceRecordController extends Controller
         if ($isOnBreak) {
             $breakStart = Carbon::parse($record->break_start);
             $breakDurationSeconds = Carbon::now()->diffInSeconds($breakStart);
-            $maxBreakSeconds = 3600; // 1 hour
+            
+            // Get break duration from settings (default 90 mins = 5400 seconds)
+            $breakLimitMinutes = (int) (Setting::where('key', 'break_duration')->value('value') ?: 90);
+            $maxBreakSeconds = $breakLimitMinutes * 60;
             
             if ($breakDurationSeconds > $maxBreakSeconds) {
                 $record->break_end = $breakStart->copy()->addSeconds($maxBreakSeconds);

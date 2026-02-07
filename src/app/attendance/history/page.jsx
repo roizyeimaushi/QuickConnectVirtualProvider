@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -250,6 +251,14 @@ export default function AttendanceHistoryPage() {
         excused: CheckCircle2,
         left_early: Timer,
     };
+
+    if (loading && records.length === 0) {
+        return (
+            <DashboardLayout title="Attendance History">
+                <PageSkeleton cardCount={4} hasHeader={true} />
+            </DashboardLayout>
+        );
+    }
 
     return (
         <DashboardLayout title="Attendance History">

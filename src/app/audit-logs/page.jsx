@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 import {
     Table,
     TableBody,
@@ -290,6 +291,14 @@ export default function AuditLogsPage() {
     };
 
 
+
+    if (loading && logs.length === 0) {
+        return (
+            <DashboardLayout title="Audit Logs">
+                <PageSkeleton cardCount={4} hasHeader={true} />
+            </DashboardLayout>
+        );
+    }
 
     return (
         <DashboardLayout title="Audit Logs">
