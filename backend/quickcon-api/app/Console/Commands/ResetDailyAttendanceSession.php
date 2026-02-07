@@ -43,17 +43,34 @@ class ResetDailyAttendanceSession extends Command
 
         $today = Carbon::today();
         
-        // ============================================================
-        // WEEKEND CHECK: Based on 'weekend_checkin' setting
-        // ============================================================
         $dayOfWeek = $today->dayOfWeek;
         $allowWeekend = filter_var(\App\Models\Setting::where('key', 'weekend_checkin')->value('value'), FILTER_VALIDATE_BOOLEAN);
+        $isOvernight = $schedule->is_overnight;
         
-        if (!$allowWeekend && ($dayOfWeek === Carbon::SATURDAY || $dayOfWeek === Carbon::SUNDAY)) {
-            $dayName = $dayOfWeek === Carbon::SATURDAY ? 'Saturday' : 'Sunday';
-            $this->info("Today is {$dayName}. 'weekend_checkin' is disabled. Skipping session creation.");
+        // ============================================================
+        // SMART WEEKEND LOGIC:
+        // Regular Shift: Sat/Sun are weekends.
+        // Night Shift (Overnight): 
+        //   - Saturday Night (23:00) is the primary "Off" shift.
+        //   - Sunday Night (23:00) is technically the start of the Monday workday.
+        // ============================================================
+        $isTrueWeekend = false;
+        if ($isOvernight) {
+            // Only Saturday Night is a hard "No Work" for night shifts
+            $isTrueWeekend = ($dayOfWeek === Carbon::SATURDAY);
+        } else {
+            // Standard Sat/Sun for day shifts
+            $isTrueWeekend = ($dayOfWeek === Carbon::SATURDAY || $dayOfWeek === Carbon::SUNDAY);
+        }
+
+        if (!$allowWeekend && $isTrueWeekend) {
+            $dayName = $today->format('l');
+            $this->info("Today is {$dayName} ({$schedule->name}). skipping auto-session creation.");
             return 0;
         }
+        
+        // If it's a weekend but check-ins are allowed, we set attendance_required to false
+        $attendanceRequired = !$isTrueWeekend;
         
         // Check if a session already exists for today
         $existingSession = AttendanceSession::where('schedule_id', $schedule->id)
@@ -101,6 +118,7 @@ class ResetDailyAttendanceSession extends Command
             'schedule_id' => $schedule->id,
             'date' => $today,
             'status' => 'active',
+            'attendance_required' => $attendanceRequired,
             'opened_at' => now(),
             'created_by' => $adminUser->id, // System-created (using admin account)
         ]);

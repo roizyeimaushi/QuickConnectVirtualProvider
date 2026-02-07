@@ -32,6 +32,7 @@ import {
     ChevronDown,
     ChevronLeft,
     ChevronRight,
+    Coffee,
 } from "lucide-react";
 
 import { Label, Pie, PieChart } from "recharts";
@@ -65,6 +66,12 @@ const statusConfig = {
         icon: Clock,
         color: "#3b82f6",
         badgeClass: "bg-blue-100 text-blue-800 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200"
+    },
+    optional: {
+        label: "Day Off",
+        icon: Coffee,
+        color: "#0ea5e9",
+        badgeClass: "bg-sky-50 text-sky-700 hover:bg-sky-100 dark:bg-sky-900/40 dark:text-sky-400 border-sky-100"
     },
 };
 

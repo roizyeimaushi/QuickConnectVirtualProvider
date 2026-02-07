@@ -49,7 +49,8 @@ import {
     Smartphone,
     Pencil,
     Trash2,
-    MoreHorizontal
+    MoreHorizontal,
+    Coffee
 } from "lucide-react";
 import {
     DropdownMenu,
@@ -241,6 +242,11 @@ export default function SessionDetailsPage() {
             label: "Left Early",
             color: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
             icon: AlertCircle,
+        },
+        optional: {
+            label: "Day Off",
+            color: "bg-sky-50 text-sky-700 dark:bg-sky-900/40 dark:text-sky-400 border-sky-100",
+            icon: Coffee,
         }
     };
 

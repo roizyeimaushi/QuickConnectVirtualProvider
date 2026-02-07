@@ -44,9 +44,10 @@ class ReportController extends Controller
                 ->whereDate('date', $today)
                 ->get();
                 
-            $todaySession = $allTodaySessions->where('status', 'active')->first()
+            $todaySession = $allTodaySessions->where('status', 'active')->where('attendance_required', true)->first()
+                         ?? $allTodaySessions->where('status', 'active')->where('confirmed_count', '>', 0)->first()
                          ?? $allTodaySessions->where('status', 'locked')->first()
-                         ?? $allTodaySessions->where('status', 'pending')->first()
+                         ?? $allTodaySessions->where('status', 'pending')->where('attendance_required', true)->first()
                          ?? $allTodaySessions->where('status', 'completed')->first();
 
             // Fallback: Check if there's an active session on REAL today if logical today is yesterday (overnight)
@@ -57,8 +58,9 @@ class ReportController extends Controller
                     }])
                     ->whereDate('date', $realToday)
                     ->get();
-                $todaySession = $realTodaySessions->where('status', 'active')->first() 
-                             ?? $realTodaySessions->where('status', 'pending')->first();
+                $todaySession = $realTodaySessions->where('status', 'active')->where('attendance_required', true)->first()
+                             ?? $realTodaySessions->where('status', 'active')->where('confirmed_count', '>', 0)->first()
+                             ?? $realTodaySessions->where('status', 'pending')->where('attendance_required', true)->first();
             }
 
             // Check for active overnight session from yesterday if still no session
@@ -125,18 +127,31 @@ class ReportController extends Controller
                 $pendingToday = $remainingCount;
             }
 
-            $activeSessions = AttendanceSession::where('status', 'active')->count();
+            $activeSessions = AttendanceSession::where('status', 'active')
+                ->where(function($q) {
+                    $q->where('attendance_required', true)
+                      ->orWhereHas('records', function($r) {
+                          $r->whereNotNull('time_in');
+                      });
+                })
+                ->count();
 
-            $sessionsList = $allTodaySessions->map(function($session) {
-                return [
-                    'id' => $session->id,
-                    'status' => $session->status,
-                    'schedule' => $session->schedule,
-                    'confirmed_count' => $session->confirmed_count,
-                    'total_count' => $session->total_count,
-                    'date' => $session->date->toDateString(),
-                ];
-            });
+            $sessionsList = $allTodaySessions
+                ->filter(function($session) {
+                    // Hide non-required sessions if they have no check-ins
+                    return $session->attendance_required || $session->confirmed_count > 0;
+                })
+                ->map(function($session) {
+                    return [
+                        'id' => $session->id,
+                        'status' => $session->status,
+                        'schedule' => $session->schedule,
+                        'confirmed_count' => $session->confirmed_count,
+                        'total_count' => $session->total_count,
+                        'date' => $session->date->toDateString(),
+                        'attendance_required' => $session->attendance_required,
+                    ];
+                });
 
             if ($todaySession) {
                 $todaySession->confirmed_count = $todaySession->confirmed_count;
@@ -466,8 +481,11 @@ class ReportController extends Controller
                     'status' => $record->status,
                 ];
             } elseif ($includeMissing) {
-                // If it's in the past and a session existed, they are technically absent if no record exists
-                $status = $reportDate->lessThan($today) ? 'absent' : 'pending';
+                // Determine if it's a weekend (Standard)
+                $isWeekend = $reportDate->isWeekend();
+                
+                // If it's a weekend, they aren't "Pending" or "Absent", they are "Optional"
+                $status = $isWeekend ? 'optional' : ($reportDate->lessThan($today) ? 'absent' : 'pending');
                 return [
                     'id' => 'p-' . $employee->id,
                     'user_id' => $employee->id,

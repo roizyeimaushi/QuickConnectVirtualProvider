@@ -35,6 +35,7 @@ import {
     Briefcase,
     ChevronLeft,
     ChevronRight,
+    Coffee,
 } from "lucide-react";
 
 export default function EmployeeReportDetailPage() {
@@ -99,6 +100,7 @@ export default function EmployeeReportDetailPage() {
         pending: { label: "Pending", variant: "outline", icon: Clock, className: "bg-blue-100 text-blue-800 border-blue-200" },
         excused: { label: "Excused", variant: "outline", icon: CheckCircle2, className: "bg-blue-100 text-blue-800 border-blue-200" },
         left_early: { label: "Left Early", variant: "warning", icon: AlertTriangle, className: "bg-orange-100 text-orange-800 border-orange-200" },
+        optional: { label: "Day Off", variant: "outline", icon: Coffee, className: "bg-sky-50 text-sky-700 border-sky-100" },
     };
 
     // Fallback config for unknown statuses - should NOT show as Present

@@ -67,32 +67,52 @@ class AttendanceSessionController extends Controller
         
         $initialStatus = $sessionDate->equalTo($targetToday) ? 'active' : 'pending';
 
+        // Smart Attendance Required Logic
+        $dayOfWeek = $sessionDate->dayOfWeek;
+        $schedule = \App\Models\Schedule::find($validated['schedule_id']);
+        $isOvernight = $schedule ? $schedule->is_overnight : false;
+        
+        $isWeekendOffline = false;
+        if ($isOvernight) {
+             $isWeekendOffline = ($dayOfWeek === Carbon::SATURDAY);
+        } else {
+             $isWeekendOffline = ($dayOfWeek === Carbon::SATURDAY || $dayOfWeek === Carbon::SUNDAY);
+        }
+        $isRequired = !$isWeekendOffline;
+
         $session = AttendanceSession::create([
             'schedule_id' => $validated['schedule_id'],
             'date' => $validated['date'],
             'status' => $initialStatus,
+            'attendance_required' => $isRequired,
+            'session_type' => $isRequired ? 'Normal' : 'Weekend',
             'opened_at' => now(),
             'created_by' => auth()->id(),
         ]);
 
         if (empty($validated['employee_ids'])) {
-            // Fix the 0/0 error: Default to all active employees
-            $employeeIds = \App\Models\User::where('role', 'employee')
-                ->where('status', 'active')
-                ->pluck('id')
-                ->toArray();
+            // Only auto-create records if attendance is required
+            // On weekends, we leave it empty so it shows as 0/0 and "Optional" in detailed view
+            if ($isRequired) {
+                $employeeIds = \App\Models\User::where('role', 'employee')
+                    ->where('status', 'active')
+                    ->pluck('id')
+                    ->toArray();
+            } else {
+                $employeeIds = [];
+            }
         } else {
             $employeeIds = array_unique($validated['employee_ids']);
         }
 
         if (!empty($employeeIds)) {
             $records = [];
-            $sessionDate = $session->date->toDateString();
+            $sessionDateStr = $session->date->toDateString();
             foreach ($employeeIds as $userId) {
                 $records[] = [
                     'session_id' => $session->id,
                     'user_id' => $userId,
-                    'attendance_date' => $sessionDate,
+                    'attendance_date' => $sessionDateStr,
                     'status' => 'pending', 
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -145,13 +165,12 @@ class AttendanceSessionController extends Controller
             }
 
             // Determine status based on session state
-            // Status stays 'pending' even if session is completed, until admin explicitly marks it.
-            // Only 'locked' sessions might imply a final state, but per user request, we keep them pending.
-            $status = in_array($attendanceSession->status, ['locked']) ? 'pending' : 'pending';
+            $isWeekend = $attendanceSession->date->isWeekend();
+            $isRequired = $attendanceSession->attendance_required ?? true;
             
-            // Re-evaluating: If the user wants "Pending -> stays Pending", then status is always pending 
-            // unless a real record exists.
-            $status = 'pending';
+            // If it's a weekend or attendance is not required, mark as 'optional'
+            // This prevents employees from appearing as "Pending" when they aren't supposed to work.
+            $status = (!$isRequired || $isWeekend) ? 'optional' : 'pending';
 
             // Create Virtual Record
             return [
