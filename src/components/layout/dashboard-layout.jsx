@@ -167,14 +167,16 @@ export function AppSidebar() {
                 <span className="text-[13px] font-medium">Profile</span>
             </Link>
 
-            <Link
-                href={isAdmin ? "/settings/general" : "/dashboard/employee/profile"}
-                scroll={false}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${isCollapsible ? 'hover:bg-white/5 text-white/60 hover:text-white' : 'hover:bg-white/5 text-white/70 focus:bg-white/5 focus:text-white'}`}
-            >
-                <Settings className="h-4 w-4 text-emerald-500 shrink-0" />
-                <span className="text-[13px] font-medium">Settings</span>
-            </Link>
+            {isAdmin && (
+                <Link
+                    href="/settings/general"
+                    scroll={false}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${isCollapsible ? 'hover:bg-white/5 text-white/60 hover:text-white' : 'hover:bg-white/5 text-white/70 focus:bg-white/5 focus:text-white'}`}
+                >
+                    <Settings className="h-4 w-4 text-emerald-500 shrink-0" />
+                    <span className="text-[13px] font-medium">Settings</span>
+                </Link>
+            )}
 
             {isCollapsible && <div className="h-px bg-white/5 my-1 mx-2" />}
 
