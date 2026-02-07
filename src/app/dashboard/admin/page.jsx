@@ -59,6 +59,8 @@ function StatCard({ title, value, description, icon: Icon, trend, loading }) {
 }
 
 function AttendanceOverviewCard({ data, loading }) {
+    const isWeekend = data?.isWeekend;
+    const dayName = data?.dayName || 'Weekend';
 
     const presentRate = data?.presentRate || 0;
     const lateRate = data?.lateRate || 0;
@@ -66,60 +68,76 @@ function AttendanceOverviewCard({ data, loading }) {
     const pendingRate = data?.pendingRate || 0;
 
     return (
-        <Card className="col-span-full lg:col-span-2">
-            <CardHeader>
+        <Card className="col-span-full lg:col-span-2 overflow-hidden">
+            <CardHeader className={isWeekend ? "bg-emerald-50/50 dark:bg-emerald-950/10" : ""}>
                 <CardTitle className="flex items-center gap-2">
-                    <CalendarCheck className="h-5 w-5 text-primary" />
-                    Today's Attendance Overview
+                    {isWeekend ? <Calendar className="h-5 w-5 text-emerald-600" /> : <CalendarCheck className="h-5 w-5 text-primary" />}
+                    {isWeekend ? `Weekend - ${dayName}` : "Today's Attendance Overview"}
                 </CardTitle>
                 <CardDescription>
-                    Real-time attendance statistics for {formatDate(getCurrentDate())}
+                    {isWeekend
+                        ? "Currently no work is scheduled for today."
+                        : `Real-time attendance statistics for ${formatDate(getCurrentDate())}`}
                 </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                            <span className="text-sm font-medium">Present</span>
+            <CardContent className="space-y-6 pt-6">
+                {isWeekend ? (
+                    <div className="flex flex-col items-center justify-center py-8 text-center animate-fade-in">
+                        <div className="h-16 w-16 rounded-full bg-emerald-100 flex items-center justify-center mb-4 text-emerald-600">
+                            <Calendar className="h-8 w-8" />
                         </div>
-                        <span className="text-sm font-bold text-emerald-600">{presentRate}%</span>
+                        <h3 className="font-semibold text-lg text-emerald-900 dark:text-emerald-100">Enjoy your {dayName}!</h3>
+                        <p className="text-sm text-muted-foreground max-w-[280px] mt-2">
+                            Automatic tracking is paused. If you need to check attendance, view the individual records or history.
+                        </p>
                     </div>
-                    <Progress value={presentRate} className="h-2 [&>div]:bg-emerald-500" />
-                </div>
+                ) : (
+                    <>
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                                    <span className="text-sm font-medium">Present</span>
+                                </div>
+                                <span className="text-sm font-bold text-emerald-600">{presentRate}%</span>
+                            </div>
+                            <Progress value={presentRate} className="h-2 [&>div]:bg-emerald-500" />
+                        </div>
 
-                <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <Timer className="h-4 w-4 text-amber-600" />
-                            <span className="text-sm font-medium">Late</span>
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Timer className="h-4 w-4 text-amber-600" />
+                                    <span className="text-sm font-medium">Late</span>
+                                </div>
+                                <span className="text-sm font-bold text-amber-600">{lateRate}%</span>
+                            </div>
+                            <Progress value={lateRate} className="h-2 [&>div]:bg-amber-500" />
                         </div>
-                        <span className="text-sm font-bold text-amber-600">{lateRate}%</span>
-                    </div>
-                    <Progress value={lateRate} className="h-2 [&>div]:bg-amber-500" />
-                </div>
 
-                <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-blue-600" />
-                            <span className="text-sm font-medium">Pending</span>
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Clock className="h-4 w-4 text-blue-600" />
+                                    <span className="text-sm font-medium">Pending</span>
+                                </div>
+                                <span className="text-sm font-bold text-blue-600">{pendingRate}%</span>
+                            </div>
+                            <Progress value={pendingRate} className="h-2 [&>div]:bg-blue-500" />
                         </div>
-                        <span className="text-sm font-bold text-blue-600">{pendingRate}%</span>
-                    </div>
-                    <Progress value={pendingRate} className="h-2 [&>div]:bg-blue-500" />
-                </div>
 
-                <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <XCircle className="h-4 w-4 text-red-600" />
-                            <span className="text-sm font-medium">Absent</span>
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <XCircle className="h-4 w-4 text-red-600" />
+                                    <span className="text-sm font-medium">Absent</span>
+                                </div>
+                                <span className="text-sm font-bold text-red-600">{absentRate}%</span>
+                            </div>
+                            <Progress value={absentRate} className="h-2 [&>div]:bg-red-500" />
                         </div>
-                        <span className="text-sm font-bold text-red-600">{absentRate}%</span>
-                    </div>
-                    <Progress value={absentRate} className="h-2 [&>div]:bg-red-500" />
-                </div>
+                    </>
+                )}
             </CardContent>
         </Card>
     );

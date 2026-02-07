@@ -77,16 +77,41 @@ class ReportController extends Controller
                 }
             }
 
+            // 3. WEEKEND ENFORCEMENT
+            // If it's physically a weekend (Saturday/Sunday)
+            // AND we don't have an ACTIVE or PENDING session
+            // Then we should switch to the REAL date so statistics for today are clean (0)
+            $isWeekend = $now->isWeekend();
+            if ($isWeekend && (!$todaySession || !in_array($todaySession->status, ['active', 'pending']))) {
+                $today = $realToday;
+                
+                // Refresh session search for physical today
+                $allTodaySessions = AttendanceSession::with(['schedule', 'creator'])
+                    ->whereDate('date', $today)
+                    ->get();
+                $todaySession = $allTodaySessions->whereIn('status', ['active', 'pending'])->first();
+            }
+
             $todayRecords = AttendanceRecord::where('attendance_date', $today)->get();
             
             $presentToday = $todayRecords->whereIn('status', ['present', 'left_early'])->count();
             $lateToday = $todayRecords->where('status', 'late')->count();
             $manualAbsentToday = $todayRecords->whereIn('status', ['absent', 'excused'])->count();
                                          
-            $confirmedCount = $presentToday + $lateToday + $manualAbsentToday;
-            $remainingCount = max(0, $totalEmployees - $confirmedCount);
-            $pendingToday = $remainingCount;
-            $absentToday = $manualAbsentToday;
+            // 4. RESET STATS ON WEEKENDS
+            // If it's a weekend and there's no active session, stats should be zero
+            if ($isWeekend && (!$todaySession || !in_array($todaySession->status, ['active', 'pending']))) {
+                $presentToday = 0;
+                $lateToday = 0;
+                $absentToday = 0;
+                $pendingToday = 0;
+                $confirmedCount = 0;
+            } else {
+                $absentToday = $manualAbsentToday;
+                $confirmedCount = $presentToday + $lateToday + $absentToday;
+                $remainingCount = max(0, $totalEmployees - $confirmedCount);
+                $pendingToday = $remainingCount;
+            }
 
             $activeSessions = AttendanceSession::where('status', 'active')->count();
 
@@ -121,16 +146,6 @@ class ReportController extends Controller
                 ? round(($presentToday / $totalEmployees) * 100, 1)
                 : 0;
 
-            $dateObj = Carbon::parse($today);
-            $physicalDate = Carbon::now();
-            $isWeekend = $dateObj->isWeekend();
-            
-            // Fallback: If physically weekend and no session found
-            if (!$isWeekend && $physicalDate->isWeekend() && !$todaySession) {
-                $isWeekend = true;
-                $today = $physicalDate->toDateString();
-            }
-            
             $dayName = Carbon::parse($today)->format('l');
 
             return response()->json([
