@@ -132,7 +132,7 @@ export default function EmployeeLoginPage() {
                     {/* Overlay with Text */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-12">
                         <div className="max-w-xl animate-fade-in space-y-8">
-                            <h1 className="text-6xl lg:text-[76px] font-black leading-[0.95] tracking-tighter text-white drop-shadow-sm select-none">
+                            <h1 className="text-4xl lg:text-5xl font-black leading-tight tracking-tight text-white drop-shadow-sm select-none">
                                 Welcome to <br />
                                 <span className="text-[#22c55e]">QuickConn Virtual</span>
                             </h1>
