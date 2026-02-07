@@ -38,6 +38,9 @@ class ReportController extends Controller
             // 2. Find the most relevant session for the dashboard focus
             // Priority: Active > Locked > Pending > Completed
             $allTodaySessions = AttendanceSession::with(['schedule', 'creator'])
+                ->withCount(['records as total_count', 'records as confirmed_count' => function ($q) {
+                    $q->whereNotNull('time_in');
+                }])
                 ->whereDate('date', $today)
                 ->get();
                 
@@ -49,6 +52,9 @@ class ReportController extends Controller
             // Fallback: Check if there's an active session on REAL today if logical today is yesterday (overnight)
             if (!$todaySession && $today !== $realToday) {
                 $realTodaySessions = AttendanceSession::with(['schedule', 'creator'])
+                    ->withCount(['records as total_count', 'records as confirmed_count' => function ($q) {
+                        $q->whereNotNull('time_in');
+                    }])
                     ->whereDate('date', $realToday)
                     ->get();
                 $todaySession = $realTodaySessions->where('status', 'active')->first() 
@@ -59,6 +65,9 @@ class ReportController extends Controller
             if (!$todaySession) {
                 $yesterday = Carbon::yesterday();
                 $overnightSession = AttendanceSession::with('schedule')
+                    ->withCount(['records as total_count', 'records as confirmed_count' => function ($q) {
+                        $q->whereNotNull('time_in');
+                    }])
                     ->whereDate('date', $yesterday->toDateString())
                     ->whereIn('status', ['active', 'locked'])
                     ->whereHas('schedule', function ($q) {
@@ -87,6 +96,9 @@ class ReportController extends Controller
                 
                 // Refresh session search for physical today
                 $allTodaySessions = AttendanceSession::with(['schedule', 'creator'])
+                    ->withCount(['records as total_count', 'records as confirmed_count' => function ($q) {
+                        $q->whereNotNull('time_in');
+                    }])
                     ->whereDate('date', $today)
                     ->get();
                 $todaySession = $allTodaySessions->whereIn('status', ['active', 'pending'])->first();
@@ -115,31 +127,20 @@ class ReportController extends Controller
 
             $activeSessions = AttendanceSession::where('status', 'active')->count();
 
-            $allTodaySessions = AttendanceSession::with(['schedule'])
-                ->whereDate('date', $today)
-                ->get();
-
             $sessionsList = $allTodaySessions->map(function($session) {
-                $confirmed = AttendanceRecord::where('session_id', $session->id)
-                    ->whereNotNull('time_in')
-                    ->count();
-                $total = AttendanceRecord::where('session_id', $session->id)->count();
-                
                 return [
                     'id' => $session->id,
                     'status' => $session->status,
                     'schedule' => $session->schedule,
-                    'confirmed_count' => $confirmed,
-                    'total_count' => $total,
+                    'confirmed_count' => $session->confirmed_count,
+                    'total_count' => $session->total_count,
                     'date' => $session->date->toDateString(),
                 ];
             });
 
             if ($todaySession) {
-                $todaySession->confirmed_count = AttendanceRecord::where('session_id', $todaySession->id)
-                    ->whereNotNull('time_in')
-                    ->count();
-                $todaySession->total_count = AttendanceRecord::where('session_id', $todaySession->id)->count();
+                $todaySession->confirmed_count = $todaySession->confirmed_count;
+                $todaySession->total_count = $todaySession->total_count;
             }
 
             $attendanceRate = $totalEmployees > 0 
@@ -387,6 +388,15 @@ class ReportController extends Controller
             'break_remaining_seconds' => $activeBreak ? $activeBreak->getRemainingSeconds() : 5400,
         ];
 
+        if ($todayRecord) {
+            $todayRecord->hours_worked = $todayRecord->calculateHoursWorked();
+        }
+
+        $recentRecords->transform(function ($record) {
+            $record->hours_worked = $record->calculateHoursWorked();
+            return $record;
+        });
+
         return response()->json([
             'active_session' => $todaySession,
             'today_record' => $todayRecord,
@@ -450,7 +460,7 @@ class ReportController extends Controller
                     'break_start' => $record->break_start ? $record->break_start->format('H:i') : null,
                     'break_end' => $record->break_end ? $record->break_end->format('H:i') : null,
                     'time_out' => $record->time_out ? $record->time_out->format('H:i') : null,
-                    'hours' => (float)$record->hours_worked,
+                    'hours' => $record->calculateHoursWorked(),
                     'late_duration' => $record->minutes_late ? "{$record->minutes_late}m" : null,
                     'overtime' => $record->overtime_minutes ? "{$record->overtime_minutes}m" : null,
                     'status' => $record->status,

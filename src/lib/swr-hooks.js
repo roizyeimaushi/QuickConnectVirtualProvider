@@ -86,7 +86,7 @@ export const POLLING_INTERVALS = {
  */
 export function useMyAttendanceToday(options = {}) {
     const { data, error, isLoading, mutate } = useSWR(
-        '/attendance/today',
+        '/attendance-records/today-status',
         fetcher,
         {
             ...swrDefaultOptions,
@@ -109,7 +109,7 @@ export function useMyAttendanceToday(options = {}) {
  */
 export function useAttendanceRecords(params = {}, options = {}) {
     const queryString = new URLSearchParams(params).toString();
-    const key = `/attendance${queryString ? `?${queryString}` : ''}`;
+    const key = `/attendance-records${queryString ? `?${queryString}` : ''}`;
 
     const { data, error, isLoading, mutate } = useSWR(
         key,
@@ -140,7 +140,7 @@ export function useAttendanceRecords(params = {}, options = {}) {
  */
 export function useSessionToday(options = {}) {
     const { data, error, isLoading, mutate } = useSWR(
-        '/sessions/today',
+        '/attendance-sessions/today',
         fetcher,
         {
             ...swrDefaultOptions,
@@ -163,7 +163,7 @@ export function useSessionToday(options = {}) {
  */
 export function useSessions(params = {}, options = {}) {
     const queryString = new URLSearchParams(params).toString();
-    const key = `/sessions${queryString ? `?${queryString}` : ''}`;
+    const key = `/attendance-sessions${queryString ? `?${queryString}` : ''}`;
 
     const { data, error, isLoading, mutate } = useSWR(
         key,
@@ -194,7 +194,7 @@ export function useSessions(params = {}, options = {}) {
  */
 export function useMyBreakToday(options = {}) {
     const { data, error, isLoading, mutate } = useSWR(
-        '/breaks/today',
+        '/break/status',
         fetcher,
         {
             ...swrDefaultOptions,
@@ -355,7 +355,7 @@ export function useEmployeeDashboard(options = {}) {
  */
 export function useDailyReport(date, options = {}) {
     const { data, error, isLoading, mutate } = useSWR(
-        date ? `/reports/daily?date=${date}` : null,
+        date ? `/reports/daily/${date}` : null,
         fetcher,
         {
             ...swrDefaultOptions,
@@ -454,16 +454,16 @@ export function invalidateCache(key) {
  * Invalidate all attendance-related caches
  */
 export function invalidateAttendanceCache() {
-    globalMutate((key) => typeof key === 'string' && key.includes('/attendance'));
-    globalMutate('/sessions/today');
-    globalMutate('/breaks/today');
+    globalMutate((key) => typeof key === 'string' && key.includes('/attendance-records'));
+    globalMutate('/attendance-sessions/today');
+    globalMutate('/break/status');
 }
 
 /**
  * Invalidate all session-related caches
  */
 export function invalidateSessionCache() {
-    globalMutate((key) => typeof key === 'string' && key.includes('/sessions'));
+    globalMutate((key) => typeof key === 'string' && key.includes('/attendance-sessions'));
 }
 
 /**

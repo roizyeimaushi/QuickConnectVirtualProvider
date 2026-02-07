@@ -109,4 +109,48 @@ class AttendanceRecord extends Model
     {
         return $this->status === 'absent';
     }
+
+    /**
+     * Calculate total break duration in minutes.
+     * Performance: Uses loaded collection if available to avoid extra DB queries.
+     */
+    public function getTotalBreakMinutes(): int
+    {
+        // If breaks are already eager-loaded, use the collection sum
+        if ($this->relationLoaded('breaks')) {
+            $breakMins = (int) $this->breaks->sum('duration_minutes');
+        } else {
+            // Prioritize structured breaks table
+            $breakMins = (int) $this->breaks()->sum('duration_minutes');
+        }
+        
+        // Fallback to legacy break_start/break_end columns if no structured breaks exist
+        if ($breakMins === 0 && $this->break_start && $this->break_end) {
+            $diff = $this->break_start->diffInMinutes($this->break_end, false);
+            $breakMins = $diff < 0 ? $diff + 1440 : $diff;
+        }
+        
+        return $breakMins;
+    }
+
+    /**
+     * Calculate net hours worked (Gross - Breaks).
+     * @param int|null $providedBreakMinutes Optional override to avoid recalc
+     */
+    public function calculateHoursWorked(?int $providedBreakMinutes = null): float
+    {
+        if (!$this->time_in || !$this->time_out || in_array($this->status, ['pending', 'absent'])) {
+            return 0.00;
+        }
+
+        $grossMinutes = $this->time_in->diffInMinutes($this->time_out, false);
+        if ($grossMinutes < 0) {
+            $grossMinutes += 1440; // Handle overnight rollover
+        }
+
+        $breakMinutes = $providedBreakMinutes ?? $this->getTotalBreakMinutes();
+        $netMinutes = max(0, $grossMinutes - $breakMinutes);
+
+        return round($netMinutes / 60, 2);
+    }
 }

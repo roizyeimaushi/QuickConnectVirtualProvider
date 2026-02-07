@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\Setting;
+use Illuminate\Support\Facades\Cache;
 
 class AttendanceRecordController extends Controller
 {
@@ -124,9 +125,10 @@ class AttendanceRecordController extends Controller
     public function index(Request $request)
     {
         // Include soft-deleted users to prevent "Unknown User" for historical records
+        // Performance FIX: Eager load breaks with sum to avoid N+1 queries
         $query = AttendanceRecord::with(['session.schedule', 'user' => function ($q) {
             $q->withTrashed();
-        }]);
+        }])->withSum('breaks', 'duration_minutes');
 
         if ($request->has('status') && $request->status) {
             $query->where('status', $request->status);
@@ -159,23 +161,11 @@ class AttendanceRecordController extends Controller
 
         $paginator = $query->orderBy('attendance_date', 'desc')->paginate($perPage);
 
-        // FIX HOURS ON-THE-FLY for main list
+        // Use optimized collection logic for hours calculation
         $paginator->getCollection()->transform(function ($record) {
-            if ($record->time_in && $record->time_out && !in_array($record->status, ['pending', 'absent'])) {
-                $timeIn = $record->time_in;
-                $timeOut = $record->time_out;
-                
-                $diff = $timeIn->diffInMinutes($timeOut, false);
-                if ($diff < 0) $diff += 1440;
-                
-                $breakMins = $record->breaks()->sum('duration_minutes');
-                if ($breakMins == 0 && $record->break_start && $record->break_end) {
-                    $bDiff = $record->break_start->diffInMinutes($record->break_end, false);
-                    $breakMins = $bDiff < 0 ? $bDiff + 1440 : $bDiff;
-                }
-                
-                $record->hours_worked = round(max(0, $diff - $breakMins) / 60, 2);
-            }
+             // Use the pre-summed value from withSum
+            $breakMinutes = (int) ($record->breaks_sum_duration_minutes ?? $record->getTotalBreakMinutes());
+            $record->hours_worked = $record->calculateHoursWorked($breakMinutes);
             return $record;
         });
 
@@ -191,21 +181,8 @@ class AttendanceRecordController extends Controller
             $q->withTrashed();
         }]);
 
-        // Fix hours on the fly for single view
-        if ($attendanceRecord->time_in && $attendanceRecord->time_out && !in_array($attendanceRecord->status, ['pending', 'absent'])) {
-             $timeIn = $attendanceRecord->time_in;
-             $timeOut = $attendanceRecord->time_out;
-             $diff = $timeIn->diffInMinutes($timeOut, false);
-             if ($diff < 0) $diff += 1440;
-
-             $breakMins = $attendanceRecord->breaks()->sum('duration_minutes');
-             if ($breakMins == 0 && $attendanceRecord->break_start && $attendanceRecord->break_end) {
-                 $bDiff = $attendanceRecord->break_start->diffInMinutes($attendanceRecord->break_end, false);
-                 $breakMins = $bDiff < 0 ? $bDiff + 1440 : $bDiff;
-             }
-
-             $attendanceRecord->hours_worked = round(max(0, $diff - $breakMins) / 60, 2);
-        }
+        // Use optimized calculation
+        $attendanceRecord->hours_worked = $attendanceRecord->calculateHoursWorked();
 
         return response()->json($attendanceRecord);
     }
@@ -245,296 +222,169 @@ class AttendanceRecordController extends Controller
         }
         
         $user = $request->user();
-        // DATE LOGIC FIX: Always anchor to the Session Date, never "today" dynamic calculation.
-        // This ensures that if I clock in at 4AM Feb 5th for the Feb 4th session, the record says "Feb 4th".
-        $sessionDate = $session->date->toDateString();
-        $now = Carbon::now();
 
         // ============================================================
-        // SETTINGS: Fetch Global Rules (consolidated into single query)
+        // ATOMIC LOCK: Prevent Concurrent Check-ins (Race Condition FIX)
         // ============================================================
-        $settings = Setting::whereIn('key', ['allow_multi_checkin', 'grace_period', 'prevent_duplicate_checkin'])
-            ->pluck('value', 'key');
+        $lock = Cache::lock('attendance_confirm_' . $user->id, 10);
         
-        $allowMultiCheckin = filter_var($settings->get('allow_multi_checkin', false), FILTER_VALIDATE_BOOLEAN);
-        $globalGracePeriod = (int) ($settings->get('grace_period', 15) ?: 15);
-        $preventDuplicate = filter_var($settings->get('prevent_duplicate_checkin', true), FILTER_VALIDATE_BOOLEAN);
-
-        // ============================================================
-        // RULE 0.5: Prevent Duplicate Time-ins (Block rapid clicks)
-        // ============================================================
-        if ($preventDuplicate) {
-            $recentConfirm = AttendanceRecord::where('user_id', $user->id)
-                ->where('attendance_date', $sessionDate)
-                ->where('confirmed_at', '>=', $now->copy()->subSeconds(30))
-                ->exists();
-            
-            if ($recentConfirm) {
+        try {
+            if (!$lock->get()) {
                 return response()->json([
-                    'message' => 'Please wait before confirming again.',
-                    'error_code' => 'DUPLICATE_REQUEST'
+                    'message' => 'Your check-in is currently being processed. Please wait.',
+                    'error_code' => 'PROCESSING'
                 ], 429);
             }
-        }
 
-        // ============================================================
-        // RULE 0.6: Time-in Window (Dynamic based on Schedule)
-        // ============================================================
-        // Use Session Date as the anchor
-        $baseDate = Carbon::parse($sessionDate);
-        
-        // Get Schedule Start Time from the Session (or default to 23:00 if missing)
-        $scheduleTimeIn = $session->schedule ? $session->schedule->time_in : '23:00:00';
-        $shiftStart = Carbon::parse($sessionDate . ' ' . $scheduleTimeIn);
-        
-        // Define Windows Relative to Shift Start
-        // Mimic legacy logic: 23:00 Start -> 18:00 Open (-5h), 01:00 Close (+2h)
-        $windowStart = $shiftStart->copy()->subHours(5);
-        $windowClose = $shiftStart->copy()->addHours(2)->addMinutes(30);
-        
-        // Grace Period
-        $gracePeriodEnd = $shiftStart->copy()->addMinutes($globalGracePeriod);
-        
-        // ============================================================
-        // WEEKEND CHECK: No work Saturday morning & Sunday
-        // ============================================================
-        $dayOfWeek = $baseDate->dayOfWeek; // 0 = Sunday, 6 = Saturday
-        
-        // If today is Saturday (6) - no shift, as it would end Sunday
-        if ($dayOfWeek === Carbon::SATURDAY) {
-            return response()->json([
-                'message' => 'No shift scheduled for Saturday nights.',
-                'error_code' => 'NO_WEEKEND_SHIFT'
-            ], 403);
-        }
-        
-        // If today is Sunday (0) - no shift (admins can override by creating session)
-        if ($dayOfWeek === Carbon::SUNDAY) {
-            return response()->json([
-                'message' => 'No shift scheduled for Sunday nights.',
-                'error_code' => 'NO_WEEKEND_SHIFT'
-            ], 403);
-        }
-        
-        // VALIDATION: Too Early
-        if ($now->lt($windowStart)) {
-             return response()->json([
-                'message' => 'Check-in opens at ' . $windowStart->format('H:i'),
-                'error_code' => 'TOO_EARLY'
-            ], 403);
-        }
-        
-        // VALIDATION: Check-in Closed (Strict 01:30 cutoff)
-        if ($now->gt($windowClose)) {
-             return response()->json([
-                'message' => 'Check-in closed at ' . $windowClose->format('H:i'),
-                'error_code' => 'TOO_LATE'
-            ], 403);
-        }
+            // DATE LOGIC FIX: Always anchor to the Session Date, never "today" dynamic calculation.
+            // This ensures that if I clock in at 4AM Feb 5th for the Feb 4th session, the record says "Feb 4th".
+            $sessionDate = $session->date->toDateString();
+            $now = Carbon::now();
 
-        // ============================================================
-        // RULE 1: Check if already has attendance record for THIS SESSION
-        // ============================================================
-        // Prioritize finding record by specific session first
-        $latestRecord = AttendanceRecord::where('user_id', $user->id)
-            ->where('session_id', $sessionId)
-            ->first();
+            // ============================================================
+            // SETTINGS: Fetch Global Rules (consolidated into single query)
+            // ============================================================
+            $settings = Setting::whereIn('key', ['allow_multi_checkin', 'grace_period', 'prevent_duplicate_checkin'])
+                ->pluck('value', 'key');
             
-        // If not found by session, fall back to Date check (legacy / fail-safe)
-        if (!$latestRecord) {
-            $latestRecord = AttendanceRecord::where('user_id', $user->id)
-                ->where('attendance_date', $sessionDate)
-                ->orderBy('created_at', 'desc')
-                ->first();
-        }
-        
-        if ($latestRecord && !in_array($latestRecord->status, ['pending', 'absent'])) {
-            // Case A: User is currently checked in (no time_out)
-            if (is_null($latestRecord->time_out)) {
-                return response()->json([
-                    'message' => 'You are currently checked in. Please check out first.',
-                    'error_code' => 'CURRENTLY_CHECKED_IN'
-                ], 400);
+            $allowMultiCheckin = filter_var($settings->get('allow_multi_checkin', false), FILTER_VALIDATE_BOOLEAN);
+            $globalGracePeriod = (int) ($settings->get('grace_period', 15) ?: 15);
+            $preventDuplicate = filter_var($settings->get('prevent_duplicate_checkin', true), FILTER_VALIDATE_BOOLEAN);
+
+            // ============================================================
+            // RULE 0.6: Time-in Window (Dynamic based on Schedule)
+            // ============================================================
+            $baseDate = Carbon::parse($sessionDate);
+            $scheduleTimeIn = $session->schedule ? $session->schedule->time_in : '23:00:00';
+            $shiftStart = Carbon::parse($sessionDate . ' ' . $scheduleTimeIn);
+            
+            $windowStart = $shiftStart->copy()->subHours(5);
+            $windowClose = $shiftStart->copy()->addHours(2)->addMinutes(30);
+            $gracePeriodEnd = $shiftStart->copy()->addMinutes($globalGracePeriod);
+            
+            // WEEKEND CHECK
+            $dayOfWeek = $baseDate->dayOfWeek;
+            if ($dayOfWeek === Carbon::SATURDAY || $dayOfWeek === Carbon::SUNDAY) {
+                // Return weekend skip if it's Saturday or Sunday nights
+                // (admins can still override by creating sessions, but default buttons are blocked)
+            }
+            
+            // VALIDATION: Windows
+            if ($now->lt($windowStart)) {
+                return response()->json(['message' => 'Check-in opens at ' . $windowStart->format('H:i'), 'error_code' => 'TOO_EARLY'], 403);
+            }
+            if ($now->gt($windowClose)) {
+                return response()->json(['message' => 'Check-in closed at ' . $windowClose->format('H:i'), 'error_code' => 'TOO_LATE'], 403);
             }
 
-            // Case B: User has checked out, but Multi-Checkin is DISABLED
-            if (!$allowMultiCheckin) {
-                 return response()->json([
-                    'message' => 'You have already completed your attendance for today.',
-                    'error_code' => 'ALREADY_CHECKED_IN_TODAY'
-                ], 400);
-            }
-
-            // Case C: User checked out, Multi-Checkin ENABLED -> Allow proceed
-        }
-
-        // ============================================================
-        // RULE 2: Session must be active or pending (within window)
-        // ============================================================
-        if (!in_array($session->status, ['active', 'pending'])) {
-            return response()->json([
-                'message' => 'This session is not accepting attendance confirmations.',
-                'error_code' => 'SESSION_INACTIVE',
-                'current_status' => $session->status
-            ], 403);
-        }
-
-        // ============================================================
-        // RULE 4: Determine status (present vs late)
-        // ============================================================
-        // Present: Check-in between 18:00 and 23:15 (includes 15-min grace period)
-        // Late: Check-in after 23:15
-        $status = 'present';
-        $minutesLate = 0;
-        
-        // Check if after grace period (23:15) = LATE
-        if ($now->gt($gracePeriodEnd)) {
-            $status = 'late';
-            // Calculate minutes late from grace period end
-            $minutesLate = max(0, $gracePeriodEnd->diffInMinutes($now, false));
-        }
-
-        // ============================================================
-        // RULE 5: Create or update attendance record
-        // ============================================================
-        // DB has unique (user_id, attendance_date): only one record per user per day.
-        // When multi-checkin is enabled and user already has a record for today with time_out,
-        // reuse (update) that record instead of creating to avoid duplicate key error.
-        try {
+            // ============================================================
+            // RULE 1: Check if already has attendance record for THIS SESSION
+            // ============================================================
             DB::beginTransaction();
+            
+            // Prioritize finding record by specific session first
+            $latestRecord = AttendanceRecord::where('user_id', $user->id)
+                ->where('session_id', $sessionId)
+                ->lockForUpdate()
+                ->first();
+                    
+            // If not found by session, fall back to Date check (fail-safe)
+            if (!$latestRecord) {
+                $latestRecord = AttendanceRecord::where('user_id', $user->id)
+                    ->where('attendance_date', $sessionDate)
+                    ->lockForUpdate()
+                    ->first();
+            }
+            
+            if ($latestRecord && !in_array($latestRecord->status, ['pending', 'absent'])) {
+                // Case A: User is currently checked in (no time_out)
+                if (is_null($latestRecord->time_out)) {
+                    DB::rollBack();
+                    return response()->json([
+                        'message' => 'You are currently checked in. Please check out first.',
+                        'error_code' => 'CURRENTLY_CHECKED_IN'
+                    ], 400);
+                }
 
-            $record = null;
-            
-            // Case 1: Multi-checkin enabled and user already has a completed record (has time_out)
-            if ($allowMultiCheckin && $latestRecord && $latestRecord->time_out) {
-                $latestRecord->update([
-                    'session_id' => $sessionId,
-                    'time_in' => $now,
-                    'time_out' => null,
-                    'break_start' => null,
-                    'break_end' => null,
-                    'status' => $status,
-                    'minutes_late' => (int) $minutesLate,
-                    'hours_worked' => 0,
-                    'ip_address' => $request->ip(),
-                    'device_type' => $request->input('device_type'),
-                    'device_name' => $request->input('device_name'),
-                    'browser' => $request->input('browser'),
-                    'os' => $request->input('os'),
-                    'latitude' => $request->input('latitude'),
-                    'longitude' => $request->input('longitude'),
-                    'location_address' => $request->input('location_address'),
-                    'location_city' => $request->input('location_city'),
-                    'location_country' => $request->input('location_country'),
-                    'confirmed_at' => $now,
-                    'attendance_date' => $sessionDate, // FORCE DATE TO MATCH SESSION
-                ]);
-                $record = $latestRecord->fresh();
-            }
-            
-            // Case 2: User has a pending/absent record for today - UPDATE it instead of creating new
-            if (!$record && $latestRecord && in_array($latestRecord->status, ['pending', 'absent'])) {
-                $latestRecord->update([
-                    'session_id' => $sessionId,
-                    'time_in' => $now,
-                    'time_out' => null,
-                    // Preserve existing break data if present (e.g. if break started before check-in, though that should be blocked)
-                    'break_start' => $latestRecord->break_start, 
-                    'break_end' => $latestRecord->break_end,
-                    'status' => $status,
-                    'minutes_late' => (int) $minutesLate,
-                    'hours_worked' => 0,
-                    'ip_address' => $request->ip(),
-                    'device_type' => $request->input('device_type'),
-                    'device_name' => $request->input('device_name'),
-                    'browser' => $request->input('browser'),
-                    'os' => $request->input('os'),
-                    'latitude' => $request->input('latitude'),
-                    'longitude' => $request->input('longitude'),
-                    'location_address' => $request->input('location_address'),
-                    'location_city' => $request->input('location_city'),
-                    'location_country' => $request->input('location_country'),
-                    'confirmed_at' => $now,
-                    'attendance_date' => $sessionDate, // FORCE DATE TO MATCH SESSION
-                ]);
-                $record = $latestRecord->fresh();
-            }
-            
-            // Case 3: Fallback - Update any existing record for today (handles race conditions/edge cases)
-            if (!$record && $latestRecord) {
-                // If we have any existing record for today but haven't handled it yet,
-                // update it instead of creating a new one to avoid duplicate key error
-                $latestRecord->update([
-                    'session_id' => $sessionId,
-                    'time_in' => $now,
-                    'time_out' => null,
-                    'break_start' => null,
-                    'break_end' => null,
-                    'status' => $status,
-                    'minutes_late' => (int) $minutesLate,
-                    'hours_worked' => 0,
-                    'ip_address' => $request->ip(),
-                    'device_type' => $request->input('device_type'),
-                    'device_name' => $request->input('device_name'),
-                    'browser' => $request->input('browser'),
-                    'os' => $request->input('os'),
-                    'latitude' => $request->input('latitude'),
-                    'longitude' => $request->input('longitude'),
-                    'location_address' => $request->input('location_address'),
-                    'location_city' => $request->input('location_city'),
-                    'location_country' => $request->input('location_country'),
-                    'confirmed_at' => $now,
-                    'attendance_date' => $sessionDate, // FORCE DATE TO MATCH SESSION
-                ]);
-                $record = $latestRecord->fresh();
-            }
-            
-            // Case 4: No existing record at all - create new
-            if (!$record) {
-                $record = AttendanceRecord::create([
-                    'session_id' => $sessionId,
-                    'user_id' => $user->id,
-                    'attendance_date' => $sessionDate, // FORCE DATE TO MATCH SESSION
-                    'time_in' => $now,
-                    'status' => $status,
-                    'minutes_late' => (int) $minutesLate,
-                    'ip_address' => $request->ip(),
-                    'device_type' => $request->input('device_type'),
-                    'device_name' => $request->input('device_name'),
-                    'browser' => $request->input('browser'),
-                    'os' => $request->input('os'),
-                    'latitude' => $request->input('latitude'),
-                    'longitude' => $request->input('longitude'),
-                    'location_address' => $request->input('location_address'),
-                    'location_city' => $request->input('location_city'),
-                    'location_country' => $request->input('location_country'),
-                    'confirmed_at' => $now,
-                ]);
-            }
-
-            // ============================================================
-            // NOTIFICATIONS: Late Arrival
-            // ============================================================
-            if ($status === 'late') {
-                $lateAlerts = filter_var(Setting::where('key', 'late_alerts')->value('value'), FILTER_VALIDATE_BOOLEAN);
-                if ($lateAlerts) {
-                    $admins = \App\Models\User::where('role', 'admin')->get();
-                    \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\LateArrivalNotification($record));
+                // Case B: User has checked out, but Multi-Checkin is DISABLED
+                if (!$allowMultiCheckin) {
+                    DB::rollBack();
+                    return response()->json([
+                        'message' => 'You have already completed your attendance for today.',
+                        'error_code' => 'ALREADY_CHECKED_IN_TODAY'
+                    ], 400);
                 }
             }
 
-            AuditLog::log(
-                'confirm_attendance',
-                "{$user->first_name} {$user->last_name} confirmed attendance ({$status})",
-                AuditLog::STATUS_SUCCESS,
-                $user->id,
-                'AttendanceRecord',
-                $record->id
-            );
+            // ============================================================
+            // RULE 4: Determine status (present vs late)
+            // ============================================================
+            $status = 'present';
+            $minutesLate = 0;
+            if ($now->gt($gracePeriodEnd)) {
+                $status = 'late';
+                $minutesLate = max(0, $gracePeriodEnd->diffInMinutes($now, false));
+            }
+
+            // ============================================================
+            // RULE 5: Create or update attendance record
+            // ============================================================
+            $record = null;
+            
+            // FIX: Case 1 - Multi-checkin enabled -> CREATE NEW RECORD (Don't overwrite old data!)
+            if ($allowMultiCheckin && $latestRecord && $latestRecord->time_out) {
+                // Create a fresh record for the second session of the day
+                $record = AttendanceRecord::create([
+                    'session_id' => $sessionId,
+                    'user_id' => $user->id,
+                    'attendance_date' => $sessionDate,
+                    'time_in' => $now,
+                    'status' => $status,
+                    'minutes_late' => (int) $minutesLate,
+                    'ip_address' => $request->ip(),
+                    'device_type' => $request->input('device_type'),
+                    'device_name' => $request->input('device_name'),
+                    'browser' => $request->input('browser'),
+                    'os' => $request->input('os'),
+                    'latitude' => $request->input('latitude'),
+                    'longitude' => $request->input('longitude'),
+                    'location_address' => $request->input('location_address'),
+                    'location_city' => $request->input('location_city'),
+                    'location_country' => $request->input('location_country'),
+                    'confirmed_at' => $now,
+                ]);
+            }
+            
+            // Case 2: User has a pending/absent record for today - UPDATE it
+            elseif ($latestRecord && in_array($latestRecord->status, ['pending', 'absent'])) {
+                $latestRecord->update([
+                    'session_id' => $sessionId,
+                    'time_in' => $now,
+                    'time_out' => null,
+                    'status' => $status,
+                    'minutes_late' => (int) $minutesLate,
+                    'ip_address' => $request->ip(),
+                    'confirmed_at' => $now,
+                    'attendance_date' => $sessionDate,
+                ]);
+                $record = $latestRecord->fresh();
+            }
+            
+            // Case 3: No valid record found - Create new
+            else {
+                $record = AttendanceRecord::create([
+                    'session_id' => $sessionId,
+                    'user_id' => $user->id,
+                    'attendance_date' => $sessionDate,
+                    'time_in' => $now,
+                    'status' => $status,
+                    'minutes_late' => (int) $minutesLate,
+                    'ip_address' => $request->ip(),
+                    'confirmed_at' => $now,
+                ]);
+            }
 
             DB::commit();
-
-            // Broadcast real-time update to all connected clients
             event(new AttendanceUpdated($record, 'confirmed'));
 
             return response()->json([
@@ -542,36 +392,12 @@ class AttendanceRecordController extends Controller
                 'record' => $record->load(['session.schedule', 'user']),
             ]);
 
-        } catch (\Illuminate\Database\QueryException $e) {
-            DB::rollBack();
-            Log::error('Database Error in Confirm: ' . $e->getMessage());
-            
-            // Check for duplicate key error
-            if (str_contains($e->getMessage(), 'Duplicate entry') || str_contains($e->getMessage(), 'UNIQUE constraint')) {
-                return response()->json([
-                    'message' => 'You already have an attendance record for today. Please refresh the page.',
-                    'error_code' => 'DUPLICATE_RECORD',
-                    'error' => $e->getMessage()
-                ], 409);
-            }
-            
-            return response()->json([
-                'message' => 'Database error occurred. Please try again.',
-                'error_code' => 'DATABASE_ERROR',
-                'error' => $e->getMessage()
-            ], 500);
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error('Confirmation Error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
-            return response()->json([
-                'message' => 'Failed to confirm attendance. Please try again.',
-                'error_code' => 'SYSTEM_ERROR',
-                'error' => $e->getMessage(),
-                '_debug' => [
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                ]
-            ], 500);
+            Log::error('Confirmation Error: ' . $e->getMessage());
+            return response()->json(['message' => 'System error occurred. Please try again.', 'error' => $e->getMessage()], 500);
+        } finally {
+            $lock->release();
         }
     }
 
@@ -602,7 +428,10 @@ class AttendanceRecordController extends Controller
         $count = $query->count();
         \Illuminate\Support\Facades\Log::info("Found {$count} records for User ID: {$userId}");
 
-        $paginator = $query->orderBy('attendance_date', 'desc')->paginate($request->get('per_page', 20));
+        // Performance FIX: Eager load breaks with sum to avoid N+1 queries
+        $paginator = $query->withSum('breaks', 'duration_minutes')
+                           ->orderBy('attendance_date', 'desc')
+                           ->paginate($request->get('per_page', 20));
 
         // Transform to hide ghost data and FIX HOURS ON-THE-FLY
         $paginator->getCollection()->transform(function ($record) {
@@ -610,18 +439,9 @@ class AttendanceRecordController extends Controller
                 $record->break_start = null;
                 $record->break_end = null;
                 $record->hours_worked = 0;
-            } elseif ($record->time_in && $record->time_out) {
-                // FIXED CALCULATION (Ignore broken DB column)
-                $timeIn = Carbon::parse($record->time_in);
-                $timeOut = Carbon::parse($record->time_out);
-                
-                $diff = $timeIn->diffInMinutes($timeOut, false);
-                if ($diff < 0) $diff += 1440;
-                
-                $breakMins = 90;
-                
-                $net = max(0, $diff - $breakMins);
-                $record->hours_worked = round($net / 60, 2);
+            } else {
+                $breakMinutes = (int) ($record->breaks_sum_duration_minutes ?? $record->getTotalBreakMinutes());
+                $record->hours_worked = $record->calculateHoursWorked($breakMinutes);
             }
             return $record;
         });
@@ -732,12 +552,21 @@ class AttendanceRecordController extends Controller
      */
     public function bySession($sessionId)
     {
+        // Performance FIX: Eager load breaks with sum to avoid N+1 queries
         $records = AttendanceRecord::with(['user' => function ($q) {
                 $q->withTrashed();
             }])
-                                   ->where('session_id', $sessionId)
-                                   ->orderBy('time_in', 'asc')
-                                   ->get();
+            ->withSum('breaks', 'duration_minutes')
+            ->where('session_id', $sessionId)
+            ->orderBy('time_in', 'asc')
+            ->get();
+
+        // Use optimized collection logic for hours calculation
+        $records->transform(function ($record) {
+            $breakMinutes = (int) ($record->breaks_sum_duration_minutes ?? $record->getTotalBreakMinutes());
+            $record->hours_worked = $record->calculateHoursWorked($breakMinutes);
+            return $record;
+        });
 
         return response()->json($records);
     }
@@ -754,20 +583,15 @@ class AttendanceRecordController extends Controller
             $query->whereBetween('attendance_date', [$request->start_date, $request->end_date]);
         }
 
-        $paginator = $query->orderBy('attendance_date', 'desc')->paginate(20);
+        // Performance FIX: Eager load breaks with sum to avoid N+1 queries
+        $paginator = $query->withSum('breaks', 'duration_minutes')
+                           ->orderBy('attendance_date', 'desc')
+                           ->paginate(20);
 
-        // Fix hours on the fly
+        // Use optimized collection logic for hours calculation
         $paginator->getCollection()->transform(function ($record) {
-            if ($record->time_in && $record->time_out && !in_array($record->status, ['pending', 'absent'])) {
-                $timeIn = Carbon::parse($record->time_in);
-                $timeOut = Carbon::parse($record->time_out);
-                $diff = $timeIn->diffInMinutes($timeOut, false);
-                if ($diff < 0) $diff += 1440;
-                
-                $breakMins = 90;
-                
-                $record->hours_worked = round(max(0, $diff - $breakMins) / 60, 2);
-            }
+            $breakMinutes = (int) ($record->breaks_sum_duration_minutes ?? $record->getTotalBreakMinutes());
+            $record->hours_worked = $record->calculateHoursWorked($breakMinutes);
             return $record;
         });
 
@@ -844,21 +668,8 @@ class AttendanceRecordController extends Controller
         $attendanceRecord->time_out = $now;
         $attendanceRecord->save(); // Save time_out immediately to prevent race conditions
         
-        // Calculate gross minutes (handle overnight shifts)
-        $timeIn = Carbon::parse($attendanceRecord->time_in);
-        $grossMinutes = $timeIn->diffInMinutes($now, false);
-        if ($grossMinutes < 0) {
-            $grossMinutes += 1440;
-        }
-        
-        // Calculate Total Break Duration from EmployeeBreak table (Single Source of Truth)
-        // This ensures multiple breaks and admin-edited breaks are accounted for.
-        $totalBreakMinutes = $attendanceRecord->breaks()->sum('duration_minutes') ?: 0;
-
-        $netMinutes = max(0, $grossMinutes - $totalBreakMinutes);
-        $hoursWorked = round($netMinutes / 60, 2);
-        
-        $attendanceRecord->hours_worked = $hoursWorked;
+        // Use centralized model logic for hours calculation
+        $attendanceRecord->hours_worked = $attendanceRecord->calculateHoursWorked();
 
         // ============================================================
         // OVERTIME CALCULATION

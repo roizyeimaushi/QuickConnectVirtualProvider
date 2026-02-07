@@ -139,6 +139,8 @@ class AttendanceSessionController extends Controller
             $existingRecord = $attendanceSession->records->firstWhere('user_id', $employee->id);
 
             if ($existingRecord) {
+                // Ensure hours are calculated correctly
+                $existingRecord->hours_worked = $existingRecord->calculateHoursWorked();
                 return $existingRecord;
             }
 
