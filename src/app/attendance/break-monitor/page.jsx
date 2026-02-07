@@ -5,6 +5,7 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 
 import {
     Table,
@@ -124,6 +125,14 @@ export default function BreakMonitorPage() {
             });
         }
     };
+
+    if (loading && activeBreaks.length === 0) {
+        return (
+            <DashboardLayout title="Break Time Monitor">
+                <PageSkeleton cardCount={3} hasHeader={true} />
+            </DashboardLayout>
+        );
+    }
 
     return (
         <DashboardLayout title="Break Time Monitor">
