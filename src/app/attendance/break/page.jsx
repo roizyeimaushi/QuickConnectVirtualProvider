@@ -205,7 +205,18 @@ export default function BreakPage() {
     if (loading) {
         return (
             <DashboardLayout title="Break Time">
-                <PageSkeleton cardCount={0} hasHeader={true} />
+                <div className="flex flex-col items-center justify-center min-h-[60vh] animate-pulse">
+                    <Card className="w-full max-w-md border-none shadow-lg">
+                        <CardHeader className="text-center pb-2">
+                            <Skeleton className="w-10 h-10 mx-auto rounded-full bg-slate-200/60 mb-4" />
+                            <Skeleton className="h-8 w-24 mx-auto bg-slate-200/60 mb-2" />
+                            <Skeleton className="h-4 w-40 mx-auto bg-slate-100/60" />
+                        </CardHeader>
+                        <CardContent className="pt-6">
+                            <Skeleton className="w-full h-20 rounded-xl bg-slate-100/60" />
+                        </CardContent>
+                    </Card>
+                </div>
             </DashboardLayout>
         );
     }

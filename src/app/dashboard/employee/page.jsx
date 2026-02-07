@@ -600,7 +600,58 @@ export default function EmployeeDashboardPage() {
     if (loading) {
         return (
             <DashboardLayout title="Employee Dashboard">
-                <PageSkeleton cardCount={3} hasHeader={true} />
+                <div className="space-y-6 animate-pulse">
+                    {/* Welcome Section Skeleton */}
+                    <div className="space-y-2 mb-2">
+                        <Skeleton className="h-8 w-64 bg-slate-200/60" />
+                        <Skeleton className="h-4 w-48 bg-slate-100/60" />
+                    </div>
+
+                    {/* Today's Status Card Skeleton */}
+                    <Card className="col-span-full border-none shadow-lg overflow-hidden">
+                        <div className="bg-slate-200/40 p-8 h-32 md:h-40 flex flex-col justify-center">
+                            <div className="flex justify-between items-center">
+                                <div className="space-y-3">
+                                    <Skeleton className="h-6 w-32 bg-white/40" />
+                                    <Skeleton className="h-4 w-24 bg-white/20" />
+                                </div>
+                                <div className="space-y-2 text-right">
+                                    <Skeleton className="h-4 w-32 bg-white/20 ml-auto" />
+                                    <Skeleton className="h-10 w-28 bg-white/40 ml-auto" />
+                                </div>
+                            </div>
+                        </div>
+                        <CardContent className="p-8">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <Skeleton className="h-40 w-full bg-slate-100/60 rounded-xl" />
+                                <Skeleton className="h-40 w-full bg-slate-100/60 rounded-xl" />
+                                <Skeleton className="h-40 w-full bg-slate-100/60 rounded-xl" />
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Bottom Grid Skeleton */}
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        <Card className="p-6 space-y-4">
+                            <Skeleton className="h-6 w-40 bg-slate-100/60" />
+                            <Skeleton className="h-12 w-full bg-slate-100/40" />
+                            <div className="grid grid-cols-3 gap-2">
+                                <Skeleton className="h-12 w-full bg-slate-100/30" />
+                                <Skeleton className="h-12 w-full bg-slate-100/30" />
+                                <Skeleton className="h-12 w-full bg-slate-100/30" />
+                            </div>
+                        </Card>
+                        <Card className="col-span-1 lg:col-span-2 p-6">
+                            <Skeleton className="h-6 w-32 mb-6 bg-slate-100/60" />
+                            <div className="grid grid-cols-2 gap-4">
+                                <Skeleton className="h-24 w-full bg-slate-100/40" />
+                                <Skeleton className="h-24 w-full bg-slate-100/40" />
+                                <Skeleton className="h-24 w-full bg-slate-100/40" />
+                                <Skeleton className="h-24 w-full bg-slate-100/40" />
+                            </div>
+                        </Card>
+                    </div>
+                </div>
             </DashboardLayout>
         );
     }
