@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 
 import { Progress } from "@/components/ui/progress";
 import {
@@ -156,7 +157,7 @@ export default function MonthlyHistoryPage() {
                 </div>
 
                 {loading ? (
-                    null
+                    <PageSkeleton cardCount={4} hasHeader={false} />
                 ) : (
                     <>
                         {/* Stats Grid */}

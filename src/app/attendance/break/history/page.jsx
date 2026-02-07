@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 
 import { History } from "lucide-react";
 
@@ -16,6 +17,14 @@ export default function BreakHistoryPage() {
         }, 1000);
         return () => clearTimeout(timer);
     }, []);
+
+    if (loading) {
+        return (
+            <DashboardLayout title="Break History">
+                <PageSkeleton cardCount={2} hasHeader={true} />
+            </DashboardLayout>
+        );
+    }
 
     return (
         <DashboardLayout title="Break History">
