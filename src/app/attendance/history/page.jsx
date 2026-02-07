@@ -38,7 +38,7 @@ import {
 import { useAuth } from "@/components/providers/auth-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { attendanceApi } from "@/lib/api";
-import { formatDate, formatTime24, getInitials } from "@/lib/utils";
+import { formatDate, formatTime24, getInitials, cn } from "@/lib/utils";
 import { EditRecordDialog } from "@/components/attendance/edit-record-dialog";
 import {
     DropdownMenu,
