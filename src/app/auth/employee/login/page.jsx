@@ -130,13 +130,13 @@ export default function EmployeeLoginPage() {
                     />
 
                     {/* Overlay with Text */}
-                    <div className="absolute inset-0 bg-black/10 flex flex-col items-center justify-center text-center p-12">
-                        <div className="max-w-md animate-fade-in">
-                            <h1 className="text-5xl lg:text-6xl font-black text-white drop-shadow-[0_4px_4px_rgba(0,0,0,0.25)] leading-tight mb-6">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-12">
+                        <div className="max-w-xl animate-fade-in space-y-8">
+                            <h1 className="text-6xl lg:text-[76px] font-black leading-[0.95] tracking-tighter text-white drop-shadow-sm select-none">
                                 Welcome to <br />
                                 <span className="text-[#22c55e]">QuickConn Virtual</span>
                             </h1>
-                            <p className="text-white text-lg lg:text-xl font-medium drop-shadow-md leading-relaxed">
+                            <p className="text-white/90 text-lg lg:text-xl font-medium max-w-md mx-auto leading-relaxed drop-shadow-sm">
                                 Track your attendance, view schedules, and manage your work records in one convenient portal.
                             </p>
                         </div>
