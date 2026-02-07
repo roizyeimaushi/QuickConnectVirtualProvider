@@ -1408,6 +1408,20 @@ class AttendanceRecordController extends Controller
             }
         }
 
+        // 3. WEEKEND ENFORCEMENT
+        // If it is physically a weekend (Saturday/Sunday) and the user has NO open record,
+        // we should favor the weekend message to prevent showing yesterday's data as "Today".
+        $physicalDate = Carbon::now();
+        $hasActiveWork = AttendanceRecord::where('user_id', $user->id)
+            ->whereNull('time_out')
+            ->whereNotIn('status', ['pending', 'absent', 'excused'])
+            ->exists();
+
+        if ($physicalDate->isWeekend() && !$hasActiveWork) {
+            $session = null; // Force weekend bypass
+            $today = $physicalDate->toDateString();
+        }
+
         // FALLBACK: Check yesterday's active session (for overnight shifts)
         if (!$session) {
             $yesterday = Carbon::yesterday()->toDateString();
@@ -1440,13 +1454,13 @@ class AttendanceRecordController extends Controller
             }
         }
 
-        if (!$session) {
+        if (!$session || ($physicalDate->isWeekend() && !$hasActiveWork)) {
+            $session = null; // Final force weekend if not actively working
             $dateObj = Carbon::parse($today);
-            $physicalDate = Carbon::now();
             $isWeekend = $dateObj->isWeekend();
             
-            // If physically it's weekend and no session is active, it's effectively the weekend
-            if (!$isWeekend && $physicalDate->isWeekend()) {
+            // If physically it's weekend, it's effectively the weekend for anyone not clocked in
+            if ($physicalDate->isWeekend()) {
                 $isWeekend = true;
                 $today = $physicalDate->toDateString();
             }

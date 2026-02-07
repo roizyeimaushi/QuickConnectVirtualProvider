@@ -221,12 +221,12 @@ class ReportController extends Controller
         
         // It's a weekend if:
         // 1. Logically it's a weekend (e.g. Saturday afternoon counts as Saturday)
-        // 2. Physically it's a weekend AND no session is detected (e.g. Saturday morning after shift)
+        // 2. Physically it's a weekend AND user is NOT currently at work (no activeRecord)
         $isWeekend = $logicalDate->isWeekend();
         
-        // Special case: Saturday morning is logical Friday. 
-        // If it's Saturday physically, and no session is found, it's effectively the weekend.
-        if (!$isWeekend && $physicalDate->isWeekend() && !$todaySession) {
+        // Special case: Saturday/Sunday morning. 
+        // If physically weekend, and NOT currently at work, show weekend.
+        if (!$isWeekend && $physicalDate->isWeekend() && !$activeRecord) {
             $isWeekend = true;
             $today = $physicalDate->toDateString(); // Switch to physical date for message
         }
