@@ -120,119 +120,134 @@ export default function EmployeeLoginPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* Layout - Centered Card Only */}
-            <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-slate-50">
-                {/* Background Decoration */}
-                <div className="absolute inset-0 z-0">
+            <div className="min-h-screen h-screen w-full flex flex-col md:flex-row overflow-hidden bg-white">
+                {/* Left Side - Image and Branding */}
+                <div className="hidden md:block md:w-1/2 h-full relative overflow-hidden bg-slate-200">
                     <img
                         src="/employee-login-side.png"
-                        alt="Background"
-                        className="w-full h-full object-cover opacity-10 blur-[2px]"
+                        alt="QuickConn Workspace"
+                        className="absolute inset-0 w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-blue-500/10" />
+
+                    {/* Overlay with Text */}
+                    <div className="absolute inset-0 bg-black/10 flex flex-col items-center justify-center text-center p-12">
+                        <div className="max-w-md animate-fade-in">
+                            <h1 className="text-5xl lg:text-6xl font-black text-white drop-shadow-[0_4px_4px_rgba(0,0,0,0.25)] leading-tight mb-6">
+                                Welcome to <br />
+                                <span className="text-[#22c55e]">QuickConn Virtual</span>
+                            </h1>
+                            <p className="text-white text-lg lg:text-xl font-medium drop-shadow-md leading-relaxed">
+                                Track your attendance, view schedules, and manage your work records in one convenient portal.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Decorative Elements can be added here if they are separate images, 
+                        otherwise they are expected to be part of the background image */}
                 </div>
 
-                {/* Login Card */}
-                <div className="relative z-10 w-full max-w-[450px] px-4">
-                    <Card className="border-none shadow-2xl bg-white/95 backdrop-blur-sm">
-                        <CardHeader className="pt-8 pb-4 text-center">
-                            <div className="flex justify-center mb-4">
-                                <img
-                                    src={getLogoUrl(settings?.system_logo)}
-                                    alt="QuickConn Logo"
-                                    className="h-16 w-auto object-contain"
-                                    onError={(e) => {
-                                        e.currentTarget.src = "/quickconnect-logo.png";
-                                        e.currentTarget.onerror = null;
-                                    }}
-                                />
-                            </div>
-                            <CardTitle className="text-2xl font-bold tracking-tight">
-                                Welcome to <span className="text-[#22c55e]">QuickConn</span>
-                            </CardTitle>
-                            <CardDescription className="text-muted-foreground mt-2">
-                                Sign in to access your employee account
-                            </CardDescription>
-                        </CardHeader>
+                {/* Right Side - Login Form */}
+                <div className="w-full md:w-1/2 h-full flex flex-col justify-center items-center p-6 sm:p-12 lg:p-20 overflow-y-auto">
+                    <div className="w-full max-w-[420px] space-y-8 py-8">
+                        {/* Logo */}
+                        <div className="flex justify-center flex-col items-center space-y-6">
+                            <img
+                                src={getLogoUrl(settings?.system_logo)}
+                                alt="QuickConn Logo"
+                                className="h-auto max-h-24 w-auto object-contain"
+                                onError={(e) => {
+                                    e.currentTarget.src = "/quickconnect-logo.png";
+                                    e.currentTarget.onerror = null;
+                                }}
+                            />
+                            <p className="text-slate-500 text-sm font-medium">
+                                Sign in to access your QuickConn Virtual account
+                            </p>
+                        </div>
 
-                        <CardContent className="px-8 pb-8">
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="email" className="text-xs font-bold text-slate-700 uppercase ml-1">Email Address</Label>
-                                        <div className="relative">
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
-                                                <Mail className="h-5 w-5" />
-                                            </div>
-                                            <input
-                                                id="email"
-                                                type="email"
-                                                placeholder="Enter your email"
-                                                value={email}
-                                                onChange={(e) => setEmail(e.target.value)}
-                                                required
-                                                className="w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                                            />
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <div className="space-y-5">
+                                {/* Email Field */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="email" className="text-xs font-bold text-slate-800 uppercase tracking-widest ml-1">
+                                        Email Address
+                                    </Label>
+                                    <div className="relative group">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#22c55e] transition-colors">
+                                            <Mail className="h-5 w-5" />
                                         </div>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="password" className="text-xs font-bold text-slate-700 uppercase ml-1">Password</Label>
-                                        <div className="relative">
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
-                                                <Lock className="h-5 w-5" />
-                                            </div>
-                                            <input
-                                                id="password"
-                                                type={showPassword ? "text" : "password"}
-                                                placeholder="Enter your password"
-                                                value={password}
-                                                onChange={(e) => setPassword(e.target.value)}
-                                                required
-                                                className="w-full h-12 pl-12 pr-12 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowPassword(!showPassword)}
-                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
-                                            >
-                                                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center justify-between py-2">
-                                    <div className="flex items-center space-x-2">
-                                        <Checkbox
-                                            id="remember"
-                                            checked={remember}
-                                            onCheckedChange={setRemember}
-                                            className="border-slate-300"
+                                        <input
+                                            id="email"
+                                            type="email"
+                                            placeholder="Enter your email"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            required
+                                            className="w-full h-14 pl-12 pr-4 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#22c55e] focus:ring-4 focus:ring-[#22c55e]/10 transition-all text-slate-900 placeholder:text-slate-300"
                                         />
-                                        <Label htmlFor="remember" className="text-sm font-medium text-muted-foreground cursor-pointer">
-                                            Remember me
-                                        </Label>
                                     </div>
                                 </div>
 
-                                <Button
-                                    type="submit"
-                                    className="w-full h-12 text-base font-semibold rounded-xl shadow-lg transition-all active:scale-[0.98]"
-                                    loading={loading}
-                                    style={{
-                                        background: 'linear-gradient(135deg, #2e8b57 0%, #236b43 100%)'
-                                    }}
-                                >
-                                    Sign In
-                                </Button>
-                            </form>
-                        </CardContent>
-                    </Card>
+                                {/* Password Field */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="password" className="text-xs font-bold text-slate-800 uppercase tracking-widest ml-1">
+                                        Password
+                                    </Label>
+                                    <div className="relative group">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#22c55e] transition-colors">
+                                            <Lock className="h-5 w-5" />
+                                        </div>
+                                        <input
+                                            id="password"
+                                            type={showPassword ? "text" : "password"}
+                                            placeholder="Enter your password"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            required
+                                            className="w-full h-14 pl-12 pr-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#22c55e] focus:ring-4 focus:ring-[#22c55e]/10 transition-all text-slate-900 placeholder:text-slate-300"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#22c55e] transition-colors"
+                                        >
+                                            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
 
-                    <p className="text-center text-slate-400 text-xs mt-8">
-                        &copy; {new Date().getFullYear()} QuickConn Virtual Services. All rights reserved.
-                    </p>
+                            <div className="flex items-center space-x-2 py-1">
+                                <Checkbox
+                                    id="remember"
+                                    checked={remember}
+                                    onCheckedChange={setRemember}
+                                    className="border-slate-300 data-[state=checked]:bg-[#22c55e] data-[state=checked]:border-[#22c55e]"
+                                />
+                                <Label htmlFor="remember" className="text-sm font-medium text-slate-500 cursor-pointer">
+                                    Remember me
+                                </Label>
+                            </div>
+
+                            <Button
+                                type="submit"
+                                className="w-full h-14 text-lg font-bold rounded-xl shadow-lg border-none hover:shadow-xl transition-all active:scale-[0.98] mt-2"
+                                loading={loading}
+                                style={{
+                                    background: 'linear-gradient(135deg, #2e8b57 0%, #236b43 100%)'
+                                }}
+                            >
+                                Sign In
+                            </Button>
+                        </form>
+
+                        {/* Footer text */}
+                        <div className="pt-8 text-center">
+                            <p className="text-slate-400 text-sm font-medium">
+                                QuickConn Virtual Attendance System
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </>
