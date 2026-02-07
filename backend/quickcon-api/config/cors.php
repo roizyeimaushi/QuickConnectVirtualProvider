@@ -22,7 +22,8 @@ return [
     ))),
 
     'allowed_origins_patterns' => [
-        'https://quickconnect-frontend-*.onrender.com', // Preview deployments only
+        '/^https:\/\/quickconnect-frontend-.*\.onrender\.com$/',
+        '/^https:\/\/virtualquickconnect-.*\.vercel\.app$/',
     ],
 
     'allowed_headers' => ['*'],

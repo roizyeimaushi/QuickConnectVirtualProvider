@@ -12,11 +12,21 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('attendance_sessions', function (Blueprint $table) {
-            $table->boolean('attendance_required')->default(true)->after('status');
-            $table->string('session_type')->default('Normal')->after('attendance_required'); // Normal, Emergency, Holiday, etc.
-            $table->string('completion_reason')->nullable()->after('session_type');
-            $table->timestamp('locked_at')->nullable()->after('completion_reason');
-            $table->foreignId('locked_by')->nullable()->constrained('users')->onDelete('set null')->after('locked_at');
+            if (!Schema::hasColumn('attendance_sessions', 'attendance_required')) {
+                $table->boolean('attendance_required')->default(true)->after('status');
+            }
+            if (!Schema::hasColumn('attendance_sessions', 'session_type')) {
+                $table->string('session_type')->default('Normal')->after('attendance_required');
+            }
+            if (!Schema::hasColumn('attendance_sessions', 'completion_reason')) {
+                $table->string('completion_reason')->nullable()->after('session_type');
+            }
+            if (!Schema::hasColumn('attendance_sessions', 'locked_at')) {
+                $table->timestamp('locked_at')->nullable()->after('completion_reason');
+            }
+            if (!Schema::hasColumn('attendance_sessions', 'locked_by')) {
+                $table->foreignId('locked_by')->nullable()->constrained('users')->onDelete('set null')->after('locked_at');
+            }
         });
     }
 
