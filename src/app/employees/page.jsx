@@ -643,6 +643,7 @@ export default function EmployeesPage() {
                         </AlertDialogContent>
                     </AlertDialog>
                 </div>
-        </DashboardLayout >
+            )}
+        </DashboardLayout>
     );
 }
