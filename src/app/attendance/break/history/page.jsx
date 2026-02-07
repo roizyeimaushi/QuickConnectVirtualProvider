@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { PageSkeleton } from "@/components/ui/page-skeleton";
+import Skeleton from "@/components/ui/skeleton";
 
 import { History } from "lucide-react";
 
@@ -21,7 +21,37 @@ export default function BreakHistoryPage() {
     if (loading) {
         return (
             <DashboardLayout title="Break History">
-                <PageSkeleton cardCount={2} hasHeader={true} />
+                <div className="space-y-6 animate-pulse">
+                    <div className="space-y-2">
+                        <Skeleton className="h-9 w-48 bg-slate-200/60" />
+                        <Skeleton className="h-4 w-64 bg-slate-100/60" />
+                    </div>
+                    <Card>
+                        <CardHeader className="space-y-2">
+                            <div className="flex items-center gap-2">
+                                <Skeleton className="h-5 w-5 bg-slate-100/60" />
+                                <Skeleton className="h-6 w-32 bg-slate-100/60" />
+                            </div>
+                            <Skeleton className="h-4 w-64 bg-slate-100/40" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                {[...Array(5)].map((_, i) => (
+                                    <div key={i} className="flex items-center justify-between p-4 border rounded-md">
+                                        <div className="flex items-center gap-3">
+                                            <Skeleton className="h-9 w-9 rounded-full bg-slate-200/40" />
+                                            <div className="space-y-2">
+                                                <Skeleton className="h-4 w-24 bg-slate-200/40" />
+                                                <Skeleton className="h-3 w-16 bg-slate-100/30" />
+                                            </div>
+                                        </div>
+                                        <Skeleton className="h-6 w-20 rounded-full bg-slate-100/30" />
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
             </DashboardLayout>
         );
     }

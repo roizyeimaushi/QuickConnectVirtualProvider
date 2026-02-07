@@ -9,7 +9,7 @@ import { breakApi, reportsApi } from "@/lib/api";
 import { formatTime24 } from "@/lib/utils";
 import { Timer, Coffee, Play, StopCircle, AlertCircle, Clock, Ban, Loader2, PauseCircle, Calendar, ThumbsUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { PageSkeleton } from "@/components/ui/page-skeleton";
+import Skeleton from "@/components/ui/skeleton";
 
 export default function BreakPage() {
     const router = useRouter();
@@ -213,7 +213,10 @@ export default function BreakPage() {
                             <Skeleton className="h-4 w-40 mx-auto bg-slate-100/60" />
                         </CardHeader>
                         <CardContent className="pt-6">
-                            <Skeleton className="w-full h-20 rounded-xl bg-slate-100/60" />
+                            <Skeleton className="w-full h-20 rounded-xl bg-slate-100/40" />
+                            <div className="mt-4 flex justify-center">
+                                <Skeleton className="h-4 w-32 bg-slate-100/30" />
+                            </div>
                         </CardContent>
                     </Card>
                 </div>
@@ -350,4 +353,3 @@ function BreakTypeCard({ type, label, duration, icon, isUsed, isActive, isDisabl
         </Button>
     );
 }
-

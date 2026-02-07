@@ -3,11 +3,10 @@
 import { useState, useEffect, useRef } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { PageSkeleton } from "@/components/ui/page-skeleton";
+import Skeleton from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -252,13 +251,7 @@ export default function AttendanceHistoryPage() {
         left_early: Timer,
     };
 
-    if (loading && records.length === 0) {
-        return (
-            <DashboardLayout title="Attendance History">
-                <PageSkeleton cardCount={4} hasHeader={true} />
-            </DashboardLayout>
-        );
-    }
+    // Loading state is now handled by Skeletons in the main return check
 
     return (
         <DashboardLayout title="Attendance History">
@@ -273,13 +266,13 @@ export default function AttendanceHistoryPage() {
 
                 {/* Summary Stats */}
                 {loading && records.length === 0 ? (
-                    <div className="grid gap-4 md:grid-cols-4">
+                    <div className="grid gap-4 md:grid-cols-4 animate-pulse">
                         <Card>
                             <CardContent className="flex items-center gap-4 p-4">
-                                <Skeleton className="h-10 w-10 rounded-lg" />
+                                <Skeleton className="h-10 w-10 bg-slate-200/60 rounded-lg" />
                                 <div className="space-y-2">
-                                    <Skeleton className="h-8 w-12" />
-                                    <Skeleton className="h-3 w-24" />
+                                    <Skeleton className="h-8 w-12 bg-slate-200/60" />
+                                    <Skeleton className="h-3 w-24 bg-slate-100/60" />
                                 </div>
                             </CardContent>
                         </Card>
@@ -380,7 +373,7 @@ export default function AttendanceHistoryPage() {
                     </CardHeader>
                     <CardContent>
                         {loading && records.length === 0 ? (
-                            <div className="space-y-4">
+                            <div className="space-y-4 animate-pulse">
                                 {/* Skeleton Table */}
                                 <div className="hidden md:block">
                                     <div className="border rounded-md">
@@ -388,13 +381,13 @@ export default function AttendanceHistoryPage() {
                                             {[...Array(8)].map((_, i) => (
                                                 <div key={i} className="p-4 border-b last:border-0">
                                                     <div className="grid grid-cols-7 gap-4 items-center">
-                                                        <Skeleton className="h-4 w-full" />
-                                                        <Skeleton className="h-4 w-full" />
-                                                        <Skeleton className="h-4 w-full" />
-                                                        <Skeleton className="h-4 w-full" />
-                                                        <Skeleton className="h-4 w-full" />
-                                                        <Skeleton className="h-4 w-full" />
-                                                        <Skeleton className="h-8 w-8 rounded-md mx-auto" />
+                                                        <Skeleton className="h-4 w-full bg-slate-100/40" />
+                                                        <Skeleton className="h-4 w-full bg-slate-200/40" />
+                                                        <Skeleton className="h-4 w-full bg-slate-100/40" />
+                                                        <Skeleton className="h-4 w-full bg-slate-100/30" />
+                                                        <Skeleton className="h-4 w-full bg-slate-100/30" />
+                                                        <Skeleton className="h-4 w-full bg-slate-200/40" />
+                                                        <Skeleton className="h-8 w-8 rounded-md mx-auto bg-slate-100/30" />
                                                     </div>
                                                 </div>
                                             ))}
@@ -404,22 +397,22 @@ export default function AttendanceHistoryPage() {
                                 {/* Skeleton Cards (Mobile) */}
                                 <div className="md:hidden space-y-3">
                                     {[...Array(3)].map((_, i) => (
-                                        <div key={i} className="border rounded-lg p-4 space-y-3">
+                                        <div key={i} className="border rounded-lg p-4 space-y-4">
                                             <div className="flex justify-between items-center">
                                                 <div className="flex items-center gap-3">
-                                                    <Skeleton className="h-10 w-10 rounded-full" />
+                                                    <Skeleton className="h-10 w-10 rounded-full bg-slate-200/60" />
                                                     <div className="space-y-2">
-                                                        <Skeleton className="h-4 w-24" />
-                                                        <Skeleton className="h-3 w-20" />
+                                                        <Skeleton className="h-4 w-24 bg-slate-100/60" />
+                                                        <Skeleton className="h-3 w-20 bg-slate-100/40" />
                                                     </div>
                                                 </div>
-                                                <Skeleton className="h-6 w-16 rounded-full" />
+                                                <Skeleton className="h-6 w-16 rounded-full bg-slate-200/40" />
                                             </div>
                                             <div className="grid grid-cols-2 gap-2">
-                                                <Skeleton className="h-10 w-full rounded-md" />
-                                                <Skeleton className="h-10 w-full rounded-md" />
+                                                <Skeleton className="h-10 w-full rounded-md bg-slate-100/30" />
+                                                <Skeleton className="h-10 w-full rounded-md bg-slate-100/30" />
                                             </div>
-                                            <Skeleton className="h-10 w-full rounded-md" />
+                                            <Skeleton className="h-10 w-full rounded-md bg-slate-100/30" />
                                         </div>
                                     ))}
                                 </div>

@@ -7,8 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { PageSkeleton } from "@/components/ui/page-skeleton";
+import Skeleton from "@/components/ui/skeleton";
 
 import { useAuth } from "@/components/providers/auth-provider";
 import { attendanceApi, reportsApi, breakApi } from "@/lib/api";

@@ -7,8 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { PageSkeleton } from "@/components/ui/page-skeleton";
+import Skeleton from "@/components/ui/skeleton";
 import {
     Table,
     TableBody,
@@ -292,13 +291,7 @@ export default function AuditLogsPage() {
 
 
 
-    if (loading && logs.length === 0) {
-        return (
-            <DashboardLayout title="Audit Logs">
-                <PageSkeleton cardCount={4} hasHeader={true} />
-            </DashboardLayout>
-        );
-    }
+    // Loading state is now handled by Skeletons in the main return check
 
     return (
         <DashboardLayout title="Audit Logs">
@@ -313,14 +306,14 @@ export default function AuditLogsPage() {
 
                 {/* Stats */}
                 {loading && logs.length === 0 ? (
-                    <div className="grid gap-4 md:grid-cols-4">
+                    <div className="grid gap-4 md:grid-cols-4 animate-pulse">
                         {[...Array(4)].map((_, i) => (
                             <Card key={i}>
                                 <CardContent className="flex items-center gap-4 p-6">
-                                    <Skeleton className="h-12 w-12 rounded-lg" />
+                                    <Skeleton className="h-12 w-12 rounded-lg bg-slate-200/60" />
                                     <div className="space-y-2">
-                                        <Skeleton className="h-8 w-16" />
-                                        <Skeleton className="h-4 w-24" />
+                                        <Skeleton className="h-8 w-16 bg-slate-200/60" />
+                                        <Skeleton className="h-4 w-24 bg-slate-100/60" />
                                     </div>
                                 </CardContent>
                             </Card>
@@ -444,19 +437,19 @@ export default function AuditLogsPage() {
                             </CardHeader>
                             <CardContent>
                                 {loading && logs.length === 0 ? (
-                                    <div className="space-y-4">
+                                    <div className="space-y-4 animate-pulse">
                                         <div className="hidden md:block">
                                             <div className="border rounded-md">
                                                 <div className="p-0">
                                                     {[...Array(10)].map((_, i) => (
                                                         <div key={i} className="p-4 border-b last:border-0">
                                                             <div className="grid grid-cols-6 gap-4 items-center">
-                                                                <Skeleton className="h-4 w-full" />
-                                                                <Skeleton className="h-4 w-full" />
-                                                                <Skeleton className="h-6 w-16 mx-auto" />
-                                                                <Skeleton className="h-8 w-24 mx-auto" />
-                                                                <Skeleton className="h-4 w-24 mx-auto" />
-                                                                <Skeleton className="h-4 w-32 mx-auto" />
+                                                                <Skeleton className="h-4 w-full bg-slate-200/40" />
+                                                                <Skeleton className="h-4 w-full bg-slate-100/40" />
+                                                                <Skeleton className="h-6 w-16 mx-auto bg-slate-200/40" />
+                                                                <Skeleton className="h-8 w-24 mx-auto bg-slate-200/60" />
+                                                                <Skeleton className="h-4 w-24 mx-auto bg-slate-100/40" />
+                                                                <Skeleton className="h-4 w-32 mx-auto bg-slate-200/40" />
                                                             </div>
                                                         </div>
                                                     ))}
@@ -465,13 +458,13 @@ export default function AuditLogsPage() {
                                         </div>
                                         <div className="md:hidden space-y-3">
                                             {[...Array(3)].map((_, i) => (
-                                                <div key={i} className="border rounded-lg p-4 space-y-3">
+                                                <div key={i} className="border rounded-lg p-4 space-y-4">
                                                     <div className="flex justify-between">
-                                                        <Skeleton className="h-4 w-32" />
-                                                        <Skeleton className="h-6 w-16" />
+                                                        <Skeleton className="h-4 w-32 bg-slate-200/60" />
+                                                        <Skeleton className="h-6 w-16 bg-slate-200/60" />
                                                     </div>
-                                                    <Skeleton className="h-10 w-full" />
-                                                    <Skeleton className="h-8 w-full" />
+                                                    <Skeleton className="h-10 w-full bg-slate-100/40" />
+                                                    <Skeleton className="h-8 w-full bg-slate-100/40" />
                                                 </div>
                                             ))}
                                         </div>

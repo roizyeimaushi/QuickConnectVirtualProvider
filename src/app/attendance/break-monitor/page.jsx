@@ -5,7 +5,7 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PageSkeleton } from "@/components/ui/page-skeleton";
+import Skeleton from "@/components/ui/skeleton";
 
 import {
     Table,
@@ -126,13 +126,7 @@ export default function BreakMonitorPage() {
         }
     };
 
-    if (loading && activeBreaks.length === 0) {
-        return (
-            <DashboardLayout title="Break Time Monitor">
-                <PageSkeleton cardCount={3} hasHeader={true} />
-            </DashboardLayout>
-        );
-    }
+    // Loading state is now handled by Skeletons in the main return check
 
     return (
         <DashboardLayout title="Break Time Monitor">
@@ -148,14 +142,12 @@ export default function BreakMonitorPage() {
 
                 {/* Stats */}
                 <div className="grid gap-4 md:grid-cols-3">
-                    <Card className="bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800">
+                    <Card className="bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800 animate-pulse">
                         <CardContent className="flex items-center gap-4 p-6">
-                            <div className="p-3 rounded-lg bg-orange-100 dark:bg-orange-900/40">
-                                <Timer className="h-6 w-6 text-orange-600" />
-                            </div>
-                            <div>
-                                <p className="text-2xl font-bold">{activeBreaks.length}</p>
-                                <p className="text-sm text-muted-foreground">Employees on Break</p>
+                            <Skeleton className="h-12 w-12 rounded-lg bg-orange-100 dark:bg-orange-900/40" />
+                            <div className="space-y-2">
+                                <Skeleton className="h-8 w-12 bg-orange-200/60" />
+                                <Skeleton className="h-4 w-32 bg-orange-100/40" />
                             </div>
                         </CardContent>
                     </Card>
@@ -168,7 +160,29 @@ export default function BreakMonitorPage() {
                     </CardHeader>
                     <CardContent>
                         {loading && activeBreaks.length === 0 ? (
-                            null
+                            <div className="space-y-4 animate-pulse">
+                                <div className="border rounded-md">
+                                    {[...Array(5)].map((_, i) => (
+                                        <div key={i} className="p-4 border-b last:border-0 flex items-center justify-between gap-4">
+                                            <div className="flex items-center gap-3 w-1/4">
+                                                <Skeleton className="h-9 w-9 rounded-full bg-slate-200/60" />
+                                                <div className="space-y-2">
+                                                    <Skeleton className="h-4 w-24 bg-slate-200/60" />
+                                                    <Skeleton className="h-3 w-16 bg-slate-100/40" />
+                                                </div>
+                                            </div>
+                                            <Skeleton className="h-4 w-24 bg-slate-100/40" />
+                                            <Skeleton className="h-4 w-20 bg-slate-200/40" />
+                                            <div className="flex flex-col items-center gap-2">
+                                                <Skeleton className="h-4 w-12 bg-slate-200/60" />
+                                                <Skeleton className="h-3 w-10 bg-slate-100/40" />
+                                            </div>
+                                            <Skeleton className="h-6 w-20 rounded-full bg-slate-100/40" />
+                                            <Skeleton className="h-9 w-24 rounded-md bg-slate-100/30" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         ) : activeBreaks.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-12 text-center">
                                 <Clock className="h-12 w-12 text-muted-foreground mb-4" />

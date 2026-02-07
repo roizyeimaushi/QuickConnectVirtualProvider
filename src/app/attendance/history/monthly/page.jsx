@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { PageSkeleton } from "@/components/ui/page-skeleton";
+import Skeleton from "@/components/ui/skeleton";
 
 import { Progress } from "@/components/ui/progress";
 import {
@@ -157,7 +157,56 @@ export default function MonthlyHistoryPage() {
                 </div>
 
                 {loading ? (
-                    <PageSkeleton cardCount={4} hasHeader={false} />
+                    <div className="space-y-6 animate-pulse">
+                        {/* Stats Grid Skeleton */}
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                            {[...Array(4)].map((_, i) => (
+                                <Card key={i} className="p-6 space-y-3">
+                                    <div className="flex items-center gap-4">
+                                        <Skeleton className="h-12 w-12 rounded-lg bg-slate-100/60" />
+                                        <div className="space-y-2">
+                                            <Skeleton className="h-8 w-12 bg-slate-200/60" />
+                                            <Skeleton className="h-4 w-24 bg-slate-100/60" />
+                                        </div>
+                                    </div>
+                                </Card>
+                            ))}
+                        </div>
+
+                        {/* Performance Card Skeleton */}
+                        <Card>
+                            <CardHeader className="space-y-4">
+                                <div className="flex items-center gap-2">
+                                    <Skeleton className="h-6 w-6 rounded bg-slate-100/60" />
+                                    <Skeleton className="h-6 w-48 bg-slate-100/60" />
+                                </div>
+                                <Skeleton className="h-4 w-64 bg-slate-100/40" />
+                            </CardHeader>
+                            <CardContent className="space-y-10 py-8">
+                                {[...Array(2)].map((_, i) => (
+                                    <div key={i} className="space-y-4">
+                                        <div className="flex justify-between items-end">
+                                            <div className="flex items-center gap-2">
+                                                <Skeleton className="h-4 w-4 rounded bg-slate-100/40" />
+                                                <Skeleton className="h-5 w-32 bg-slate-100/60" />
+                                            </div>
+                                            <Skeleton className="h-8 w-16 bg-slate-200/60" />
+                                        </div>
+                                        <Skeleton className="h-3 w-full rounded-full bg-slate-100/30" />
+                                        <Skeleton className="h-4 w-64 bg-slate-100/30" />
+                                    </div>
+                                ))}
+                                <div className="pt-6 border-t space-y-4">
+                                    <Skeleton className="h-5 w-32 bg-slate-100/60" />
+                                    <div className="flex gap-4 flex-wrap">
+                                        {[...Array(3)].map((_, i) => (
+                                            <Skeleton key={i} className="h-10 w-32 rounded-lg bg-slate-100/40" />
+                                        ))}
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
                 ) : (
                     <>
                         {/* Stats Grid */}

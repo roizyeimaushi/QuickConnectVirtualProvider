@@ -8,8 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { PageSkeleton } from "@/components/ui/page-skeleton";
+import Skeleton from "@/components/ui/skeleton";
 
 import { useAuth } from "@/components/providers/auth-provider";
 import { reportsApi } from "@/lib/api";
@@ -478,7 +477,84 @@ export default function AdminDashboard() {
     return (
         <DashboardLayout title="Admin Dashboard">
             {loading ? (
-                <PageSkeleton cardCount={5} hasHeader={true} />
+                <div className="space-y-6 animate-pulse">
+                    {/* Welcome Section Skeleton */}
+                    <div className="space-y-2 mb-2 text-left">
+                        <Skeleton className="h-9 w-64 bg-slate-200/60" />
+                        <Skeleton className="h-4 w-48 bg-slate-100/60" />
+                    </div>
+
+                    {/* Stats Grid Skeleton */}
+                    <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+                        {[...Array(5)].map((_, i) => (
+                            <Card key={i} className="p-4 space-y-3">
+                                <div className="flex justify-between items-center">
+                                    <Skeleton className="h-4 w-20 bg-slate-100/60" />
+                                    <Skeleton className="h-10 w-10 bg-slate-100/40 rounded-lg" />
+                                </div>
+                                <Skeleton className="h-8 w-16 bg-slate-200/60" />
+                                <Skeleton className="h-3 w-24 bg-slate-100/40" />
+                            </Card>
+                        ))}
+                    </div>
+
+                    {/* Main Content Grid Skeleton */}
+                    <div className="grid gap-4 lg:grid-cols-3">
+                        {/* Attendance Overview Skeleton */}
+                        <Card className="col-span-full lg:col-span-2 p-6 space-y-8">
+                            <div className="space-y-2">
+                                <Skeleton className="h-6 w-48 bg-slate-100/60" />
+                                <Skeleton className="h-4 w-64 bg-slate-100/40" />
+                            </div>
+                            <div className="space-y-6">
+                                {[...Array(4)].map((_, i) => (
+                                    <div key={i} className="space-y-2">
+                                        <div className="flex justify-between">
+                                            <Skeleton className="h-4 w-20 bg-slate-100/40" />
+                                            <Skeleton className="h-4 w-10 bg-slate-100/40" />
+                                        </div>
+                                        <Skeleton className="h-2 w-full bg-slate-100/30 rounded-full" />
+                                    </div>
+                                ))}
+                            </div>
+                        </Card>
+
+                        <div className="space-y-4">
+                            {/* Active Session Card Skeleton */}
+                            <Card className="p-6 space-y-6">
+                                <div className="flex justify-between items-start">
+                                    <Skeleton className="h-6 w-32 bg-slate-100/60" />
+                                    <Skeleton className="h-6 w-16 bg-slate-100/40 rounded-full" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Skeleton className="h-8 w-40 bg-slate-200/60" />
+                                    <Skeleton className="h-4 w-32 bg-slate-100/40" />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 py-4 border-y border-dashed">
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-3 w-16 bg-slate-100/30" />
+                                        <Skeleton className="h-6 w-24 bg-slate-100/60" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-3 w-16 bg-slate-100/30" />
+                                        <Skeleton className="h-6 w-20 bg-slate-100/60" />
+                                    </div>
+                                </div>
+                                <Skeleton className="h-10 w-full bg-slate-100/50 rounded-md" />
+                            </Card>
+
+                            {/* Quick Actions Skeleton */}
+                            <Card className="p-6">
+                                <Skeleton className="h-6 w-32 mb-6 bg-slate-100/60" />
+                                <div className="space-y-3">
+                                    {[...Array(3)].map((_, i) => (
+                                        <Skeleton key={i} className="h-14 w-full bg-slate-100/40 rounded-lg" />
+                                    ))}
+                                </div>
+                            </Card>
+                        </div>
+                    </div>
+                </div>
             ) : (
                 <div className="space-y-6 animate-fade-in">
                     {/* Welcome Section */}

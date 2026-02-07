@@ -5,7 +5,7 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PageSkeleton } from "@/components/ui/page-skeleton";
+import Skeleton from "@/components/ui/skeleton";
 
 import {
     Table,
@@ -201,13 +201,7 @@ export default function BreakHistoryPage() {
         return () => clearInterval(timer);
     }, []);
 
-    if (loading && groupedRecords.length === 0) {
-        return (
-            <DashboardLayout title="Break History">
-                <PageSkeleton cardCount={3} hasHeader={true} />
-            </DashboardLayout>
-        );
-    }
+    // Loading state is now handled by Skeletons in the main return check
 
     return (
         <DashboardLayout title="Break History">
@@ -226,7 +220,55 @@ export default function BreakHistoryPage() {
                         <CardTitle>Break Sessions</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        {loading ? null : groupedRecords.length === 0 ? (
+                        {loading ? (
+                            <div className="space-y-4 animate-pulse">
+                                {/* Desktop Tablet Skeleton */}
+                                <div className="hidden md:block">
+                                    <div className="border rounded-md">
+                                        {[...Array(8)].map((_, i) => (
+                                            <div key={i} className="p-4 border-b last:border-0 flex items-center justify-between gap-4">
+                                                <div className="flex items-center gap-3 w-1/4">
+                                                    <Skeleton className="h-9 w-9 rounded-full bg-slate-200/60" />
+                                                    <div className="space-y-2">
+                                                        <Skeleton className="h-4 w-24 bg-slate-200/60" />
+                                                        <Skeleton className="h-3 w-16 bg-slate-100/40" />
+                                                    </div>
+                                                </div>
+                                                <Skeleton className="h-4 w-24 bg-slate-100/40" />
+                                                <Skeleton className="h-4 w-20 bg-slate-200/40" />
+                                                <Skeleton className="h-4 w-16 bg-slate-100/40" />
+                                                <Skeleton className="h-4 w-16 bg-slate-100/40" />
+                                                <Skeleton className="h-4 w-12 bg-slate-200/60" />
+                                                <Skeleton className="h-6 w-16 rounded-full bg-slate-100/40" />
+                                                <Skeleton className="h-8 w-8 rounded-md bg-slate-100/30" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                {/* Mobile Cards Skeleton */}
+                                <div className="md:hidden space-y-4">
+                                    {[...Array(3)].map((_, i) => (
+                                        <Card key={i} className="p-4 space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <Skeleton className="h-10 w-10 rounded-full bg-slate-200/60" />
+                                                    <div className="space-y-2">
+                                                        <Skeleton className="h-4 w-24 bg-slate-200/60" />
+                                                        <Skeleton className="h-3 w-16 bg-slate-100/40" />
+                                                    </div>
+                                                </div>
+                                                <Skeleton className="h-6 w-16 rounded-full bg-slate-200/60" />
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4 pb-2 border-b">
+                                                <Skeleton className="h-8 w-full bg-slate-100/40" />
+                                                <Skeleton className="h-8 w-full bg-slate-100/40" />
+                                            </div>
+                                            <Skeleton className="h-10 w-full bg-slate-100/30" />
+                                        </Card>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : groupedRecords.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-12 text-center">
                                 <History className="h-12 w-12 text-muted-foreground mb-4" />
                                 <h3 className="text-lg font-semibold">No break records found</h3>
