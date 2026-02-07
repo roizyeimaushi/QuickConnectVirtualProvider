@@ -87,6 +87,7 @@ export function AppSidebar() {
     const pathname = usePathname();
     const navItems = getNavigationItems(user);
     const { setOpen } = useSidebar();
+    const sidebarScrollRef = React.useRef(null);
 
     const hideSidebar = pathname.startsWith("/settings") ||
         pathname === "/dashboard/admin/profile" ||
@@ -98,6 +99,23 @@ export function AppSidebar() {
             setOpen(false);
         }
     }, [pathname, hideSidebar, setOpen]);
+
+    // Restore sidebar scroll position on mount
+    React.useEffect(() => {
+        const savedScroll = sessionStorage.getItem("sidebar-scroll-pos");
+        if (savedScroll && sidebarScrollRef.current) {
+            // Use a small timeout to ensure content is fully rendered
+            setTimeout(() => {
+                if (sidebarScrollRef.current) {
+                    sidebarScrollRef.current.scrollTop = parseInt(savedScroll);
+                }
+            }, 0);
+        }
+    }, []);
+
+    const handleSidebarScroll = (e) => {
+        sessionStorage.setItem("sidebar-scroll-pos", e.currentTarget.scrollTop.toString());
+    };
 
     const logoUrl = getLogoUrl(settings?.system_logo);
 
@@ -142,6 +160,7 @@ export function AppSidebar() {
 
             <Link
                 href={isAdmin ? "/dashboard/admin/profile" : "/dashboard/employee/profile"}
+                scroll={false}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${isCollapsible ? 'hover:bg-white/5 text-white/60 hover:text-white' : 'hover:bg-white/5 text-white/70 focus:bg-white/5 focus:text-white'}`}
             >
                 <User className="h-4 w-4 text-emerald-500 shrink-0" />
@@ -150,6 +169,7 @@ export function AppSidebar() {
 
             <Link
                 href={isAdmin ? "/settings/general" : "/dashboard/employee/profile"}
+                scroll={false}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${isCollapsible ? 'hover:bg-white/5 text-white/60 hover:text-white' : 'hover:bg-white/5 text-white/70 focus:bg-white/5 focus:text-white'}`}
             >
                 <Settings className="h-4 w-4 text-emerald-500 shrink-0" />
@@ -174,7 +194,7 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild className="hover:bg-transparent transition-all">
-                            <Link href={isAdmin ? "/dashboard/admin" : "/dashboard/employee"} className="flex items-center gap-3">
+                            <Link href={isAdmin ? "/dashboard/admin" : "/dashboard/employee"} scroll={false} className="flex items-center gap-3">
                                 <div className="flex items-center justify-center shrink-0">
                                     <img
                                         src={logoUrl}
@@ -197,7 +217,11 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            <SidebarContent className="px-2 scrollbar-hidden">
+            <SidebarContent
+                ref={sidebarScrollRef}
+                onScroll={handleSidebarScroll}
+                className="px-2 scrollbar-hidden"
+            >
                 {navItems.map((group) => (
                     <SidebarGroup key={group.label} className="mt-4">
                         <SidebarGroupLabel className="text-[12px] font-medium text-white/60 px-4 mb-2 group-data-[collapsible=icon]:hidden">
@@ -240,7 +264,7 @@ export function AppSidebar() {
                                                                         isActive={pathname === subItem.url}
                                                                         className={`rounded-md h-9 px-3 transition-all ${pathname === subItem.url ? 'bg-primary/20 text-white font-medium' : 'text-white/50 hover:text-white hover:bg-white/5'}`}
                                                                     >
-                                                                        <Link href={subItem.url}>
+                                                                        <Link href={subItem.url} scroll={false}>
                                                                             <span className="text-[13px]">{subItem.title}</span>
                                                                         </Link>
                                                                     </SidebarMenuSubButton>
@@ -261,7 +285,7 @@ export function AppSidebar() {
                                                 tooltip={item.title}
                                                 className={`h-10 px-3 rounded-lg transition-all ${isActive ? 'bg-primary text-white font-medium' : 'hover:bg-white/5 text-white/60 hover:text-white group/btn'}`}
                                             >
-                                                <Link href={item.url}>
+                                                <Link href={item.url} scroll={false}>
                                                     <Icon className={`size-4 ${isActive ? 'text-white' : 'text-white/50 group-hover/btn:text-white'}`} />
                                                     <span className="text-[13.5px] group-data-[collapsible=icon]:hidden">{item.title}</span>
                                                 </Link>
@@ -346,8 +370,10 @@ export function DashboardHeader({ title, children }) {
                                     {crumb.isLast ? (
                                         <BreadcrumbPage className="font-bold text-primary">{crumb.label}</BreadcrumbPage>
                                     ) : (
-                                        <BreadcrumbLink href={crumb.href} className="text-muted-foreground hover:text-foreground">
-                                            {crumb.label}
+                                        <BreadcrumbLink asChild className="text-muted-foreground hover:text-foreground">
+                                            <Link href={crumb.href} scroll={false}>
+                                                {crumb.label}
+                                            </Link>
                                         </BreadcrumbLink>
                                     )}
                                 </BreadcrumbItem>
@@ -378,7 +404,21 @@ export function DashboardLayout({ children, title }) {
                 {!hideHeader && <AppSidebar />}
                 <SidebarInset className={`flex flex-col flex-1 min-w-0 bg-transparent ${!hideHeader ? 'lg:border-l' : ''} border-border/10`}>
                     {!hideHeader && <DashboardHeader title={title} />}
-                    <main className="flex-1 overflow-y-auto scrollbar-hidden">
+                    <main
+                        className="flex-1 overflow-y-auto scrollbar-hidden no-scroll-jump"
+                        onScroll={(e) => {
+                            // Only save if it's a real scroll event
+                            if (e.currentTarget.scrollTop > 0) {
+                                sessionStorage.setItem(`scroll-pos-${pathname}`, e.currentTarget.scrollTop.toString());
+                            }
+                        }}
+                        ref={(el) => {
+                            if (el) {
+                                const saved = sessionStorage.getItem(`scroll-pos-${pathname}`);
+                                if (saved) el.scrollTop = parseInt(saved);
+                            }
+                        }}
+                    >
                         <div className="mx-auto w-full max-w-[1600px] min-h-[calc(100vh-64px)] flex flex-col">
                             <div className="flex-1 p-4 sm:p-6 lg:p-10 animate-fade-in">
                                 {children}

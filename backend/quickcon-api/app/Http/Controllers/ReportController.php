@@ -121,6 +121,18 @@ class ReportController extends Controller
                 ? round(($presentToday / $totalEmployees) * 100, 1)
                 : 0;
 
+            $dateObj = Carbon::parse($today);
+            $physicalDate = Carbon::now();
+            $isWeekend = $dateObj->isWeekend();
+            
+            // Fallback: If physically weekend and no session found
+            if (!$isWeekend && $physicalDate->isWeekend() && !$todaySession) {
+                $isWeekend = true;
+                $today = $physicalDate->toDateString();
+            }
+            
+            $dayName = Carbon::parse($today)->format('l');
+
             return response()->json([
                 'total_employees' => $totalEmployees,
                 'present_today' => $presentToday,
@@ -131,6 +143,9 @@ class ReportController extends Controller
                 'active_sessions_count' => $activeSessions,
                 'active_sessions' => $sessionsList,
                 'active_session' => $todaySession,
+                'is_weekend' => $isWeekend,
+                'day_name' => $dayName,
+                'attendance_date' => $today
             ]);
         });
     }
@@ -201,12 +216,23 @@ class ReportController extends Controller
         }
 
         // 3. WEEKEND CHECK (Crucial for UI)
-        $todayDate = Carbon::parse($today);
-        $dayOfWeek = $todayDate->dayOfWeek;
-        $isWeekend = ($dayOfWeek === Carbon::SATURDAY || $dayOfWeek === Carbon::SUNDAY);
+        $logicalDate = Carbon::parse($today);
+        $physicalDate = Carbon::now();
         
+        // It's a weekend if:
+        // 1. Logically it's a weekend (e.g. Saturday afternoon counts as Saturday)
+        // 2. Physically it's a weekend AND no session is detected (e.g. Saturday morning after shift)
+        $isWeekend = $logicalDate->isWeekend();
+        
+        // Special case: Saturday morning is logical Friday. 
+        // If it's Saturday physically, and no session is found, it's effectively the weekend.
+        if (!$isWeekend && $physicalDate->isWeekend() && !$todaySession) {
+            $isWeekend = true;
+            $today = $physicalDate->toDateString(); // Switch to physical date for message
+        }
+
         if ($isWeekend) {
-            $dayName = $dayOfWeek === Carbon::SATURDAY ? 'Saturday' : 'Sunday';
+            $dayName = Carbon::parse($today)->format('l'); // 'l' gives full day name
             $thisMonth = Carbon::now()->startOfMonth();
             $monthlyStats = AttendanceRecord::where('user_id', $user->id)
                 ->where('attendance_date', '>=', $thisMonth)

@@ -151,29 +151,6 @@ const SidebarProvider = React.forwardRef(
       [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar, isHydrated]
     )
 
-    // During SSR or before hydration, render a placeholder that matches the hydrated structure
-    // but with visibility hidden to prevent layout shift while avoiding hydration mismatch
-    if (!isHydrated) {
-      return (
-        <div
-          style={{
-            "--sidebar-width": SIDEBAR_WIDTH,
-            "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
-            ...style,
-          }}
-          className={cn(
-            "group/sidebar-wrapper flex min-h-svh w-full max-w-full overflow-x-hidden has-[[data-variant=inset]]:bg-sidebar",
-            className
-          )}
-          ref={ref}
-          suppressHydrationWarning
-          {...props}
-        >
-          {/* Render children during SSR but the context will provide stable defaults */}
-        </div>
-      )
-    }
-
     return (
       <SidebarContext.Provider value={contextValue}>
         <TooltipProvider delayDuration={0}>
@@ -182,6 +159,8 @@ const SidebarProvider = React.forwardRef(
               "--sidebar-width": SIDEBAR_WIDTH,
               "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
               ...style,
+              // Prevent layout shift during hydration if possible
+              visibility: isHydrated ? "visible" : "visible",
             }}
             className={cn(
               "group/sidebar-wrapper flex min-h-svh w-full max-w-full overflow-x-hidden has-[[data-variant=inset]]:bg-sidebar",

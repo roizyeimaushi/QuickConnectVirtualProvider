@@ -258,7 +258,7 @@ function ScheduleStatsCard({ sessions }) {
     );
 }
 
-function ActiveSessionCard({ session, loading }) {
+function ActiveSessionCard({ session, isWeekend, dayName, loading }) {
     if (!session) {
         return (
             <Card>
@@ -271,13 +271,20 @@ function ActiveSessionCard({ session, loading }) {
                 </CardHeader>
                 <CardContent>
                     <div className="flex flex-col items-center justify-center py-6 text-center">
-                        <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
-                            <AlertTriangle className="h-6 w-6 text-muted-foreground" />
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${isWeekend ? 'bg-emerald-100 text-emerald-600' : 'bg-muted text-muted-foreground'}`}>
+                            {isWeekend ? <Calendar className="h-6 w-6" /> : <AlertTriangle className="h-6 w-6" />}
                         </div>
-                        <p className="text-sm text-muted-foreground mb-4">No session found for today</p>
-                        <Button asChild size="sm">
-                            <Link href="/attendance/sessions/create">Create Session</Link>
-                        </Button>
+                        <p className="font-medium text-sm mb-1">
+                            {isWeekend ? `It's ${dayName || 'the Weekend'}!` : "No session found for today"}
+                        </p>
+                        <p className="text-xs text-muted-foreground mb-4">
+                            {isWeekend ? "No work shifts are scheduled for today." : "Wait for manual start or check schedules."}
+                        </p>
+                        {!isWeekend && (
+                            <Button asChild size="sm">
+                                <Link href="/attendance/sessions/create">Create Session</Link>
+                            </Button>
+                        )}
                     </div>
                 </CardContent>
             </Card>
@@ -389,6 +396,8 @@ export default function AdminDashboard() {
 
                     activeSession: response.active_session,
                     activeSessions: response.active_sessions || [],
+                    isWeekend: response.is_weekend,
+                    dayName: response.day_name,
                 });
             } catch (error) {
                 // Log detailed error information for debugging (development only)
@@ -596,7 +605,11 @@ export default function AdminDashboard() {
                     <div className="grid gap-4 lg:grid-cols-3">
                         <AttendanceOverviewCard data={stats} />
                         <div className="space-y-4">
-                            <ActiveSessionCard session={stats?.activeSession} />
+                            <ActiveSessionCard
+                                session={stats?.activeSession}
+                                isWeekend={stats?.isWeekend}
+                                dayName={stats?.dayName}
+                            />
                             <ScheduleStatsCard sessions={stats?.activeSessions} />
                             <QuickActionsCard />
                         </div>

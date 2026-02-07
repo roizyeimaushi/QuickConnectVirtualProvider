@@ -1441,10 +1441,24 @@ class AttendanceRecordController extends Controller
         }
 
         if (!$session) {
+            $dateObj = Carbon::parse($today);
+            $physicalDate = Carbon::now();
+            $isWeekend = $dateObj->isWeekend();
+            
+            // If physically it's weekend and no session is active, it's effectively the weekend
+            if (!$isWeekend && $physicalDate->isWeekend()) {
+                $isWeekend = true;
+                $today = $physicalDate->toDateString();
+            }
+            
+            $dayName = Carbon::parse($today)->format('l');
+            
             return response()->json([
                 'has_record' => false,
-                'message' => 'No active session for today',
+                'message' => $isWeekend ? "Enjoy your weekend! No work is scheduled for {$dayName}." : 'No active session found. Please wait for your administrator to start the session.',
                 'session_status' => 'inactive',
+                'is_weekend' => $isWeekend,
+                'no_work_today' => $isWeekend,
                 'attendance_date' => $today
             ]);
         }

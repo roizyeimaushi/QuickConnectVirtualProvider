@@ -303,50 +303,69 @@ export default function AttendanceHistoryPage() {
                                     </SelectContent>
                                 </Select>
 
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="w-full sm:w-auto h-9 justify-start text-left font-normal"
-                                        >
-                                            <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-                                            {dateRange?.from ? (
-                                                dateRange.to ? (
-                                                    <>
-                                                        {format(dateRange.from, "LLL dd")} -{" "}
-                                                        {format(dateRange.to, "LLL dd")}
-                                                    </>
-                                                ) : (
-                                                    format(dateRange.from, "LLL dd, yyyy")
-                                                )
-                                            ) : (
-                                                <span>Filter by Date</span>
-                                            )}
-                                            <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="end" side="bottom" sideOffset={4} avoidCollisions={false}>
-                                        <Calendar
-                                            initialFocus
-                                            mode="range"
-                                            defaultMonth={dateRange?.from}
-                                            selected={dateRange}
-                                            onSelect={setDateRange}
-                                            numberOfMonths={1}
-                                        />
-                                        <div className="p-3 border-t flex justify-end">
+                                <div className="flex items-center gap-1 w-full sm:w-auto">
+                                    <Popover>
+                                        <PopoverTrigger asChild>
                                             <Button
-                                                variant="ghost"
+                                                variant="outline"
                                                 size="sm"
-                                                onClick={() => setDateRange({ from: null, to: null })}
-                                                className="text-xs"
+                                                className={cn(
+                                                    "w-full sm:w-auto h-9 justify-start text-left font-normal",
+                                                    dateRange?.from && "border-primary/50 bg-primary/5"
+                                                )}
                                             >
-                                                Clear Selection
+                                                <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
+                                                {dateRange?.from ? (
+                                                    dateRange.to ? (
+                                                        <>
+                                                            {format(dateRange.from, "LLL dd")} -{" "}
+                                                            {format(dateRange.to, "LLL dd")}
+                                                        </>
+                                                    ) : (
+                                                        format(dateRange.from, "LLL dd, yyyy")
+                                                    )
+                                                ) : (
+                                                    <span>Filter by Date</span>
+                                                )}
+                                                <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
                                             </Button>
-                                        </div>
-                                    </PopoverContent>
-                                </Popover>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0 max-h-[90vh] overflow-y-auto sm:max-h-none sm:overflow-visible" align="end" side="bottom" sideOffset={4} collisionPadding={10}>
+                                            <Calendar
+                                                initialFocus
+                                                mode="range"
+                                                defaultMonth={dateRange?.from}
+                                                selected={dateRange}
+                                                onSelect={setDateRange}
+                                                numberOfMonths={1}
+                                            />
+                                            <div className="p-3 border-t flex justify-between items-center bg-muted/20">
+                                                <p className="text-[10px] text-muted-foreground italic">
+                                                    Select a range to filter
+                                                </p>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => setDateRange({ from: null, to: null })}
+                                                    className="text-xs h-7 px-2 hover:bg-destructive/10 hover:text-destructive"
+                                                >
+                                                    Clear Selection
+                                                </Button>
+                                            </div>
+                                        </PopoverContent>
+                                    </Popover>
+                                    {dateRange?.from && (
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-9 w-9 text-muted-foreground hover:text-destructive"
+                                            onClick={() => setDateRange({ from: null, to: null })}
+                                            title="Clear date filter"
+                                        >
+                                            <XCircle className="h-4 w-4" />
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </CardHeader>
@@ -397,12 +416,29 @@ export default function AttendanceHistoryPage() {
                                 </div>
                             </div>
                         ) : records.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-12 text-center">
-                                <History className="h-12 w-12 text-muted-foreground mb-4" />
-                                <h3 className="text-lg font-semibold">No records found</h3>
-                                <p className="text-sm text-muted-foreground">
-                                    No attendance records match your filter criteria
+                            <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="bg-muted rounded-full p-6 mb-4">
+                                    <History className="h-12 w-12 text-muted-foreground opacity-20" />
+                                </div>
+                                <h3 className="text-xl font-bold tracking-tight">No records found</h3>
+                                <p className="text-muted-foreground max-w-[250px] mt-2 mb-6">
+                                    {dateRange?.from || statusFilter !== 'all'
+                                        ? "We couldn't find any records matching your current filter criteria."
+                                        : "There are no attendance records in your history yet."}
                                 </p>
+                                {(dateRange?.from || statusFilter !== 'all') && (
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                            setDateRange({ from: null, to: null });
+                                            setStatusFilter("all");
+                                        }}
+                                        className="gap-2"
+                                    >
+                                        <Filter className="h-4 w-4" />
+                                        Reset all filters
+                                    </Button>
+                                )}
                             </div>
                         ) : (
                             <>
