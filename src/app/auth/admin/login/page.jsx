@@ -100,7 +100,7 @@ export default function AdminLoginPage() {
     };
 
     return (
-        <>
+        <div className="min-h-screen w-full flex flex-col md:flex-row overflow-hidden bg-slate-50">
             {/* Error Modal */}
             <Dialog open={showErrorModal} onOpenChange={setShowErrorModal}>
                 <DialogContent className="sm:max-w-md">
@@ -121,81 +121,99 @@ export default function AdminLoginPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* Layout - Centered Card Only */}
-            <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-slate-50">
-                {/* Background Decoration */}
-                <div className="absolute inset-0 z-0">
-                    <img
-                        src="/admin-login-bg.jpg"
-                        alt="Background"
-                        className="w-full h-full object-cover opacity-10 blur-[2px]"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-blue-500/10" />
+            {/* Left Side - Image (50/50 Split) */}
+            <div className="hidden lg:block lg:w-1/2 relative bg-slate-900 border-r border-slate-200">
+                <img
+                    src="/admin-login-bg.jpg"
+                    alt="Admin Background"
+                    className="absolute inset-0 w-full h-full object-cover opacity-70"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/80 via-transparent to-transparent" />
+
+                {/* Overlay Content */}
+                <div className="absolute inset-0 flex flex-col justify-end p-16 text-white pb-24">
+                    <div className="space-y-4 max-w-md animate-fade-in-up">
+                        <div className="h-1 w-20 bg-emerald-500 rounded-full mb-6" />
+                        <h1 className="text-5xl font-extrabold tracking-tight leading-tight">
+                            QuickConn <br />
+                            <span className="text-emerald-400">Admin Portal</span>
+                        </h1>
+                        <p className="text-lg text-white/80 leading-relaxed font-medium">
+                            The command center for your entire workforce. Manage shifts, monitor attendance, and streamline operations from one secure location.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Right Side - Login Form (50/50 Split) */}
+            <div className="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-12 lg:p-16 relative">
+                {/* Subtle background decoration for the form side */}
+                <div className="absolute top-0 right-0 p-8 opacity-5">
+                    <img src={getLogoUrl(settings?.system_logo)} alt="" className="h-64 w-64 grayscale" />
                 </div>
 
-                {/* Login Card */}
-                <div className="relative z-10 w-full max-w-[450px] px-4">
-                    <Card className="border-none shadow-2xl bg-white/95 backdrop-blur-sm">
-                        <CardHeader className="pt-8 pb-4 text-center">
-                            <div className="flex justify-center mb-4">
+                <div className="w-full max-w-[450px] relative z-10">
+                    <Card className="border-none shadow-2xl bg-white shadow-emerald-500/5">
+                        <CardHeader className="pt-10 pb-6 text-center">
+                            <div className="flex justify-center mb-6">
                                 <img
                                     src={getLogoUrl(settings?.system_logo)}
                                     alt="QuickConn Logo"
-                                    className="h-16 w-auto object-contain"
+                                    className="h-20 w-auto object-contain"
                                     onError={(e) => {
                                         e.currentTarget.src = "/quickconnect-logo.png";
                                         e.currentTarget.onerror = null;
                                     }}
                                 />
                             </div>
-                            <CardTitle className="text-2xl font-bold tracking-tight">
-                                Administrator <span className="text-[#22c55e]">Console</span>
+                            <CardTitle className="text-3xl font-bold tracking-tight text-slate-900">
+                                Administrator <span className="text-emerald-600">Login</span>
                             </CardTitle>
-                            <CardDescription className="text-muted-foreground mt-2">
-                                Sign in to access the administrator dashboard
+                            <CardDescription className="text-slate-500 mt-2 text-base">
+                                Enter your credentials to access the console
                             </CardDescription>
                         </CardHeader>
 
-                        <CardContent className="px-8 pb-8">
-                            <form onSubmit={handleSubmit} className="space-y-4">
+                        <CardContent className="px-10 pb-10">
+                            <form onSubmit={handleSubmit} className="space-y-6">
                                 <div className="space-y-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="email" className="text-xs font-bold text-slate-700 uppercase ml-1">Admin Email</Label>
-                                        <div className="relative">
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
+                                        <Label htmlFor="email" className="text-xs font-bold text-slate-700 uppercase ml-1 tracking-wider">Email Address</Label>
+                                        <div className="relative group">
+                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-600 transition-colors">
                                                 <Mail className="h-5 w-5" />
                                             </div>
                                             <input
                                                 id="email"
                                                 type="email"
-                                                placeholder="Enter your email"
+                                                placeholder="admin@quickconn.net"
                                                 value={email}
                                                 onChange={(e) => setEmail(e.target.value)}
                                                 required
-                                                className="w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                                                className="w-full h-14 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all text-slate-900"
                                             />
                                         </div>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="password" className="text-xs font-bold text-slate-700 uppercase ml-1">Password</Label>
-                                        <div className="relative">
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
+                                        <Label htmlFor="password" className="text-xs font-bold text-slate-700 uppercase ml-1 tracking-wider">Password</Label>
+                                        <div className="relative group">
+                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-600 transition-colors">
                                                 <Lock className="h-5 w-5" />
                                             </div>
                                             <input
                                                 id="password"
                                                 type={showPassword ? "text" : "password"}
-                                                placeholder="Enter your password"
+                                                placeholder="••••••••"
                                                 value={password}
                                                 onChange={(e) => setPassword(e.target.value)}
                                                 required
-                                                className="w-full h-12 pl-12 pr-12 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                                                className="w-full h-14 pl-12 pr-14 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all text-slate-900"
                                             />
                                             <button
                                                 type="button"
                                                 onClick={() => setShowPassword(!showPassword)}
-                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
+                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600 transition-colors"
                                             >
                                                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                                             </button>
@@ -203,40 +221,48 @@ export default function AdminLoginPage() {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-between py-2">
+                                <div className="flex items-center justify-between py-1">
                                     <div className="flex items-center space-x-2">
                                         <Checkbox
                                             id="remember"
                                             checked={remember}
                                             onCheckedChange={setRemember}
-                                            className="border-slate-300"
+                                            className="border-slate-300 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
                                         />
-                                        <Label htmlFor="remember" className="text-sm font-medium text-muted-foreground cursor-pointer">
-                                            Remember me
+                                        <Label htmlFor="remember" className="text-sm font-medium text-slate-600 cursor-pointer">
+                                            Remember my credentials
                                         </Label>
                                     </div>
                                 </div>
 
                                 <Button
                                     type="submit"
-                                    className="w-full h-12 text-base font-semibold rounded-xl shadow-lg transition-all active:scale-[0.98]"
+                                    className="w-full h-14 text-lg font-bold rounded-2xl shadow-xl shadow-emerald-600/20 hover:shadow-emerald-600/30 transition-all active:scale-[0.98] border-none"
                                     loading={loading}
                                     style={{
-                                        background: 'linear-gradient(135deg, #2e8b57 0%, #236b43 100%)'
+                                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
                                     }}
                                 >
-                                    Sign In
+                                    Sign In to Console
                                 </Button>
                             </form>
                         </CardContent>
                     </Card>
 
-                    <p className="text-center text-slate-400 text-xs mt-8">
-                        &copy; {new Date().getFullYear()} QuickConn Virtual Services. All rights reserved.
-                    </p>
+                    <div className="flex flex-col items-center mt-12 space-y-2">
+                        <p className="text-slate-400 text-xs font-medium uppercase tracking-widest">
+                            Official Administrator Access
+                        </p>
+                        <p className="text-slate-300 text-[10px]">
+                            &copy; {new Date().getFullYear()} QuickConn Virtual Services. Secure Environment.
+                        </p>
+                    </div>
                 </div>
             </div>
-        </>
+        </div>
+    );
+}
+
 
     );
 }
