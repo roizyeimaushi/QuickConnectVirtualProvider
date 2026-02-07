@@ -9,6 +9,7 @@ import { breakApi, reportsApi } from "@/lib/api";
 import { formatTime24 } from "@/lib/utils";
 import { Timer, Coffee, Play, StopCircle, AlertCircle, Clock, Ban, Loader2, PauseCircle, Calendar, ThumbsUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 
 export default function BreakPage() {
     const router = useRouter();
@@ -201,6 +202,14 @@ export default function BreakPage() {
     const hasCheckedOut = breakStatus?.has_checked_out;
     const breakMessage = breakStatus?.break_message;
 
+    if (loading) {
+        return (
+            <DashboardLayout title="Break Time">
+                <PageSkeleton cardCount={0} hasHeader={true} />
+            </DashboardLayout>
+        );
+    }
+
     return (
         <DashboardLayout title="Break Time">
             <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8 animate-fade-in">
@@ -222,13 +231,7 @@ export default function BreakPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6 pt-6">
-                        {loading ? (
-                            <div className="space-y-4">
-                                <Button disabled className="w-full h-16 text-lg">
-                                    <Loader2 className="h-6 w-6 animate-spin" />
-                                </Button>
-                            </div>
-                        ) : isWeekend ? (
+                        {isWeekend ? (
                             <div className="flex flex-col items-center justify-center py-8 text-center">
                                 <div className="w-16 h-16 rounded-full bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center mb-4">
                                     <Calendar className="h-8 w-8 text-sky-600" />
