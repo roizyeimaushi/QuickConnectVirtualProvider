@@ -12,7 +12,9 @@ import { Save, Shield, Timer, Loader2 } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-export default function AttendanceSettingsPage() {
+import { Suspense } from "react";
+
+function AttendanceSettingsContent() {
     const { settings, loading, saving, updateSettings } = useSettings();
     const [formData, setFormData] = useState({});
     const [isReady, setIsReady] = useState(false);
@@ -88,7 +90,10 @@ export default function AttendanceSettingsPage() {
     // Local loader while preparing form data
     if (loading || !isReady) {
         return (
-            null
+            <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground">Loading settings...</p>
+            </div>
         );
     }
 
@@ -350,5 +355,18 @@ export default function AttendanceSettingsPage() {
                 </div>
             </Tabs>
         </div>
+    );
+}
+
+export default function AttendanceSettingsPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground">Loading page...</p>
+            </div>
+        }>
+            <AttendanceSettingsContent />
+        </Suspense>
     );
 }
