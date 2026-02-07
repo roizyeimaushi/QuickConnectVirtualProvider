@@ -100,7 +100,7 @@ export default function AdminLoginPage() {
     };
 
     return (
-        <div className="min-h-screen w-full flex flex-col md:flex-row overflow-hidden bg-slate-50">
+        <>
             {/* Error Modal */}
             <Dialog open={showErrorModal} onOpenChange={setShowErrorModal}>
                 <DialogContent className="sm:max-w-md">
@@ -121,39 +121,20 @@ export default function AdminLoginPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* Left Side - Image (50/50 Split) */}
-            <div className="hidden lg:block lg:w-1/2 relative bg-slate-900 border-r border-slate-200">
-                <img
-                    src="/admin-login-bg.jpg"
-                    alt="Admin Background"
-                    className="absolute inset-0 w-full h-full object-cover opacity-70"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/80 via-transparent to-transparent" />
-
-                {/* Overlay Content */}
-                <div className="absolute inset-0 flex flex-col justify-end p-16 text-white pb-24">
-                    <div className="space-y-4 max-w-md animate-fade-in-up">
-                        <div className="h-1 w-20 bg-emerald-500 rounded-full mb-6" />
-                        <h1 className="text-5xl font-extrabold tracking-tight leading-tight">
-                            QuickConn <br />
-                            <span className="text-emerald-400">Admin Portal</span>
-                        </h1>
-                        <p className="text-lg text-white/80 leading-relaxed font-medium">
-                            The command center for your entire workforce. Manage shifts, monitor attendance, and streamline operations from one secure location.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Right Side - Login Form (50/50 Split) */}
-            <div className="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-12 lg:p-16 relative">
-                {/* Subtle background decoration for the form side */}
-                <div className="absolute top-0 right-0 p-8 opacity-5">
-                    <img src={getLogoUrl(settings?.system_logo)} alt="" className="h-64 w-64 grayscale" />
+            <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-slate-50">
+                {/* Background Decoration */}
+                <div className="absolute inset-0 z-0">
+                    <img
+                        src="/admin-login-bg.jpg"
+                        alt="Background"
+                        className="w-full h-full object-cover opacity-10 blur-[2px]"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-blue-500/10" />
                 </div>
 
-                <div className="w-full max-w-[450px] relative z-10">
-                    <Card className="border-none shadow-2xl bg-white shadow-emerald-500/5">
+                {/* Login Card */}
+                <div className="relative z-10 w-full max-w-[480px] px-4">
+                    <Card className="border-none shadow-2xl bg-white/95 backdrop-blur-sm shadow-emerald-500/5">
                         <CardHeader className="pt-10 pb-6 text-center">
                             <div className="flex justify-center mb-6">
                                 <img
@@ -166,11 +147,11 @@ export default function AdminLoginPage() {
                                     }}
                                 />
                             </div>
-                            <CardTitle className="text-3xl font-bold tracking-tight text-slate-900">
-                                Administrator <span className="text-emerald-600">Login</span>
+                            <CardTitle className="text-3xl font-bold tracking-tight text-slate-900 font-inter">
+                                Admin <span className="text-emerald-600">Console</span>
                             </CardTitle>
                             <CardDescription className="text-slate-500 mt-2 text-base">
-                                Enter your credentials to access the console
+                                Unauthorized access is strictly prohibited
                             </CardDescription>
                         </CardHeader>
 
@@ -178,7 +159,7 @@ export default function AdminLoginPage() {
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 <div className="space-y-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="email" className="text-xs font-bold text-slate-700 uppercase ml-1 tracking-wider">Email Address</Label>
+                                        <Label htmlFor="email" className="text-xs font-bold text-slate-700 uppercase ml-1 tracking-widest">Administrator Email</Label>
                                         <div className="relative group">
                                             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-600 transition-colors">
                                                 <Mail className="h-5 w-5" />
@@ -190,13 +171,13 @@ export default function AdminLoginPage() {
                                                 value={email}
                                                 onChange={(e) => setEmail(e.target.value)}
                                                 required
-                                                className="w-full h-14 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all text-slate-900"
+                                                className="w-full h-14 pl-12 pr-4 bg-slate-50/50 border border-slate-200 rounded-2xl focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all text-slate-900 font-inter"
                                             />
                                         </div>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="password" className="text-xs font-bold text-slate-700 uppercase ml-1 tracking-wider">Password</Label>
+                                        <Label htmlFor="password" className="text-xs font-bold text-slate-700 uppercase ml-1 tracking-widest">Access Key</Label>
                                         <div className="relative group">
                                             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-600 transition-colors">
                                                 <Lock className="h-5 w-5" />
@@ -208,7 +189,7 @@ export default function AdminLoginPage() {
                                                 value={password}
                                                 onChange={(e) => setPassword(e.target.value)}
                                                 required
-                                                className="w-full h-14 pl-12 pr-14 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all text-slate-900"
+                                                className="w-full h-14 pl-12 pr-14 bg-slate-50/50 border border-slate-200 rounded-2xl focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all text-slate-900 font-inter"
                                             />
                                             <button
                                                 type="button"
@@ -230,7 +211,7 @@ export default function AdminLoginPage() {
                                             className="border-slate-300 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
                                         />
                                         <Label htmlFor="remember" className="text-sm font-medium text-slate-600 cursor-pointer">
-                                            Remember my credentials
+                                            Keep me signed in
                                         </Label>
                                     </div>
                                 </div>
@@ -243,22 +224,22 @@ export default function AdminLoginPage() {
                                         background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
                                     }}
                                 >
-                                    Sign In to Console
+                                    Log In to Console
                                 </Button>
                             </form>
                         </CardContent>
                     </Card>
 
-                    <div className="flex flex-col items-center mt-12 space-y-2">
-                        <p className="text-slate-400 text-xs font-medium uppercase tracking-widest">
-                            Official Administrator Access
+                    <div className="flex flex-col items-center mt-10 space-y-2">
+                        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em]">
+                            Enterprise Grade Security
                         </p>
                         <p className="text-slate-300 text-[10px]">
-                            &copy; {new Date().getFullYear()} QuickConn Virtual Services. Secure Environment.
+                            &copy; {new Date().getFullYear()} QuickConn Virtual Services. All rights reserved.
                         </p>
                     </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 }
