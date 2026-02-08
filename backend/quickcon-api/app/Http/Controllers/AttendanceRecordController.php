@@ -46,6 +46,23 @@ class AttendanceRecordController extends Controller
             ], 409);
         }
 
+        // Validate Break Duration (90 mins)
+        if ($validated['break_start'] && $validated['break_end']) {
+            $bStart = Carbon::parse($validated['break_start']);
+            $bEnd = Carbon::parse($validated['break_end']);
+            $bDuration = $bStart->diffInMinutes($bEnd, false);
+            if ($bDuration < 0) $bDuration += 1440;
+            
+            $globalLimit = (int)(\App\Models\Setting::where('key', 'break_duration')->value('value') ?? 90);
+            
+            if ($bDuration > $globalLimit) {
+                return response()->json([
+                    'message' => "Total break duration cannot exceed {$globalLimit} minutes. You entered {$bDuration} minutes.",
+                    'error_code' => 'BREAK_LIMIT_EXCEEDED'
+                ], 400);
+            }
+        }
+
         $record = AttendanceRecord::create([
             'user_id' => $validated['user_id'],
             'session_id' => $validated['session_id'],
@@ -1037,7 +1054,34 @@ class AttendanceRecordController extends Controller
             $changes[] = "break_end to {$request->break_end}";
         }
 
-        // Sync EmployeeBreak (SSOT) to ensure consistency with legacy columns
+        if ($request->has('break_start') || $request->has('break_end')) {
+            $bStart = $request->has('break_start') ? ($request->break_start ? Carbon::parse($request->break_start) : null) : $attendanceRecord->break_start;
+            $bEnd = $request->has('break_end') ? ($request->break_end ? Carbon::parse($request->break_end) : null) : $attendanceRecord->break_end;
+            
+            if ($bStart && $bEnd) {
+                $bDuration = $bStart->diffInMinutes($bEnd, false);
+                if ($bDuration < 0) $bDuration += 1440;
+                
+                // For main record update, we check if this specific segment (which maps to the latest segment) 
+                // plus other segments exceeds 90.
+                $latestBreakId = \App\Models\EmployeeBreak::where('attendance_id', $attendanceRecord->id)
+                    ->orderBy('created_at', 'desc')
+                    ->value('id');
+                
+                $otherBreaksDuration = \App\Models\EmployeeBreak::where('attendance_id', $attendanceRecord->id)
+                    ->where('id', '!=', $latestBreakId)
+                    ->sum('duration_minutes');
+                
+                $globalLimit = (int)(\App\Models\Setting::where('key', 'break_duration')->value('value') ?? 90);
+                
+                if (($bDuration + $otherBreaksDuration) > $globalLimit) {
+                    return response()->json([
+                        'message' => "Total break duration cannot exceed {$globalLimit} minutes. Current segments + this edit = " . ($bDuration + $otherBreaksDuration) . " minutes.",
+                        'error_code' => 'BREAK_LIMIT_EXCEEDED'
+                    ], 400);
+                }
+            }
+        }
         if ($request->has('break_start') || $request->has('break_end')) {
              $break = \App\Models\EmployeeBreak::where('attendance_id', $attendanceRecord->id)
                 ->orderBy('created_at', 'desc')

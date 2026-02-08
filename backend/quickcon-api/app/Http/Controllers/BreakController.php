@@ -592,7 +592,23 @@ class BreakController extends Controller
         
         if ($end) {
             $diff = $start->diffInMinutes($end, false);
-            $employeeBreak->duration_minutes = $diff < 0 ? $diff + 1440 : $diff;
+            $newDuration = $diff < 0 ? $diff + 1440 : $diff;
+            
+            // Validate Cumulative Limit (90 mins)
+            $globalLimit = (int)(\App\Models\Setting::where('key', 'break_duration')->value('value') ?? 90);
+            
+            $otherBreaksDuration = \App\Models\EmployeeBreak::where('attendance_id', $employeeBreak->attendance_id)
+                ->where('id', '!=', $employeeBreak->id)
+                ->sum('duration_minutes');
+            
+            if (($newDuration + $otherBreaksDuration) > $globalLimit) {
+                return response()->json([
+                    'message' => "Total break duration cannot exceed {$globalLimit} minutes. Your selection results in " . ($newDuration + $otherBreaksDuration) . " minutes.",
+                    'error_code' => 'BREAK_LIMIT_EXCEEDED'
+                ], 400);
+            }
+
+            $employeeBreak->duration_minutes = $newDuration;
         } else {
             $employeeBreak->duration_minutes = 0;
         }

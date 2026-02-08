@@ -242,6 +242,7 @@ export default function AttendanceHistoryPage() {
                 status: record.status,
                 schedule: record.session?.schedule?.name || "Regular Shift",
                 hours_worked: record.hours_worked || null,
+                breaks_sum_duration_minutes: record.breaks_sum_duration_minutes || 0,
             }));
 
             setRecords(formattedRecords);

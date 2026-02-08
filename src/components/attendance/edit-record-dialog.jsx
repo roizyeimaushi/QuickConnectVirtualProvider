@@ -129,6 +129,43 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
 
         try {
             setLoading(true);
+            const isVirtual = typeof record.id === 'string' && record.id.startsWith('virtual_');
+
+            // Calculate current edit's break duration
+            const bStart = formData.break_start ? new Date(formData.break_start) : null;
+            const bEnd = formData.break_end ? new Date(formData.break_end) : null;
+            let currentEditMinutes = 0;
+            if (bStart && bEnd) {
+                let diffMs = bEnd - bStart;
+                if (diffMs < 0) diffMs += 24 * 60 * 60 * 1000; // Overnight
+                currentEditMinutes = diffMs / (1000 * 60);
+            }
+
+            // Calculate "Other" breaks duration. 
+            // In the main record, the legacy break columns usually map to the LATEST segment.
+            // We need to subtract the LATEST segment's OLD duration from the sum to get "Others".
+            const oldBreakStart = record.break_start ? new Date(record.break_start) : null;
+            const oldBreakEnd = record.break_end ? new Date(record.break_end) : null;
+            let oldSegmentMinutes = 0;
+            if (oldBreakStart && oldBreakEnd) {
+                let diffMs = oldBreakEnd - oldBreakStart;
+                if (diffMs < 0) diffMs += 24 * 60 * 60 * 1000;
+                oldSegmentMinutes = diffMs / (1000 * 60);
+            }
+
+            const otherBreaksMinutes = Math.max(0, (record.breaks_sum_duration_minutes || 0) - oldSegmentMinutes);
+            const totalProjectedBreakMinutes = otherBreaksMinutes + currentEditMinutes;
+
+            if (totalProjectedBreakMinutes > 90) {
+                toast({
+                    title: "Break Limit Exceeded",
+                    description: `Total break duration cannot exceed 90 minutes. Other segments (${Math.round(otherBreaksMinutes)}m) + this edit (${Math.round(currentEditMinutes)}m) = ${Math.round(totalProjectedBreakMinutes)} minutes.`,
+                    variant: "destructive",
+                });
+                setLoading(false);
+                return;
+            }
+
             const payload = {
                 ...formData,
                 status: formData.status,
@@ -137,8 +174,6 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                 break_start: formData.break_start || null,
                 break_end: formData.break_end || null,
             };
-
-            const isVirtual = typeof record.id === 'string' && record.id.startsWith('virtual_');
 
             if (isVirtual) {
                 payload.user_id = record.user_id;
