@@ -144,7 +144,7 @@ export default function EmployeeLoginPage() {
                             <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-3xl font-bold leading-tight text-white drop-shadow-lg mb-2 sm:mb-4 lg:mb-6">
                                 Welcome to <span className="text-[#22c55e]">QuickConn Virtual</span>
                             </h2>
-                            <p className="text-white/90 text-xs sm:text-sm md:text-base lg:text-lg leading-relaxed max-w-sm sm:max-w-md mx-auto drop-shadow-md">
+                            <p className="text-white text-xs sm:text-sm md:text-base lg:text-lg leading-relaxed max-w-sm sm:max-w-md mx-auto drop-shadow-md">
                                 Track your attendance, view schedules, and manage your work records in one convenient portal.
                             </p>
                         </div>
