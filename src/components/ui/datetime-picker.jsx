@@ -84,7 +84,7 @@ export function DateTimePicker({ value, onChange, placeholder = "Pick a date" })
                 <Button
                     variant={"outline"}
                     className={cn(
-                        "w-full justify-between text-left font-normal h-10 px-3",
+                        "w-full justify-between text-left font-normal h-10 px-3 rounded-md border",
                         !date && "text-muted-foreground"
                     )}
                 >

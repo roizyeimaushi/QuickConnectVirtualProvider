@@ -242,8 +242,8 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                     </div>
 
                     {/* Status and Time Inputs */}
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                        <div className="grid gap-2">
+                    <div className="flex flex-row gap-6">
+                        <div className="flex-1 space-y-2">
                             <Label htmlFor="status" className="text-xs font-bold uppercase text-muted-foreground">Status Override</Label>
                             <Select
                                 value={formData.status}
@@ -252,7 +252,7 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                                     setIsManual(true);
                                 }}
                             >
-                                <SelectTrigger>
+                                <SelectTrigger className="h-11">
                                     <SelectValue placeholder="Select status" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -264,9 +264,9 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="grid gap-2">
+                        <div className="flex-1 space-y-2">
                             <Label className="text-xs font-bold uppercase text-muted-foreground invisible">Placeholder</Label>
-                            <div className="flex items-center justify-start h-10 px-3 rounded-md border bg-slate-50 dark:bg-slate-900">
+                            <div className="flex items-center justify-start h-11 px-3 rounded-md border bg-slate-50 dark:bg-slate-900">
                                 <span className="text-xs font-bold text-muted-foreground mr-2">Calculated:</span>
                                 <Badge variant="outline" className={`capitalize text-[10px] ${totals.autoStatus === 'present' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                                     totals.autoStatus === 'late' ? 'bg-amber-50 text-amber-700 border-amber-200' :
@@ -279,8 +279,8 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                        <div className="grid gap-2">
+                    <div className="flex flex-row gap-6">
+                        <div className="flex-1 space-y-2">
                             <Label htmlFor="time_in" className="text-xs font-bold uppercase text-muted-foreground">Time In</Label>
                             <DateTimePicker
                                 value={formData.time_in}
@@ -288,7 +288,7 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                                 placeholder="Pick time in"
                             />
                         </div>
-                        <div className="grid gap-2">
+                        <div className="flex-1 space-y-2">
                             <Label htmlFor="time_out" className="text-xs font-bold uppercase text-muted-foreground">Time Out</Label>
                             <DateTimePicker
                                 value={formData.time_out}
@@ -298,8 +298,8 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                        <div className="grid gap-2">
+                    <div className="flex flex-row gap-6">
+                        <div className="flex-1 space-y-2">
                             <Label htmlFor="break_start" className="text-xs font-bold uppercase text-muted-foreground">Break Start</Label>
                             <DateTimePicker
                                 value={formData.break_start}
@@ -307,7 +307,7 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                                 placeholder="Pick break start"
                             />
                         </div>
-                        <div className="grid gap-2">
+                        <div className="flex-1 space-y-2">
                             <Label htmlFor="break_end" className="text-xs font-bold uppercase text-muted-foreground">Break End</Label>
                             <DateTimePicker
                                 value={formData.break_end}
@@ -318,12 +318,12 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                     </div>
 
                     {/* Calculated Totals */}
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-4 p-4 rounded-lg bg-primary/5 border border-primary/20">
-                        <div>
+                    <div className="flex flex-row gap-6 p-4 rounded-lg bg-primary/5 border border-primary/20">
+                        <div className="flex-1">
                             <p className="text-[10px] font-bold text-primary uppercase">Total Worked</p>
                             <p className="text-2xl font-mono font-bold text-primary">{totals.hours}h</p>
                         </div>
-                        <div>
+                        <div className="flex-1">
                             <p className="text-[10px] font-bold text-primary uppercase">Overtime (Est.)</p>
                             <p className="text-2xl font-mono font-bold text-primary">{totals.overtime}h</p>
                         </div>
