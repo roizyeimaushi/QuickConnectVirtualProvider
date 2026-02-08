@@ -140,7 +140,7 @@ export default function AdminLoginPage() {
                                 <img
                                     src={getLogoUrl(settings?.system_logo)}
                                     alt="QuickConn Logo"
-                                    className="h-20 w-auto object-contain"
+                                    className="h-16 w-auto object-contain"
                                     onError={(e) => {
                                         e.currentTarget.src = "/quickconnect-logo.png";
                                         e.currentTarget.onerror = null;
@@ -148,7 +148,7 @@ export default function AdminLoginPage() {
                                 />
                             </div>
                             <CardTitle className="text-4xl font-black tracking-tight text-slate-900 font-inter">
-                                QuickConn <span className="text-emerald-600">Admin</span>
+                                <span className="text-emerald-600">QuickConn</span> Admin
                             </CardTitle>
                             <CardDescription className="text-slate-500 mt-2 text-base">
                                 Unauthorized access is strictly prohibited
