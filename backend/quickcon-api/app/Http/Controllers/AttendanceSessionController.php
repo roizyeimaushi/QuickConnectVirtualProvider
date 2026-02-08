@@ -153,19 +153,25 @@ class AttendanceSessionController extends Controller
             // Check if this employee already has a record for this session
             $existingRecord = $attendanceSession->records->firstWhere('user_id', $employee->id);
 
-            if ($existingRecord) {
-                // Ensure hours are calculated correctly
-                $existingRecord->hours_worked = $existingRecord->calculateHoursWorked();
-                return $existingRecord;
-            }
-
             // Determine status based on session state
             $isWeekend = $attendanceSession->date->isWeekend();
             $isRequired = $attendanceSession->attendance_required ?? true;
             
-            // If it's a weekend or attendance is not required, mark as 'optional'
+            // If it's a weekend or attendance is not required, mark as 'optional' (Day Off)
             // This prevents employees from appearing as "Pending" when they aren't supposed to work.
             $status = (!$isRequired || $isWeekend) ? 'optional' : 'pending';
+
+            if ($existingRecord) {
+                // Ensure hours are calculated correctly
+                $existingRecord->hours_worked = $existingRecord->calculateHoursWorked();
+                
+                // If it matches our Day Off criteria, update the display status
+                if ($existingRecord->status === 'pending') {
+                    $existingRecord->status = $status;
+                }
+                
+                return $existingRecord;
+            }
 
             // Create Virtual Record
             return [
