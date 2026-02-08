@@ -45,9 +45,11 @@ class ReportController extends Controller
                 ->get();
                 
             $todaySession = $allTodaySessions->where('status', 'active')->where('attendance_required', true)->first()
+                         ?? $allTodaySessions->where('status', 'active')->where('total_count', '>', 0)->first()
                          ?? $allTodaySessions->where('status', 'active')->where('confirmed_count', '>', 0)->first()
                          ?? $allTodaySessions->where('status', 'locked')->first()
                          ?? $allTodaySessions->where('status', 'pending')->where('attendance_required', true)->first()
+                         ?? $allTodaySessions->where('status', 'pending')->where('total_count', '>', 0)->first()
                          ?? $allTodaySessions->where('status', 'completed')->first();
 
             // Fallback: Check if there's an active session on REAL today if logical today is yesterday (overnight)
@@ -103,7 +105,8 @@ class ReportController extends Controller
                     }])
                     ->whereDate('date', $today)
                     ->get();
-                $todaySession = $allTodaySessions->whereIn('status', ['active', 'pending'])->first();
+                $todaySession = $allTodaySessions->where('status', 'active')->first()
+                             ?? $allTodaySessions->where('status', 'pending')->where('total_count', '>', 0)->first();
             }
 
             $todayRecords = AttendanceRecord::where('attendance_date', $today)->get();
