@@ -354,17 +354,21 @@ export default function EmployeeReportDetailPage() {
                                                 </div>
 
                                                 {/* Times Grid */}
-                                                <div className="grid grid-cols-3 gap-2 text-sm">
+                                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
                                                     <div className="bg-muted/50 rounded p-2 text-center">
-                                                        <p className="text-xs text-muted-foreground">Time In</p>
+                                                        <p className="text-[10px] uppercase font-bold text-muted-foreground">In</p>
                                                         <p className="font-mono font-medium">{timeIn}</p>
                                                     </div>
                                                     <div className="bg-muted/50 rounded p-2 text-center">
-                                                        <p className="text-xs text-muted-foreground">Break</p>
-                                                        <p className="font-mono font-medium">{breakTime}</p>
+                                                        <p className="text-[10px] uppercase font-bold text-muted-foreground">Break S</p>
+                                                        <p className="font-mono font-medium">{breakStart}</p>
                                                     </div>
                                                     <div className="bg-muted/50 rounded p-2 text-center">
-                                                        <p className="text-xs text-muted-foreground">Time Out</p>
+                                                        <p className="text-[10px] uppercase font-bold text-muted-foreground">Break E</p>
+                                                        <p className="font-mono font-medium">{breakEnd}</p>
+                                                    </div>
+                                                    <div className="bg-muted/50 rounded p-2 text-center">
+                                                        <p className="text-[10px] uppercase font-bold text-muted-foreground">Out</p>
                                                         <p className="font-mono font-medium">{timeOut}</p>
                                                     </div>
                                                 </div>
@@ -397,10 +401,11 @@ export default function EmployeeReportDetailPage() {
                                                 <TableHead>Date</TableHead>
                                                 <TableHead>Schedule</TableHead>
                                                 <TableHead className="text-center">Time In</TableHead>
-                                                <TableHead className="text-center">Break Duration</TableHead>
+                                                <TableHead className="text-center text-xs opacity-70">Break S</TableHead>
+                                                <TableHead className="text-center text-xs opacity-70">Break E</TableHead>
                                                 <TableHead className="text-center">Time Out</TableHead>
-                                                <TableHead className="text-center">Worked Time</TableHead>
-                                                <TableHead className="text-center">Overtime</TableHead>
+                                                <TableHead className="text-center font-bold">Hours</TableHead>
+                                                <TableHead className="text-center text-amber-600">OT</TableHead>
                                                 <TableHead className="text-center">Status</TableHead>
                                             </TableRow>
                                         </TableHeader>
@@ -413,7 +418,8 @@ export default function EmployeeReportDetailPage() {
                                                 const dateStr = record.session?.date ? format(new Date(record.session.date), "MMM d, yyyy") : "—";
                                                 const timeIn = record.time_in ? formatTime24(record.time_in) : "—";
                                                 const timeOut = record.time_out ? formatTime24(record.time_out) : "—";
-                                                const breakTime = record.break_start ? formatTime24(record.break_start) : "—";
+                                                const breakStart = record.break_start ? formatTime24(record.break_start) : "—";
+                                                const breakEnd = record.break_end ? formatTime24(record.break_end) : "—";
 
                                                 return (
                                                     <TableRow key={record.id}>
@@ -425,14 +431,13 @@ export default function EmployeeReportDetailPage() {
                                                         </TableCell>
                                                         <TableCell>{record.session?.schedule?.name || "—"}</TableCell>
                                                         <TableCell className="text-center font-mono">{timeIn}</TableCell>
-                                                        <TableCell className="text-center font-mono">
-                                                            {record.break_minutes > 0 ? formatDuration(record.break_minutes) : (breakTime !== "—" ? breakTime : "0:00")}
-                                                        </TableCell>
+                                                        <TableCell className="text-center font-mono text-xs opacity-70">{breakStart}</TableCell>
+                                                        <TableCell className="text-center font-mono text-xs opacity-70">{breakEnd}</TableCell>
                                                         <TableCell className="text-center font-mono">{timeOut}</TableCell>
-                                                        <TableCell className="text-center font-mono">
+                                                        <TableCell className="text-center font-mono font-bold text-primary">
                                                             {formatDecimalHours(record.hours_worked)}
                                                         </TableCell>
-                                                        <TableCell className="text-center font-mono text-amber-600">
+                                                        <TableCell className="text-center font-mono text-amber-600 text-xs">
                                                             {record.overtime_minutes > 0 ? formatDuration(record.overtime_minutes) : "0:00"}
                                                         </TableCell>
                                                         <TableCell className="text-center">

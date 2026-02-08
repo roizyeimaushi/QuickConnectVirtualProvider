@@ -181,21 +181,27 @@ export default function PersonalReportPage() {
                                             </div>
 
                                             {/* Times Grid */}
-                                            <div className="grid grid-cols-3 gap-2 text-sm">
+                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
                                                 <div className="bg-muted/50 rounded p-2 text-center">
-                                                    <p className="text-xs text-muted-foreground">Time In</p>
+                                                    <p className="text-[10px] uppercase font-bold text-muted-foreground">In</p>
                                                     <p className="font-mono font-medium">
                                                         {record.time_in ? new Date(record.time_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
                                                     </p>
                                                 </div>
-                                                <div className="bg-muted/50 rounded p-2 text-center">
-                                                    <p className="text-xs text-muted-foreground">Break Duration</p>
-                                                    <p className="font-mono font-medium">
-                                                        {record.break_minutes > 0 ? formatDuration(record.break_minutes) : "0:00"}
+                                                <div className="bg-muted/50 rounded p-2 text-center border-l-2 border-amber-200">
+                                                    <p className="text-[10px] uppercase font-bold text-amber-600">Break S</p>
+                                                    <p className="font-mono font-medium text-xs">
+                                                        {record.break_start ? new Date(record.break_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
+                                                    </p>
+                                                </div>
+                                                <div className="bg-muted/50 rounded p-2 text-center border-l-2 border-emerald-200">
+                                                    <p className="text-[10px] uppercase font-bold text-emerald-600">Break E</p>
+                                                    <p className="font-mono font-medium text-xs">
+                                                        {record.break_end ? new Date(record.break_end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
                                                     </p>
                                                 </div>
                                                 <div className="bg-muted/50 rounded p-2 text-center">
-                                                    <p className="text-xs text-muted-foreground">Time Out</p>
+                                                    <p className="text-[10px] uppercase font-bold text-muted-foreground">Out</p>
                                                     <p className="font-mono font-medium">
                                                         {record.time_out ? new Date(record.time_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
                                                     </p>
@@ -227,9 +233,10 @@ export default function PersonalReportPage() {
                                                 <TableHead>Date</TableHead>
                                                 <TableHead>Schedule</TableHead>
                                                 <TableHead className="text-center">Time In</TableHead>
-                                                <TableHead className="text-center">Break Duration</TableHead>
+                                                <TableHead className="text-center text-xs opacity-70">Break S</TableHead>
+                                                <TableHead className="text-center text-xs opacity-70">Break E</TableHead>
                                                 <TableHead className="text-center">Time Out</TableHead>
-                                                <TableHead className="text-center">Worked Time</TableHead>
+                                                <TableHead className="text-center font-bold">Hours</TableHead>
                                                 <TableHead className="text-center">Overtime</TableHead>
                                                 <TableHead className="text-right">Status</TableHead>
                                             </TableRow>
@@ -241,19 +248,22 @@ export default function PersonalReportPage() {
                                                         {new Date(record.attendance_date).toLocaleDateString()}
                                                     </TableCell>
                                                     <TableCell>{record.session?.schedule?.name || 'N/A'}</TableCell>
-                                                    <TableCell className="text-center">
+                                                    <TableCell className="text-center font-mono">
                                                         {record.time_in ? new Date(record.time_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
                                                     </TableCell>
-                                                    <TableCell className="text-center">
-                                                        {record.break_minutes > 0 ? formatDuration(record.break_minutes) : "0:00"}
+                                                    <TableCell className="text-center font-mono text-xs opacity-70">
+                                                        {record.break_start ? new Date(record.break_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
                                                     </TableCell>
-                                                    <TableCell className="text-center">
-                                                        {record.time_out ? new Date(record.time_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
+                                                    <TableCell className="text-center font-mono text-xs opacity-70">
+                                                        {record.break_end ? new Date(record.break_end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
                                                     </TableCell>
                                                     <TableCell className="text-center font-mono">
+                                                        {record.time_out ? new Date(record.time_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
+                                                    </TableCell>
+                                                    <TableCell className="text-center font-mono font-bold text-primary">
                                                         {formatDecimalHours(record.hours_worked)}
                                                     </TableCell>
-                                                    <TableCell className="text-center font-mono text-amber-600">
+                                                    <TableCell className="text-center font-mono text-amber-600 text-xs">
                                                         {record.overtime_minutes > 0 ? formatDuration(record.overtime_minutes) : "0:00"}
                                                     </TableCell>
                                                     <TableCell className="text-right">

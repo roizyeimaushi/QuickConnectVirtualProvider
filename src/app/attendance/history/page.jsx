@@ -502,16 +502,20 @@ export default function AttendanceHistoryPage() {
                                                 {/* Time & Schedule Info */}
                                                 <div className="grid grid-cols-2 gap-2 text-sm">
                                                     <div className="bg-muted/50 rounded p-2 text-center">
-                                                        <p className="text-xs text-muted-foreground">Time In</p>
+                                                        <p className="text-[10px] uppercase font-bold text-muted-foreground">In</p>
                                                         <p className="font-mono font-medium">{formatTime24(record.time_in) || '--:--'}</p>
                                                     </div>
                                                     <div className="bg-muted/50 rounded p-2 text-center">
-                                                        <p className="text-xs text-muted-foreground">Time Out</p>
+                                                        <p className="text-[10px] uppercase font-bold text-muted-foreground">Out</p>
                                                         <p className="font-mono font-medium">{formatTime24(record.time_out) || '--:--'}</p>
                                                     </div>
 
+                                                    <div className="bg-amber-50 dark:bg-amber-900/20 rounded p-2 text-center">
+                                                        <p className="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400">Break S</p>
+                                                        <p className="font-mono font-medium text-amber-700 dark:text-amber-300">{formatTime24(record.break_start) || '--:--'}</p>
+                                                    </div>
                                                     <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded p-2 text-center">
-                                                        <p className="text-xs text-emerald-600 dark:text-emerald-400">Break Out</p>
+                                                        <p className="text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400">Break E</p>
                                                         <p className="font-mono font-medium text-emerald-700 dark:text-emerald-300">{formatTime24(record.break_end) || '--:--'}</p>
                                                     </div>
                                                 </div>
@@ -575,7 +579,8 @@ export default function AttendanceHistoryPage() {
                                                 <TableHead>Shift Date</TableHead>
                                                 <TableHead className="text-center">Schedule</TableHead>
                                                 <TableHead className="text-center">Time In</TableHead>
-
+                                                <TableHead className="text-center text-xs opacity-70">Break S</TableHead>
+                                                <TableHead className="text-center text-xs opacity-70">Break E</TableHead>
                                                 <TableHead className="text-center">Time Out</TableHead>
                                                 <TableHead className="text-center">Hours</TableHead>
                                                 <TableHead className="text-center">Status</TableHead>
@@ -614,7 +619,12 @@ export default function AttendanceHistoryPage() {
                                                         <TableCell className="font-mono text-center">
                                                             {formatTime24(record.time_in) || '--:--'}
                                                         </TableCell>
-
+                                                        <TableCell className="font-mono text-center text-xs opacity-70">
+                                                            {formatTime24(record.break_start) || '--:--'}
+                                                        </TableCell>
+                                                        <TableCell className="font-mono text-center text-xs opacity-70">
+                                                            {formatTime24(record.break_end) || '--:--'}
+                                                        </TableCell>
                                                         <TableCell className="font-mono text-center">
                                                             {formatTime24(record.time_out) || '--:--'}
                                                         </TableCell>
