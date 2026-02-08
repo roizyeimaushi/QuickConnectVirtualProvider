@@ -230,11 +230,6 @@ export default function AdminLoginPage() {
                         </CardContent>
                     </Card>
 
-                    <div className="flex flex-col items-center mt-10 space-y-2">
-                        <p className="text-slate-300 text-[10px]">
-                            &copy; {new Date().getFullYear()} QuickConn Virtual Services. All rights reserved.
-                        </p>
-                    </div>
                 </div>
             </div>
         </>
