@@ -242,7 +242,7 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                     </div>
 
                     {/* Status and Time Inputs */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-4">
                         <div className="grid gap-2">
                             <Label htmlFor="status" className="text-xs font-bold uppercase text-muted-foreground">Status Override</Label>
                             <Select
@@ -279,7 +279,7 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-4">
                         <div className="grid gap-2">
                             <Label htmlFor="time_in" className="text-xs font-bold uppercase text-muted-foreground">Time In</Label>
                             <DateTimePicker
@@ -298,7 +298,7 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-4">
                         <div className="grid gap-2">
                             <Label htmlFor="break_start" className="text-xs font-bold uppercase text-muted-foreground">Break Start</Label>
                             <DateTimePicker
@@ -318,7 +318,7 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                     </div>
 
                     {/* Calculated Totals */}
-                    <div className="grid grid-cols-2 gap-4 p-4 rounded-lg bg-primary/5 border border-primary/20">
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-4 p-4 rounded-lg bg-primary/5 border border-primary/20">
                         <div>
                             <p className="text-[10px] font-bold text-primary uppercase">Total Worked</p>
                             <p className="text-2xl font-mono font-bold text-primary">{totals.hours}h</p>
