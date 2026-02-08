@@ -545,6 +545,7 @@ class ReportController extends Controller
             'late' => $mergedData->where('status', 'late')->count(),
             'absent' => $mergedData->where('status', 'absent')->count(),
             'pending' => $mergedData->where('status', 'pending')->count(),
+            'optional' => $mergedData->where('status', 'optional')->count(),
         ];
 
         // Manual Pagination for the merged collection

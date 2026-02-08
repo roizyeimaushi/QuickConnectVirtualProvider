@@ -79,7 +79,7 @@ export default function DailyReportsPage() {
     const { toast } = useToast();
     const [date, setDate] = useState(new Date());
     const [initialLoad, setInitialLoad] = useState(true);
-    const [report, setReport] = useState({ summary: { total: 0, present: 0, late: 0, absent: 0, pending: 0 }, records: [] });
+    const [report, setReport] = useState({ summary: { total: 0, present: 0, late: 0, absent: 0, pending: 0, optional: 0 }, records: [] });
 
     // Pagination State (server-side: backend returns one page)
     const [currentPage, setCurrentPage] = useState(1);
@@ -102,14 +102,14 @@ export default function DailyReportsPage() {
                 : (Array.isArray(response.records) ? response.records : []);
 
             setReport({
-                summary: response.summary || { total: 0, present: 0, late: 0, absent: 0, pending: 0 },
+                summary: response.summary || { total: 0, present: 0, late: 0, absent: 0, pending: 0, optional: 0 },
                 records: Array.isArray(dailyRecords) ? dailyRecords.filter(r => r && typeof r === 'object') : [],
             });
             setTotalPages(paginator?.last_page ?? 1);
             setTotalRecords(paginator?.total ?? 0);
         } catch (error) {
             if (!isPolling) {
-                setReport({ summary: { total: 0, present: 0, late: 0, absent: 0, pending: 0 }, records: [] });
+                setReport({ summary: { total: 0, present: 0, late: 0, absent: 0, pending: 0, optional: 0 }, records: [] });
                 setTotalPages(1);
                 setTotalRecords(0);
             }
@@ -141,6 +141,7 @@ export default function DailyReportsPage() {
         { status: "Late", count: report?.summary?.late ?? 0, fill: statusConfig.late.color },
         { status: "Absent", count: report?.summary?.absent ?? 0, fill: statusConfig.absent.color },
         { status: "Pending", count: report?.summary?.pending ?? 0, fill: statusConfig.pending.color },
+        { status: "Day Off", count: report?.summary?.optional ?? 0, fill: statusConfig.optional.color },
     ].filter(item => item.count > 0);
 
     const chartConfig = {
@@ -162,6 +163,10 @@ export default function DailyReportsPage() {
         Pending: {
             label: "Pending",
             color: statusConfig.pending.color,
+        },
+        "Day Off": {
+            label: "Day Off",
+            color: statusConfig.optional.color,
         },
     };
 
@@ -282,8 +287,8 @@ export default function DailyReportsPage() {
 
                 {/* Summary Cards */}
                 {initialLoad ? (
-                    <div className="grid gap-4 md:grid-cols-5">
-                        {[...Array(5)].map((_, i) => (
+                    <div className="grid gap-4 md:grid-cols-6">
+                        {[...Array(6)].map((_, i) => (
                             <Card key={i}>
                                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                                     <Skeleton className="h-4 w-20" />
@@ -296,7 +301,7 @@ export default function DailyReportsPage() {
                         ))}
                     </div>
                 ) : (
-                    <div className="grid gap-4 md:grid-cols-5">
+                    <div className="grid gap-4 md:grid-cols-6">
                         <Card>
                             <CardContent className="flex flex-col items-center justify-center p-6 text-center">
                                 <div className="p-2 rounded-full bg-primary/10 mb-2">
@@ -340,6 +345,15 @@ export default function DailyReportsPage() {
                                 </div>
                                 <p className="text-sm font-medium text-muted-foreground">Pending</p>
                                 <p className="text-2xl font-bold text-blue-600">{report?.summary?.pending ?? 0}</p>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+                                <div className="p-2 rounded-full bg-sky-100 dark:bg-sky-900/30 mb-2">
+                                    <Coffee className="h-5 w-5 text-sky-600" />
+                                </div>
+                                <p className="text-sm font-medium text-muted-foreground">Day Off</p>
+                                <p className="text-2xl font-bold text-sky-600">{report?.summary?.optional ?? 0}</p>
                             </CardContent>
                         </Card>
                     </div>
