@@ -68,4 +68,57 @@ class AttendanceSession extends Model
     {
         return $this->status === 'pending';
     }
+
+    /**
+     * Synchronize session statuses based on current time and schedules.
+     * Logic centralizes state transitions (Pending -> Active -> Completed).
+     */
+    public static function syncStatuses()
+    {
+        $now = \Carbon\Carbon::now();
+        $boundary = (int) (\App\Models\Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
+        $today = ($now->hour < $boundary ? \Carbon\Carbon::yesterday() : \Carbon\Carbon::today())->startOfDay();
+
+        // Sync non-locked sessions for today or earlier
+        $sessions = self::whereIn('status', ['pending', 'active'])
+            ->where('date', '<=', $today)
+            ->with('schedule')
+            ->get();
+
+        foreach ($sessions as $session) {
+            if (!$session->schedule) {
+                // Fail-safe: if active and a day old, mark completed
+                if ($session->status === 'active' && $session->date->addDay()->isPast()) {
+                    $session->update(['status' => 'completed']);
+                }
+                continue;
+            }
+
+            $schedule = $session->schedule;
+            $sessionDate = $session->date->format('Y-m-d');
+            
+            $shiftStart = \Carbon\Carbon::parse("$sessionDate {$schedule->time_in}");
+            $shiftEnd = \Carbon\Carbon::parse("$sessionDate {$schedule->time_out}");
+            
+            // Handle overnight shifts
+            if ($shiftEnd->lt($shiftStart)) {
+                $shiftEnd->addDay();
+            }
+
+            $oldStatus = $session->status;
+            $newStatus = $oldStatus;
+
+            if ($now->lt($shiftStart)) {
+                $newStatus = 'pending';
+            } elseif ($now->gte($shiftStart) && $now->lte($shiftEnd)) {
+                $newStatus = 'active';
+            } else {
+                $newStatus = 'completed';
+            }
+
+            if ($newStatus !== $oldStatus) {
+                $session->update(['status' => $newStatus]);
+            }
+        }
+    }
 }

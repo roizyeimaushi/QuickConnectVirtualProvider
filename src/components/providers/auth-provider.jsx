@@ -83,7 +83,13 @@ export function AuthProvider({ children }) {
                 setTimeout(() => reject({ status: 0, message: 'Request timed out' }), timeoutMs)
             );
             const response = await Promise.race([mePromise, timeoutPromise]);
-            setUser(response.data || response.user || response);
+            const userData = response.data || response.user || response;
+            setUser(userData);
+
+            // Sync role cookie for middleware
+            if (userData?.role) {
+                Cookies.set("quickcon_role", userData.role, { expires: 7, secure: window.location.protocol === 'https:', sameSite: "lax" });
+            }
         } catch (error) {
             // Silence 401/Unauthorized and network (status 0) errors — expected when token expires or backend unreachable
             const isUnauthorized = error?.status === 401 || error?.message === 'Unauthorized';
@@ -188,6 +194,12 @@ export function AuthProvider({ children }) {
         const userData = response.user || response.data;
         setUser(userData);
 
+        // Set role cookie for middleware routing
+        if (userData?.role) {
+            const days = credentials.remember ? 30 : 7;
+            Cookies.set("quickcon_role", userData.role, { expires: days, secure: window.location.protocol === 'https:', sameSite: "lax" });
+        }
+
         // Redirect based on role
         if (userData.role === USER_ROLES.ADMIN) {
             router.push(ROUTES.ADMIN_DASHBOARD);
@@ -214,6 +226,7 @@ export function AuthProvider({ children }) {
             }
         } finally {
             Cookies.remove("quickcon_token");
+            Cookies.remove("quickcon_role");
             localStorage.removeItem("quickcon_token");
             localStorage.removeItem("quickcon_user");
             setUser(null);

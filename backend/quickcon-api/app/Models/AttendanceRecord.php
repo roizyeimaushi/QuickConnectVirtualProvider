@@ -8,6 +8,16 @@ use Illuminate\Database\Eloquent\Model;
 class AttendanceRecord extends Model
 {
     use HasFactory;
+    
+    protected static function booted()
+    {
+        static::saving(function ($record) {
+            // Auto-calculate hours worked if time_in and time_out are present
+            if ($record->time_in && $record->time_out) {
+                $record->hours_worked = $record->calculateHoursWorked();
+            }
+        });
+    }
 
     protected $fillable = [
         'session_id',

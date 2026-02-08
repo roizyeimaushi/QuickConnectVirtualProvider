@@ -45,6 +45,15 @@ export default function EmployeeLoginPage() {
 
     useEffect(() => {
         if (isAuthenticated) {
+            // Check for redirect parameter in URL
+            const params = new URLSearchParams(window.location.search);
+            const redirectPath = params.get("redirect");
+
+            if (redirectPath) {
+                router.replace(redirectPath);
+                return;
+            }
+
             if (isAdmin) {
                 router.replace("/dashboard/admin");
             } else if (isEmployee) {

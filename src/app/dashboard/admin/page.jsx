@@ -231,13 +231,19 @@ function SessionTimer({ session }) {
         const formatDiff = (diff) => {
             const h = Math.floor(diff / (1000 * 60 * 60));
             const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            return `${h > 0 ? h + "h " : ""}${m}m`;
+            const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+            const hours = h > 0 ? `${h}h ` : "";
+            const minutes = `${m}m `;
+            const seconds = `${s}s`;
+
+            return `${hours}${minutes}${seconds}`;
         };
 
         setTimeLeft(calculateTimeLeft());
         const interval = setInterval(() => {
             setTimeLeft(calculateTimeLeft());
-        }, 30000);
+        }, 1000);
 
         return () => clearInterval(interval);
     }, [session]);

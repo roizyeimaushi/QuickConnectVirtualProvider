@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Storage;
 
 use Illuminate\Support\Facades\RateLimiter;
 use App\Models\Setting;
+use App\Http\Resources\UserResource;
 
 class AuthController extends Controller
 {
@@ -157,7 +158,7 @@ class AuthController extends Controller
 
         return response()->json([
             'token' => $token,
-            'user' => $user,
+            'user' => new UserResource($user),
         ]);
     }
 
@@ -276,7 +277,7 @@ class AuthController extends Controller
         
         // Return user with schedule info
         return response()->json([
-            'user' => array_merge($user->toArray(), [
+            'user' => (new UserResource($user))->additional([
                 'schedule' => $schedule ? [
                     'id' => $schedule->id,
                     'name' => $schedule->name,
@@ -293,7 +294,7 @@ class AuthController extends Controller
 
         return response()->json([
             'token' => $token,
-            'user' => $user,
+            'user' => new UserResource($user),
         ]);
     }
     public function updateProfile(Request $request)

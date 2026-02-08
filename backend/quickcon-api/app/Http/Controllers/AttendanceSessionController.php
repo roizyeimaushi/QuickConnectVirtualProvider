@@ -444,61 +444,6 @@ class AttendanceSessionController extends Controller
      */
     private function syncSessionStatuses()
     {
-        $now = Carbon::now();
-        $boundary = (int) (\App\Models\Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
-        $today = ($now->hour < $boundary ? Carbon::yesterday() : Carbon::today())->startOfDay();
-
-        // Fetch all non-locked sessions for today or earlier that are not yet completed correctly.
-        $sessions = AttendanceSession::whereIn('status', ['pending', 'active'])
-            ->where('date', '<=', $today)
-            ->with('schedule')
-            ->get();
-
-        foreach ($sessions as $session) {
-            if (!$session->schedule) {
-                // Heuristic for sessions without a schedule: If active and date is past, complete it.
-                if ($session->status === 'active' && $session->date->addDay()->isPast()) {
-                    $session->update(['status' => 'completed']);
-                }
-                continue;
-            }
-
-            $schedule = $session->schedule;
-            $sessionDate = $session->date->format('Y-m-d');
-            
-            // Calculate exact start and end times
-            $shiftStart = Carbon::parse("$sessionDate {$schedule->time_in}");
-            $shiftEnd = Carbon::parse("$sessionDate {$schedule->time_out}");
-            
-            // Handle overnight shifts
-            if ($shiftEnd->lt($shiftStart)) {
-                $shiftEnd->addDay();
-            }
-
-            $oldStatus = $session->status;
-            $newStatus = $oldStatus;
-
-            if ($now->lt($shiftStart)) {
-                // 1. Upcoming Phase
-                $newStatus = 'pending';
-            } elseif ($now->gte($shiftStart) && $now->lte($shiftEnd)) {
-                // 2. Live Phase
-                $newStatus = 'active';
-            } else {
-                // 3. Completed Phase
-                $newStatus = 'completed';
-            }
-
-            if ($newStatus !== $oldStatus) {
-                $session->update(['status' => $newStatus]);
-                
-                // Optional: Broadcast or Log transitions
-                if ($newStatus === 'active') {
-                    event(new SessionUpdated($session, 'opened'));
-                } elseif ($newStatus === 'completed') {
-                    event(new SessionUpdated($session, 'completed'));
-                }
-            }
-        }
+        AttendanceSession::syncStatuses();
     }
 }

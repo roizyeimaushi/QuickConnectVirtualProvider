@@ -636,108 +636,102 @@ class AttendanceRecordController extends Controller
             ], 400);
         }
 
-        if ($attendanceRecord->time_out) {
-            return response()->json([
-                'message' => 'Already checked out',
-                'error_code' => 'ALREADY_CHECKED_OUT'
-            ], 400);
-        }
+        try {
+            DB::beginTransaction();
 
-        // CRITICAL: Cannot check out if never checked in (e.g. absent/pending records)
-        if (!$attendanceRecord->time_in) {
-            return response()->json([
-                'message' => 'Cannot check out without checking in first',
-                'error_code' => 'NOT_CHECKED_IN'
-            ], 400);
-        }
+            // Reload with lock to prevent race condition
+            $attendanceRecord = AttendanceRecord::where('id', $attendanceRecord->id)->lockForUpdate()->first();
 
-        // AUTO-END BREAK: If on break (EmployeeBreak logic), end it now
-        $activeBreak = $attendanceRecord->activeBreak;
-        if ($activeBreak) {
-             $activeBreak->update([
-                 'break_end' => $now,
-                 'duration_minutes' => (int) Carbon::parse($activeBreak->break_start)->diffInMinutes($now)
-             ]);
-             // Sync legacy columns just in case
-             $attendanceRecord->break_end = $now;
-        } elseif ($attendanceRecord->break_start && !$attendanceRecord->break_end) {
-             // Fallback for purely legacy records
-             $attendanceRecord->break_end = $now;
-        }
-
-        $attendanceRecord->time_out = $now;
-        $attendanceRecord->save(); // Save time_out immediately to prevent race conditions
-        
-        // Use centralized model logic for hours calculation
-        $attendanceRecord->hours_worked = $attendanceRecord->calculateHoursWorked();
-
-        // ============================================================
-        // OVERTIME CALCULATION
-        // ============================================================
-        $allowOvertime = filter_var(\App\Models\Setting::where('key', 'allow_overtime')->value('value'), FILTER_VALIDATE_BOOLEAN);
-        
-        if ($allowOvertime && $attendanceRecord->session && $attendanceRecord->session->schedule) {
-            $schedule = $attendanceRecord->session->schedule;
-            // Determine Shift End (handle overnight)
-            // Fix: Use the RECORD's attendance_date, not "today", because shift might have started yesterday
-            $dateStr = $attendanceRecord->attendance_date->format('Y-m-d');
-            
-            $shiftStart = Carbon::parse($dateStr . ' ' . $schedule->time_in);
-            $shiftEnd = Carbon::parse($dateStr . ' ' . $schedule->time_out);
-            
-            if ($shiftEnd->lt($shiftStart)) {
-                $shiftEnd->addDay();
+            if ($attendanceRecord->time_out) {
+                DB::rollBack();
+                return response()->json([
+                    'message' => 'Already checked out',
+                    'error_code' => 'ALREADY_CHECKED_OUT'
+                ], 400);
             }
 
-            // Only calculate OT if checkout is AFTER shift end
-            if ($now->gt($shiftEnd)) {
-                $rawOtMinutes = $shiftEnd->diffInMinutes($now);
+            // AUTO-END BREAK: If on break (EmployeeBreak logic), end it now
+            $activeBreak = $attendanceRecord->activeBreak;
+            if ($activeBreak) {
+                $activeBreak->update([
+                    'break_end' => $now,
+                    'duration_minutes' => (int) Carbon::parse($activeBreak->break_start)->diffInMinutes($now)
+                ]);
+                $attendanceRecord->break_end = $now;
+            } elseif ($attendanceRecord->break_start && !$attendanceRecord->break_end) {
+                $attendanceRecord->break_end = $now;
+            }
+
+            $attendanceRecord->time_out = $now;
+            
+            // Centralized calculation
+            $attendanceRecord->hours_worked = $attendanceRecord->calculateHoursWorked();
+
+            // ============================================================
+            // OVERTIME CALCULATION
+            // ============================================================
+            $allowOvertime = filter_var(\App\Models\Setting::where('key', 'allow_overtime')->value('value'), FILTER_VALIDATE_BOOLEAN);
+            
+            if ($allowOvertime && $attendanceRecord->session && $attendanceRecord->session->schedule) {
+                $schedule = $attendanceRecord->session->schedule;
+                $dateStr = $attendanceRecord->attendance_date->format('Y-m-d');
                 
-                // Get OT Rules
-                $minOtMinutes = (int) (\App\Models\Setting::where('key', 'min_overtime_minutes')->value('value') ?: 60);
-                $roundingRule = \App\Models\Setting::where('key', 'ot_rounding')->value('value') ?: 'none';
-                $requireApproval = filter_var(\App\Models\Setting::where('key', 'require_ot_approval')->value('value'), FILTER_VALIDATE_BOOLEAN);
-
-                if ($rawOtMinutes >= $minOtMinutes) {
-                    $finalOtMinutes = $rawOtMinutes;
-
-                    // Apply Rounding
-                    if (str_starts_with($roundingRule, 'down_')) {
-                        $interval = (int) explode('_', $roundingRule)[1];
-                        if ($interval > 0) {
-                            $finalOtMinutes = floor($rawOtMinutes / $interval) * $interval;
-                        }
-                    }
-
-                    $attendanceRecord->overtime_minutes = $finalOtMinutes;
-                    $attendanceRecord->overtime_status = $requireApproval ? 'pending' : 'approved';
+                $shiftStart = Carbon::parse($dateStr . ' ' . $schedule->time_in);
+                $shiftEnd = Carbon::parse($dateStr . ' ' . $schedule->time_out);
+                
+                if ($shiftEnd->lt($shiftStart)) {
+                    $shiftEnd->addDay();
                 }
-            } elseif ($now->lt($shiftEnd) && $attendanceRecord->status !== 'excused') {
-                // Determine if it's a significant early leave (more than 5 mins before shift end)
-                if ($shiftEnd->diffInMinutes($now) > 5) {
-                    $attendanceRecord->status = 'left_early';
+
+                if ($now->gt($shiftEnd)) {
+                    $rawOtMinutes = $shiftEnd->diffInMinutes($now);
+                    $minOtMinutes = (int) (\App\Models\Setting::where('key', 'min_overtime_minutes')->value('value') ?: 60);
+                    $roundingRule = \App\Models\Setting::where('key', 'ot_rounding')->value('value') ?: 'none';
+                    $requireApproval = filter_var(\App\Models\Setting::where('key', 'require_ot_approval')->value('value'), FILTER_VALIDATE_BOOLEAN);
+
+                    if ($rawOtMinutes >= $minOtMinutes) {
+                        $finalOtMinutes = $rawOtMinutes;
+                        if (str_starts_with($roundingRule, 'down_')) {
+                            $interval = (int) explode('_', $roundingRule)[1];
+                            if ($interval > 0) {
+                                $finalOtMinutes = floor($rawOtMinutes / $interval) * $interval;
+                            }
+                        }
+                        $attendanceRecord->overtime_minutes = $finalOtMinutes;
+                        $attendanceRecord->overtime_status = $requireApproval ? 'pending' : 'approved';
+                    }
+                } elseif ($now->lt($shiftEnd) && $attendanceRecord->status !== 'excused') {
+                    if ($shiftEnd->diffInMinutes($now) > 5) {
+                        $attendanceRecord->status = 'left_early';
+                    }
                 }
             }
+
+            $attendanceRecord->save();
+            DB::commit();
+
+            // Broadcast real-time update
+            event(new AttendanceUpdated($attendanceRecord, 'checked_out'));
+
+            AuditLog::log(
+                'check_out',
+                "{$user->first_name} checked out",
+                AuditLog::STATUS_SUCCESS,
+                $user->id,
+                'AttendanceRecord',
+                $attendanceRecord->id
+            );
+
+            return response()->json([
+                'message' => 'Checked out successfully',
+                'record' => $attendanceRecord
+            ]);
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Check Out Error: ' . $e->getMessage());
+            return response()->json(['message' => 'Failed to check out: ' . $e->getMessage()], 500);
         }
-
-        $attendanceRecord->save();
-
-        // Broadcast real-time update
-        event(new AttendanceUpdated($attendanceRecord, 'checked_out'));
-
-        AuditLog::log(
-            'check_out',
-            "{$user->first_name} checked out",
-            AuditLog::STATUS_SUCCESS,
-            $user->id,
-            'AttendanceRecord',
-            $attendanceRecord->id
-        );
-
-        return response()->json([
-            'message' => 'Checked out successfully',
-            'record' => $attendanceRecord
-        ]);
     }
 
     /**

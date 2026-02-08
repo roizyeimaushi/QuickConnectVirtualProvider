@@ -393,10 +393,6 @@ export default function EmployeesPage() {
                                                                     </>
                                                                 )}
                                                             </DropdownMenuItem>
-                                                            <DropdownMenuItem onClick={() => toast({ title: "Coming Soon", description: "Password reset feature will be available shortly." })}>
-                                                                <Clock className="mr-2 h-4 w-4" />
-                                                                Reset Password
-                                                            </DropdownMenuItem>
                                                             <DropdownMenuSeparator />
                                                             <DropdownMenuItem
                                                                 className="text-destructive focus:text-destructive"
@@ -557,10 +553,6 @@ export default function EmployeesPage() {
                                                                                 Activate
                                                                             </>
                                                                         )}
-                                                                    </DropdownMenuItem>
-                                                                    <DropdownMenuItem onClick={() => toast({ title: "Coming Soon", description: "Password reset feature will be available shortly." })}>
-                                                                        <Clock className="mr-2 h-4 w-4" />
-                                                                        Reset Password
                                                                     </DropdownMenuItem>
                                                                     <DropdownMenuSeparator />
                                                                     <DropdownMenuItem

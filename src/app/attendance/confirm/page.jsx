@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -293,6 +294,7 @@ function AttendanceConfirmationCard({ session, canConfirm, onConfirm, confirming
 
 export default function AttendanceConfirmPage() {
     const { user } = useAuth();
+    const router = useRouter();
     const { toast } = useToast();
     const [session, setSession] = useState(null);
     const [todayRecord, setTodayRecord] = useState(null);

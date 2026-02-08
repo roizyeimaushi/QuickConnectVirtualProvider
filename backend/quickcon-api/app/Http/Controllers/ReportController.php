@@ -29,7 +29,7 @@ class ReportController extends Controller
         
         return Cache::remember($cacheKey, 30, function() use ($today, $realToday, $now) {
             // 1. Sync statuses for today's sessions to ensure they reflect current time
-            $this->syncAllSessionStatuses();
+            AttendanceSession::syncStatuses();
 
             $totalEmployees = User::where('role', 'employee')
                                   ->where('status', 'active')
@@ -190,7 +190,7 @@ class ReportController extends Controller
         $now = Carbon::now();
 
         // 1. Sync statuses for all current sessions to ensure availability
-        $this->syncAllSessionStatuses();
+        AttendanceSession::syncStatuses();
 
         // 2. Boundary & Logic Today
         $boundary = (int) (Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
@@ -580,10 +580,16 @@ class ReportController extends Controller
                             ->where('status', 'active')
                             ->get();
 
-        $summary = $allEmployees->map(function($employee) use ($startDate, $endDate, $workingDays) {
-            $records = AttendanceRecord::where('user_id', $employee->id)
-                ->whereBetween('attendance_date', [$startDate->toDateString(), $endDate->toDateString()])
-                ->get();
+        $employeeIds = $allEmployees->pluck('id');
+
+        // Optimization: Fetch all records for the month in ONE query
+        $allRecords = AttendanceRecord::whereIn('user_id', $employeeIds)
+            ->whereBetween('attendance_date', [$startDate->toDateString(), $endDate->toDateString()])
+            ->get()
+            ->groupBy('user_id');
+
+        $summary = $allEmployees->map(function($employee) use ($allRecords, $workingDays) {
+            $records = $allRecords->get($employee->id, collect());
             
             $present = $records->whereIn('status', ['present', 'left_early', 'late'])->count();
             $late = $records->where('status', 'late')->count();
@@ -708,55 +714,9 @@ class ReportController extends Controller
         return response()->json(['message' => 'Weekend shifts are now enabled in the system logic.']);
     }
 
-    /**
-     * Internal utility to sync session statuses based on current time.
-     * Replicates logic from AttendanceSessionController to ensure dashboard is always accurate.
-     */
     private function syncAllSessionStatuses()
     {
-        $now = Carbon::now();
-        $boundary = (int) (Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
-        $today = ($now->hour < $boundary ? Carbon::yesterday() : Carbon::today())->startOfDay();
-
-        // Sync non-locked sessions for today or earlier
-        $sessions = AttendanceSession::whereIn('status', ['pending', 'active'])
-            ->where('date', '<=', $today)
-            ->with('schedule')
-            ->get();
-
-        foreach ($sessions as $session) {
-            if (!$session->schedule) {
-                if ($session->status === 'active' && $session->date->addDay()->isPast()) {
-                    $session->update(['status' => 'completed']);
-                }
-                continue;
-            }
-
-            $schedule = $session->schedule;
-            $sessionDate = $session->date->format('Y-m-d');
-            
-            $shiftStart = Carbon::parse("$sessionDate {$schedule->time_in}");
-            $shiftEnd = Carbon::parse("$sessionDate {$schedule->time_out}");
-            
-            if ($shiftEnd->lt($shiftStart)) {
-                $shiftEnd->addDay();
-            }
-
-            $oldStatus = $session->status;
-            $newStatus = $oldStatus;
-
-            if ($now->lt($shiftStart)) {
-                $newStatus = 'pending';
-            } elseif ($now->gte($shiftStart) && $now->lte($shiftEnd)) {
-                $newStatus = 'active';
-            } else {
-                $newStatus = 'completed';
-            }
-
-            if ($newStatus !== $oldStatus) {
-                $session->update(['status' => $newStatus]);
-            }
-        }
+        AttendanceSession::syncStatuses();
     }
 }
 

@@ -40,8 +40,27 @@ export function middleware(request) {
         return NextResponse.redirect(loginUrl);
     }
 
-    // For role-based routing, we'll handle it on the client side
-    // since we need to decode the token which is better done there
+    const role = request.cookies.get("quickcon_role")?.value;
+
+    // Role-based protection to avoid "flash" of unauthorized content
+    if (role) {
+        // 1. Employee trying to access Admin routes
+        if (role === "employee" && adminRoutes.some(route => pathname.startsWith(route))) {
+            return NextResponse.redirect(new URL("/dashboard/employee", request.url));
+        }
+
+        // 2. Admin trying to access Employee routes
+        if (role === "admin" && employeeRoutes.some(route => pathname.startsWith(route))) {
+            return NextResponse.redirect(new URL("/dashboard/admin", request.url));
+        }
+
+        // 3. Generic dashboard redirect
+        if (pathname === "/dashboard") {
+            const target = role === "admin" ? "/dashboard/admin" : "/dashboard/employee";
+            return NextResponse.redirect(new URL(target, request.url));
+        }
+    }
+
     return NextResponse.next();
 }
 
