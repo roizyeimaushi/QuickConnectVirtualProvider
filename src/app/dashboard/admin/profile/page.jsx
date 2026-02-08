@@ -21,6 +21,7 @@ import {
     Camera,
     ArrowLeft,
     Calendar,
+    Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -170,7 +171,7 @@ export default function AdminProfilePage() {
                                     </AvatarFallback>
                                 </Avatar>
                                 <label htmlFor="avatar-upload" className="absolute inset-0 flex items-center justify-center bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                                    <Camera className="h-6 w-6" />
+                                    {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Camera className="h-6 w-6" />}
                                     <input
                                         id="avatar-upload"
                                         type="file"

@@ -142,8 +142,8 @@ export default function AdminLoginPage() {
                 </div>
 
                 {/* Login Card */}
-                <div className="relative z-10 w-full max-w-[480px] px-4">
-                    <Card className="border-none shadow-2xl bg-white/95 backdrop-blur-sm shadow-emerald-500/5 overflow-hidden">
+                <div className="relative z-10 w-full max-w-[480px] px-4 animate-in fade-in zoom-in duration-500">
+                    <Card className="border border-white/20 shadow-2xl bg-white/90 backdrop-blur-xl shadow-emerald-500/10 overflow-hidden rounded-[2rem]">
                         <CardHeader className="pt-12 pb-6 text-center">
                             <div className="flex justify-center mb-8">
                                 <img
@@ -156,8 +156,8 @@ export default function AdminLoginPage() {
                                     }}
                                 />
                             </div>
-                            <CardTitle className="text-3xl sm:text-4xl font-black tracking-tight font-inter whitespace-nowrap">
-                                <span className="text-emerald-600">QuickConn</span> <span className="text-slate-900">Admin</span>
+                            <CardTitle className="text-3xl sm:text-4xl font-black tracking-tight font-inter">
+                                <span className="text-emerald-600">QuickConnect</span> <span className="text-slate-900">Admin</span>
                             </CardTitle>
                             <CardDescription className="text-slate-500 mt-2 text-base">
                                 Unauthorized access is strictly prohibited
@@ -176,11 +176,12 @@ export default function AdminLoginPage() {
                                             <input
                                                 id="email"
                                                 type="email"
-                                                placeholder="Enter your email"
+                                                placeholder="admin@example.com"
                                                 value={email}
                                                 onChange={(e) => setEmail(e.target.value)}
                                                 required
-                                                className="w-full h-14 pl-12 pr-4 bg-slate-50/50 border border-slate-200 rounded-2xl focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all text-slate-900 font-inter"
+                                                autoComplete="username"
+                                                className="w-full h-14 pl-12 pr-4 bg-white/50 border border-slate-200 rounded-2xl focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all text-slate-900 font-inter placeholder:text-slate-300"
                                             />
                                         </div>
                                     </div>
