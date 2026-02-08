@@ -86,13 +86,16 @@ class AttendanceSessionController extends Controller
         ]);
 
         if (empty($validated['employee_ids'])) {
-            // Only auto-create records if attendance is required
-            // On weekends, we leave it empty so it shows as 0/0 and "Optional" in detailed view
-            // Default: Assign all active employees so they see the session in their dashboard
-            $employeeIds = \App\Models\User::where('role', 'employee')
-                ->where('status', 'active')
-                ->pluck('id')
-                ->toArray();
+            // Only auto-create records if attendance is required (Normal workday)
+            // On weekends, we leave it empty so it only records people who actually clock in.
+            if ($isRequired) {
+                $employeeIds = \App\Models\User::where('role', 'employee')
+                    ->where('status', 'active')
+                    ->pluck('id')
+                    ->toArray();
+            } else {
+                $employeeIds = [];
+            }
         } else {
             $employeeIds = array_unique($validated['employee_ids']);
         }
@@ -317,6 +320,17 @@ class AttendanceSessionController extends Controller
                         ->where('attendance_date', $sessionDate)
                         ->first();
 
+                    if (!$isAttendanceRequired) {
+                        // For non-required sessions (weekends), we don't want "Ghost" records.
+                        // If they didn't clock in (still pending), just delete the record so it doesn't show in history.
+                        if ($existingRecord && $existingRecord->status === 'pending') {
+                            $existingRecord->delete();
+                        }
+                        // If they don't have a record at all, don't create one.
+                        continue;
+                    }
+
+                    // For REQUIRED sessions (Mon-Fri), ensure everyone has a status
                     if (!$existingRecord) {
                         // Create new record for missing employee
                         \App\Models\AttendanceRecord::create([
