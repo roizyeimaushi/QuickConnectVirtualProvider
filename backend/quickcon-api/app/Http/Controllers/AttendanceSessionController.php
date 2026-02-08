@@ -72,12 +72,7 @@ class AttendanceSessionController extends Controller
         $schedule = \App\Models\Schedule::find($validated['schedule_id']);
         $isOvernight = $schedule ? $schedule->is_overnight : false;
         
-        $isWeekendOffline = false;
-        if ($isOvernight) {
-             $isWeekendOffline = ($dayOfWeek === Carbon::SATURDAY);
-        } else {
-             $isWeekendOffline = ($dayOfWeek === Carbon::SATURDAY || $dayOfWeek === Carbon::SUNDAY);
-        }
+        $isWeekendOffline = ($dayOfWeek === Carbon::SATURDAY || $dayOfWeek === Carbon::SUNDAY);
         $isRequired = !$isWeekendOffline;
 
         $session = AttendanceSession::create([

@@ -48,20 +48,11 @@ class ResetDailyAttendanceSession extends Command
         $isOvernight = $schedule->is_overnight;
         
         // ============================================================
-        // SMART WEEKEND LOGIC:
-        // Regular Shift: Sat/Sun are weekends.
-        // Night Shift (Overnight): 
-        //   - Saturday Night (23:00) is the primary "Off" shift.
-        //   - Sunday Night (23:00) is technically the start of the Monday workday.
+        // STRICT 2-DAY WEEKEND GAP:
+        // Skip both Saturday and Sunday starts for ALL shifts.
+        // Monday Night (23:00) will be the first session of the week.
         // ============================================================
-        $isTrueWeekend = false;
-        if ($isOvernight) {
-            // Only Saturday Night is a hard "No Work" for night shifts
-            $isTrueWeekend = ($dayOfWeek === Carbon::SATURDAY);
-        } else {
-            // Standard Sat/Sun for day shifts
-            $isTrueWeekend = ($dayOfWeek === Carbon::SATURDAY || $dayOfWeek === Carbon::SUNDAY);
-        }
+        $isTrueWeekend = ($dayOfWeek === Carbon::SATURDAY || $dayOfWeek === Carbon::SUNDAY);
 
         if (!$allowWeekend && $isTrueWeekend) {
             $dayName = $today->format('l');
