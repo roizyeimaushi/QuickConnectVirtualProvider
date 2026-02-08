@@ -483,7 +483,9 @@ export default function SessionDetailsPage() {
                                     <div className="space-y-1">
                                         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Protocol</p>
                                         <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                                            {session.attendance_required ? "Auto-mark ABSENT if not present" : "Excused / Voluntary Attendance"}
+                                            {session.attendance_required && ![0, 6].includes(new Date(session.date).getDay())
+                                                ? "Auto-mark ABSENT if not present"
+                                                : "Voluntary / Day Off (No penalties)"}
                                         </p>
                                     </div>
                                 </div>
@@ -557,9 +559,9 @@ export default function SessionDetailsPage() {
                                                 <div className="flex items-center gap-2">
                                                     <Badge
                                                         variant="outline"
-                                                        className={statusConfig[record.status] ? statusConfig[record.status].color : "bg-gray-50 text-gray-700 border-gray-200"}
+                                                        className={record.status === 'optional' ? statusConfig.optional.color : (statusConfig[record.status] ? statusConfig[record.status].color : "bg-gray-50 text-gray-700 border-gray-200")}
                                                     >
-                                                        {record.user?.status === 'inactive' ? 'inactive' : (statusConfig[record.status]?.label || record.status)}
+                                                        {record.user?.status === 'inactive' ? 'inactive' : (record.status === 'optional' ? 'Day Off' : (statusConfig[record.status]?.label || record.status))}
                                                     </Badge>
 
                                                     <DropdownMenu>
@@ -731,9 +733,9 @@ export default function SessionDetailsPage() {
                                                     <TableCell className="text-center">
                                                         <Badge
                                                             variant="outline"
-                                                            className={statusConfig[record.status] ? statusConfig[record.status].color : "bg-gray-50 text-gray-700 border-gray-200"}
+                                                            className={record.status === 'optional' ? statusConfig.optional.color : (statusConfig[record.status] ? statusConfig[record.status].color : "bg-gray-50 text-gray-700 border-gray-200")}
                                                         >
-                                                            {record.user?.status === 'inactive' ? 'inactive' : (statusConfig[record.status]?.label || record.status)}
+                                                            {record.user?.status === 'inactive' ? 'inactive' : (record.status === 'optional' ? 'Day Off' : (statusConfig[record.status]?.label || record.status))}
                                                         </Badge>
                                                     </TableCell>
 

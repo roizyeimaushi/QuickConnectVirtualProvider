@@ -110,6 +110,7 @@ class ResetDailyAttendanceSession extends Command
             'date' => $today,
             'status' => 'active',
             'attendance_required' => $attendanceRequired,
+            'session_type' => $attendanceRequired ? 'Normal' : 'Weekend',
             'opened_at' => now(),
             'created_by' => $adminUser->id, // System-created (using admin account)
         ]);
