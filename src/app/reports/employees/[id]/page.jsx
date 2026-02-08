@@ -245,9 +245,9 @@ export default function EmployeeReportDetailPage() {
                                         <Badge variant="outline" className="font-mono text-[10px]">
                                             {employee.employee_id}
                                         </Badge>
-                                        <span className="flex items-center gap-1 text-sm">
-                                            <Briefcase className="h-3.5 w-3.5" />
-                                            {employee.position}
+                                        <span className="flex items-center gap-1 text-sm whitespace-nowrap">
+                                            <Briefcase className="h-3.5 w-3.5 shrink-0" />
+                                            {employee.department || employee.position}
                                         </span>
                                     </div>
                                     <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold px-2 py-0.5 rounded-md bg-muted/50 border border-border/50">

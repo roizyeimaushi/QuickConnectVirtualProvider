@@ -156,8 +156,8 @@ export default function AdminLoginPage() {
                                     }}
                                 />
                             </div>
-                            <CardTitle className="text-2xl sm:text-4xl font-black tracking-tight font-inter whitespace-nowrap text-slate-900">
-                                QuickConn Admin
+                            <CardTitle className="text-2xl sm:text-4xl font-black tracking-tight font-inter whitespace-nowrap">
+                                <span className="text-emerald-600">QuickConn</span> <span className="text-slate-900">Admin</span>
                             </CardTitle>
                             <CardDescription className="text-slate-500 mt-2 text-base">
                                 Unauthorized access is strictly prohibited
