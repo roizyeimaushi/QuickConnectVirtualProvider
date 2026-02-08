@@ -199,7 +199,7 @@ function SessionInfoCard({ session, loading, isWeekend }) {
     );
 }
 
-function AttendanceConfirmationCard({ session, canConfirm, onConfirm, confirming, loading, checkInMessage, checkInReason, todayRecord, isWeekend, locationState }) {
+function AttendanceConfirmationCard({ session, canConfirm, onConfirm, confirming, loading, checkInMessage, checkInReason, todayRecord, isWeekend, locationState, onGoToDashboard }) {
     if (loading) {
         return null;
     }
@@ -211,6 +211,9 @@ function AttendanceConfirmationCard({ session, canConfirm, onConfirm, confirming
                     <Calendar className="h-10 w-10 text-muted-foreground mb-4" />
                     <h3 className="text-lg font-medium">It's the Weekend!</h3>
                     <p className="text-sm text-muted-foreground mb-4">No work scheduled for today.</p>
+                    <Button variant="outline" onClick={onGoToDashboard}>
+                        Go to Dashboard
+                    </Button>
                 </CardContent>
             </Card>
         );
@@ -605,6 +608,7 @@ export default function AttendanceConfirmPage() {
                     todayRecord={todayRecord}
                     isWeekend={isWeekend}
                     locationState={locationState}
+                    onGoToDashboard={() => router.push('/dashboard/employee')}
                 />
             </div>
         </DashboardLayout>

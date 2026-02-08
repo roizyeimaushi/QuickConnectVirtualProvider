@@ -106,7 +106,7 @@ function SessionInfoCard({ session, loading, isWeekend }) {
     );
 }
 
-function CheckOutConfirmationCard({ recordId, canCheckOut, onCheckOut, checkingOut, loading, checkOutMessage, onGoToTimeIn, isWeekend }) {
+function CheckOutConfirmationCard({ recordId, canCheckOut, onCheckOut, checkingOut, loading, checkOutMessage, onGoToTimeIn, onGoToDashboard, isWeekend }) {
     if (loading) {
         return null;
     }
@@ -118,7 +118,7 @@ function CheckOutConfirmationCard({ recordId, canCheckOut, onCheckOut, checkingO
                     <Calendar className="h-10 w-10 text-muted-foreground mb-4" />
                     <h3 className="text-lg font-medium">It's the Weekend!</h3>
                     <p className="text-sm text-muted-foreground mb-4">No work scheduled for today.</p>
-                    <Button variant="outline" onClick={onGoToTimeIn}>
+                    <Button variant="outline" onClick={() => onGoToDashboard()}>
                         Go to Dashboard
                     </Button>
                 </CardContent>
@@ -346,6 +346,7 @@ export default function CheckOutPage() {
                     loading={loading}
                     checkOutMessage={checkOutMessage}
                     onGoToTimeIn={() => router.push('/attendance/confirm')}
+                    onGoToDashboard={() => router.push('/dashboard/employee')}
                     isWeekend={isWeekend}
                 />
             </div>
