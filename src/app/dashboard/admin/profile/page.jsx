@@ -190,7 +190,7 @@ export default function AdminProfilePage() {
                                         <span className="capitalize">{user?.role}</span>
                                     </div>
                                     <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold px-2 py-0.5 rounded-md bg-muted/50 border border-border/50">
-                                        {user?.employee_type || "Regular"}
+                                        {user?.employee_type || "SYSTEM"}
                                     </div>
                                 </CardDescription>
                             </div>
