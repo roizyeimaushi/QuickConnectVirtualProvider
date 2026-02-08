@@ -76,10 +76,10 @@ class SettingsController extends Controller
     {
         return [
             'company_name', 'system_logo', 'timezone', 'language', 'date_format', 'time_format',
-            'grace_period', 'late_threshold', 'allow_multi_checkin', 'prevent_duplicate_checkin', 'auto_checkout',
+            'grace_period', 'late_threshold', 'allow_multi_checkin', 'prevent_duplicate_checkin', 'auto_checkout', 'auto_checkout_grace_hours',
             'checkin_start', 'checkin_end', 'weekend_checkin', 'holiday_checkin',
             'work_start', 'work_end', 'auto_absent_time', 'min_work_hours', 'allow_late_checkout', 'strict_mode',
-            'max_breaks', 'max_break_duration', 'auto_end_break', 'prevent_overlap_break',
+            'max_breaks', 'max_break_duration', 'auto_end_break', 'prevent_overlap_break', 'attendance_mode',
             'allow_overtime', 'min_overtime_minutes', 'overtime_rate', 'require_ot_approval', 'ot_rounding',
             'break_duration', 'break_start_window', 'break_end_window', 'auto_resume', 'break_penalty',
             'late_alerts', 'absent_alerts', 'break_alerts', 'notify_email', 'notify_sms', 'notify_inapp',

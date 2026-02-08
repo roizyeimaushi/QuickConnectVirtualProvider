@@ -25,8 +25,8 @@ export default function BreakSettingsPage() {
                 max_break_duration: settings.max_break_duration || settings.break_duration || "90",
 
                 // Break Time Window
-                break_start_window: settings.break_start_window || "00:00",
-                break_end_window: settings.break_end_window || "01:30",
+                break_start_window: settings.break_start_window || "01:00",
+                break_end_window: settings.break_end_window || "02:30",
 
                 // Enforcement Settings
                 auto_end_break: settings.auto_end_break === "1" || settings.auto_end_break === true ||

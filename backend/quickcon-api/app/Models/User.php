@@ -92,4 +92,12 @@ class User extends Authenticatable
     {
         return "{$this->first_name} {$this->last_name}";
     }
+
+    public function getIsOnlineAttribute(): bool
+    {
+        return (bool) UserSession::where('user_id', $this->id)
+            ->where('is_online', true)
+            ->orderBy('last_activity', 'desc')
+            ->value('is_online');
+    }
 }

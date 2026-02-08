@@ -27,6 +27,7 @@ class UserResource extends JsonResource
             'employee_type' => $this->employee_type,
             'avatar' => $this->avatar,
             'status' => $this->status,
+            'is_online' => $this->is_online,
             'created_at' => $this->created_at ? $this->created_at->toIso8601String() : null,
         ];
     }

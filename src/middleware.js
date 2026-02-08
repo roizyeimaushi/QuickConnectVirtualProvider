@@ -17,7 +17,6 @@ const adminRoutes = [
 const employeeRoutes = [
     "/dashboard/employee",
     "/attendance/confirm",
-    "/attendance/history",
 ];
 
 export function middleware(request) {

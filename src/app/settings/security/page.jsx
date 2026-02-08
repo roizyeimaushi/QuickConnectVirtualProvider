@@ -41,7 +41,10 @@ export default function SecuritySettingsPage() {
 
     if (loading || !isReady) {
         return (
-            null
+            <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground">Loading settings...</p>
+            </div>
         );
     }
 
@@ -56,12 +59,26 @@ export default function SecuritySettingsPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-lg sm:text-xl">Access Control</CardTitle>
+                    <CardTitle className="text-lg sm:text-xl font-semibold">Access Control</CardTitle>
                     <CardDescription>
                         Manage authentication and session settings.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                    <div className="flex items-center justify-between p-4 border rounded-xl bg-muted/5 shadow-sm">
+                        <Label htmlFor="2fa" className="flex flex-col space-y-1 cursor-pointer">
+                            <span className="font-semibold text-base">Two-Factor Authentication (2FA)</span>
+                            <span className="font-normal text-xs text-muted-foreground">Add an extra layer of security to account logins.</span>
+                        </Label>
+                        <div className="flex items-center gap-3">
+                            <span className="text-[10px] font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded uppercase">Experimental</span>
+                            <Switch
+                                id="2fa"
+                                checked={formData["2fa_enabled"] || false}
+                                onCheckedChange={(val) => handleChange("2fa_enabled", val)}
+                            />
+                        </div>
+                    </div>
 
                     <div className="grid gap-4 md:grid-cols-2">
                         <div className="space-y-2">

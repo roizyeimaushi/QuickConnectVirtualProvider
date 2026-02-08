@@ -25,6 +25,11 @@ class EmployeeController extends Controller
                 ->whereNotIn('status', ['pending', 'optional'])
                 ->orderBy('attendance_date', 'desc')
                 ->limit(1)
+            ])
+            ->addSelect(['is_online' => \App\Models\UserSession::select('is_online')
+                ->whereColumn('user_id', 'users.id')
+                ->orderBy('last_activity', 'desc')
+                ->limit(1)
             ]);
 
         if ($request->has('search') && $request->search) {

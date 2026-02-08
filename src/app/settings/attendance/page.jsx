@@ -32,10 +32,13 @@ function AttendanceSettingsContent() {
             isInitialized.current = true;
             setFormData({
                 // --- SECTION 1: Rules Configuration (Global) ---
-                attendance_mode: "automatic",
+                attendance_mode: settings.attendance_mode || "automatic",
                 timezone: settings.timezone || "Asia/Manila",
-                time_format: "24-hour",
-                date_format: "YYYY-MM-DD",
+                time_format: settings.time_format === '24h' ? '24-hour' : (settings.time_format || "24-hour"),
+                date_format: settings.date_format === 'mdy' ? 'MM/DD/YYYY' :
+                    settings.date_format === 'dmy' ? 'DD/MM/YYYY' :
+                        settings.date_format === 'ymd' ? 'YYYY-MM-DD' :
+                            (settings.date_format || "MM/DD/YYYY"),
 
                 // Validation Rules
                 grace_period: settings.grace_period || "15",
@@ -143,19 +146,18 @@ function AttendanceSettingsContent() {
                             <div className="grid gap-4 md:grid-cols-4 p-4 bg-muted/30 rounded-lg border">
                                 <div className="space-y-2">
                                     <Label className="text-muted-foreground">Attendance Mode</Label>
-                                    <p className="font-mono font-medium">Automatic</p>
+                                    <p className="font-mono font-medium capitalize">{formData.attendance_mode}</p>
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-muted-foreground">Time Format</Label>
                                     <p className="font-mono font-medium">
-                                        24-hour
+                                        {formData.time_format}
                                     </p>
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-muted-foreground">Date Format</Label>
                                     <p className="font-mono font-medium">
-                                        {settings?.date_format === 'mdy' ? 'MM/DD/YYYY' :
-                                            settings?.date_format === 'dmy' ? 'DD/MM/YYYY' : 'YYYY-MM-DD'}
+                                        {formData.date_format}
                                     </p>
                                 </div>
                                 <div className="space-y-2">

@@ -83,8 +83,8 @@ class BreakController extends Controller
         // This section was redundant and has been cleaned up.
 
         // DYNAMIC SCHEDULE LOGIC - Read from Settings
-        $startTime = \App\Models\Setting::where('key', 'break_start_window')->value('value') ?? '00:00:00';
-        $endTime = \App\Models\Setting::where('key', 'break_end_window')->value('value') ?? '23:59:59';
+        $startTime = \App\Models\Setting::where('key', 'break_start_window')->value('value') ?? '01:00:00';
+        $endTime = \App\Models\Setting::where('key', 'break_end_window')->value('value') ?? '02:30:00';
         $maxMinutes = (int)(\App\Models\Setting::where('key', 'break_duration')->value('value') ?? 90);
 
         // Ensure 24-hour format logic for comparison if needed, but for display we send raw or formatted

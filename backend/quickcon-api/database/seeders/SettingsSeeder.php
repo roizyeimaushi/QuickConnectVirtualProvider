@@ -22,6 +22,7 @@ class SettingsSeeder extends Seeder
             ['key' => 'language', 'value' => 'en', 'group' => 'general', 'type' => 'string'],
             ['key' => 'date_format', 'value' => 'mdy', 'group' => 'general', 'type' => 'string'],
             ['key' => 'time_format', 'value' => '24h', 'group' => 'general', 'type' => 'string'],
+            ['key' => 'attendance_mode', 'value' => 'automatic', 'group' => 'attendance', 'type' => 'string'],
 
             // ==========================================
             // Attendance Rules - Validation Thresholds
@@ -31,6 +32,7 @@ class SettingsSeeder extends Seeder
             ['key' => 'allow_multi_checkin', 'value' => '0', 'group' => 'attendance', 'type' => 'boolean'],
             ['key' => 'prevent_duplicate_checkin', 'value' => '1', 'group' => 'attendance', 'type' => 'boolean'],
             ['key' => 'auto_checkout', 'value' => '1', 'group' => 'attendance', 'type' => 'boolean'],
+            ['key' => 'auto_checkout_grace_hours', 'value' => '1', 'group' => 'attendance', 'type' => 'integer'],
 
             // ==========================================
             // Attendance Rules - Check-in Window (Night Shift: 23:00 - 07:00)
@@ -73,8 +75,8 @@ class SettingsSeeder extends Seeder
             // Break Settings (Legacy)
             // ==========================================
             ['key' => 'break_duration', 'value' => '90', 'group' => 'break', 'type' => 'integer'],
-            ['key' => 'break_start_window', 'value' => '00:00', 'group' => 'break', 'type' => 'string'],
-            ['key' => 'break_end_window', 'value' => '01:00', 'group' => 'break', 'type' => 'string'],
+            ['key' => 'break_start_window', 'value' => '01:00', 'group' => 'break', 'type' => 'string'],
+            ['key' => 'break_end_window', 'value' => '02:30', 'group' => 'break', 'type' => 'string'],
             ['key' => 'auto_resume', 'value' => '0', 'group' => 'break', 'type' => 'boolean'],
             ['key' => 'break_penalty', 'value' => '1', 'group' => 'break', 'type' => 'boolean'],
 

@@ -33,7 +33,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage, AvatarBadge } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -132,9 +132,8 @@ export function AppSidebar() {
             ) : (
                 <Avatar className="h-8 w-8 rounded-full border border-white/10 shrink-0">
                     <AvatarImage src={getAvatarUrl(user?.avatar)} alt={user?.first_name} />
-                    <AvatarFallback className="rounded-full bg-white/10 text-white text-xs font-bold">
-                        {getInitials(user?.first_name, user?.last_name)}
-                    </AvatarFallback>
+                    <AvatarFallback className="rounded-full bg-white/10 text-white text-xs font-bold">CN</AvatarFallback>
+                    <AvatarBadge className="bg-emerald-500 border-sidebar" />
                 </Avatar>
             )}
             <div className="grid flex-1 text-left text-sm leading-tight ml-2.5 group-data-[collapsible=icon]:hidden overflow-hidden">

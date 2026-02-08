@@ -49,4 +49,19 @@ function AvatarFallback({
   );
 }
 
-export { Avatar, AvatarImage, AvatarFallback }
+function AvatarBadge({
+  className,
+  ...props
+}) {
+  return (
+    <span
+      data-slot="avatar-badge"
+      className={cn(
+        "absolute right-0 bottom-0 flex size-2.5 rounded-full border-2 border-background",
+        className
+      )}
+      {...props} />
+  );
+}
+
+export { Avatar, AvatarImage, AvatarFallback, AvatarBadge }

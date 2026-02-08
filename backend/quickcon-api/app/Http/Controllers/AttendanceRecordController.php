@@ -520,7 +520,9 @@ class AttendanceRecordController extends Controller
         
         // Weekend Check
         $dayOfWeek = $baseDate->dayOfWeek;
-        if ($dayOfWeek === Carbon::SATURDAY || $dayOfWeek === Carbon::SUNDAY) {
+        $weekendAllowed = filter_var(Setting::where('key', 'weekend_checkin')->value('value'), FILTER_VALIDATE_BOOLEAN);
+        
+        if (!$weekendAllowed && ($dayOfWeek === Carbon::SATURDAY || $dayOfWeek === Carbon::SUNDAY)) {
             return response()->json([
                 'can_confirm' => false,
                 'reason' => 'no_weekend_shift',

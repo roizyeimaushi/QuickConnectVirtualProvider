@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage, AvatarBadge } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import Skeleton from "@/components/ui/skeleton";
 import { DetailHeaderSkeleton, StatsCardSkeleton, TableSkeleton, MobileCardSkeleton } from "@/components/ui/skeleton-patterns";
@@ -230,9 +230,8 @@ export default function EmployeeReportDetailPage() {
                         <div className="flex items-center gap-4">
                             <Avatar className="h-16 w-16 border-2 border-primary/10">
                                 <AvatarImage src={employee.avatar} />
-                                <AvatarFallback className="text-lg">
-                                    {getInitials(employee.first_name, employee.last_name)}
-                                </AvatarFallback>
+                                <AvatarFallback className="text-lg font-bold">CN</AvatarFallback>
+                                <AvatarBadge className={`size-3.5 border-3 ${employee.is_online ? 'bg-emerald-500' : 'bg-red-500'}`} />
                             </Avatar>
                             <div>
                                 <h1 className="text-2xl font-bold tracking-tight">
