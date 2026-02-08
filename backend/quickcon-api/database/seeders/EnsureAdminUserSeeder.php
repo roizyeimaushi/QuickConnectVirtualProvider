@@ -15,12 +15,15 @@ class EnsureAdminUserSeeder extends Seeder
     public function run(): void
     {
         $adminEmail = 'admin@quickconn.net';
+        $adminId = 'SYSADM-001';
         
-        $exists = User::where('email', $adminEmail)->exists();
+        $user = User::where('email', $adminEmail)
+            ->orWhere('employee_id', $adminId)
+            ->first();
 
-        if (!$exists) {
+        if (!$user) {
             User::create([
-                'employee_id' => 'SYSADM-001',
+                'employee_id' => $adminId,
                 'first_name' => 'Admin',
                 'last_name' => 'User',
                 'email' => $adminEmail,
@@ -32,7 +35,12 @@ class EnsureAdminUserSeeder extends Seeder
             
             $this->command->info('Default Admin user created successfully.');
         } else {
-            $this->command->info('Admin user already exists. Skipping.');
+            // Update existing user to ensure they serve as the admin if they match email or ID
+            $user->update([
+                'role' => 'admin',
+                'status' => 'active'
+            ]);
+            $this->command->info('Admin user already exists (by email or ID). Updated role and status.');
         }
 
         // ==========================================

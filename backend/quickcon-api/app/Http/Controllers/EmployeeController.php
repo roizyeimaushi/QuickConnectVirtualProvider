@@ -79,6 +79,7 @@ class EmployeeController extends Controller
             'email' => 'required|email|unique:users,email',
             'password' => $passwordRules,
             'position' => 'required|string|max:100',
+            'department' => 'nullable|string|max:100',
             'employee_type' => 'nullable|string|max:100',
         ], [
             'password.regex' => 'Password must contain at least one special character (!@#$%^&*(),.?":{}|<>).',
@@ -113,15 +114,17 @@ class EmployeeController extends Controller
     public function update(Request $request, User $employee)
     {
         $validated = $request->validate([
+            'employee_id' => 'string|max:20|unique:users,employee_id,' . $employee->id,
             'first_name' => 'string|max:100',
             'last_name' => 'string|max:100',
             'email' => 'email|unique:users,email,' . $employee->id,
             'position' => 'string|max:100',
+            'department' => 'nullable|string|max:100',
             'employee_type' => 'nullable|string|max:100',
             'status' => 'in:active,inactive',
-            'password' => 'nullable|string|min:6',
+            'password' => 'nullable|string|min:8|confirmed',
         ]);
-
+        
         $oldValues = $employee->toArray();
         
         // Hash password if provided

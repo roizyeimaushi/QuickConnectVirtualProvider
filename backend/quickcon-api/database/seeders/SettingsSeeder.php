@@ -106,9 +106,13 @@ class SettingsSeeder extends Seeder
         ];
 
         foreach ($settings as $setting) {
-            Setting::firstOrCreate(
+            Setting::updateOrCreate(
                 ['key' => $setting['key']],
-                $setting
+                [
+                    'value' => $setting['value'],
+                    'group' => $setting['group'],
+                    'type' => $setting['type'],
+                ]
             );
         }
     }
