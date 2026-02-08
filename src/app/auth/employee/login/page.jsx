@@ -242,11 +242,6 @@ export default function EmployeeLoginPage() {
                         </form>
 
                         {/* Footer text */}
-                        <div className="pt-8 text-center">
-                            <p className="text-slate-400 text-sm font-medium">
-                                QuickConn Virtual Attendance System
-                            </p>
-                        </div>
                     </div>
                 </div>
             </div>

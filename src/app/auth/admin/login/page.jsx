@@ -159,7 +159,7 @@ export default function AdminLoginPage() {
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 <div className="space-y-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="email" className="text-xs font-bold text-slate-700 uppercase ml-1 tracking-widest">Administrator Email</Label>
+                                        <Label htmlFor="email" className="text-xs font-bold text-slate-700 uppercase ml-1 tracking-widest">Email</Label>
                                         <div className="relative group">
                                             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-600 transition-colors">
                                                 <Mail className="h-5 w-5" />
@@ -177,7 +177,7 @@ export default function AdminLoginPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="password" className="text-xs font-bold text-slate-700 uppercase ml-1 tracking-widest">Access Key</Label>
+                                        <Label htmlFor="password" className="text-xs font-bold text-slate-700 uppercase ml-1 tracking-widest">Password</Label>
                                         <div className="relative group">
                                             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-600 transition-colors">
                                                 <Lock className="h-5 w-5" />
@@ -224,16 +224,13 @@ export default function AdminLoginPage() {
                                         background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
                                     }}
                                 >
-                                    Log In to Console
+                                    Login
                                 </Button>
                             </form>
                         </CardContent>
                     </Card>
 
                     <div className="flex flex-col items-center mt-10 space-y-2">
-                        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em]">
-                            Enterprise Grade Security
-                        </p>
                         <p className="text-slate-300 text-[10px]">
                             &copy; {new Date().getFullYear()} QuickConn Virtual Services. All rights reserved.
                         </p>
