@@ -314,17 +314,22 @@ class AuthController extends Controller
 
         if ($request->hasFile('avatar')) {
             // Delete old avatar if exists
-            if ($user->avatar && str_contains($user->avatar, '/storage/avatars/')) {
-                // Extract filename to delete from storage
-                $filename = basename($user->avatar);
-                if ($filename) {
-                    Storage::disk('public')->delete('avatars/' . $filename);
+            if ($user->avatar) {
+                // Extract relative path to delete from storage
+                // It might be a full URL (old format) or a relative path (new format)
+                $oldPath = $user->avatar;
+                if (str_contains($oldPath, '/storage/')) {
+                    $oldPath = explode('/storage/', $oldPath)[1];
+                }
+                
+                if ($oldPath && Storage::disk('public')->exists($oldPath)) {
+                    Storage::disk('public')->delete($oldPath);
                 }
             }
             
             $path = $request->file('avatar')->store('avatars', 'public');
-            // Use Storage::url() to support S3/Cloud drivers automatically
-            $user->avatar = Storage::disk('public')->url($path);
+            // Store ONLY the path, not the full URL, to allow different devices to resolve the IP correctly
+            $user->avatar = $path;
         }
 
         $user->save();
