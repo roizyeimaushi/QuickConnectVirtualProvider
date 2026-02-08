@@ -143,8 +143,7 @@ export default function EmployeeLoginPage() {
                         <div className="max-w-xl animate-fade-in space-y-8">
                             <h1 className="text-4xl lg:text-5xl font-black leading-tight tracking-tight text-white drop-shadow-sm select-none">
                                 Welcome to <br />
-                                <span className="text-[#22c55e]">QuickConnect Virtual</span><br />
-                                <span className="text-white text-3xl font-bold">Agency Provider</span>
+                                <span className="text-[#22c55e]">QuickConn Virtual</span>
                             </h1>
                             <p className="text-white text-lg lg:text-xl font-medium max-w-md mx-auto leading-relaxed drop-shadow-sm">
                                 Track your attendance, view schedules, and manage your work records in one convenient portal.
@@ -163,7 +162,7 @@ export default function EmployeeLoginPage() {
                         <div className="flex justify-center flex-col items-center space-y-6">
                             <img
                                 src={getLogoUrl(settings?.system_logo)}
-                                alt="QuickConnect Logo"
+                                alt="QuickConn Logo"
                                 className="h-auto max-h-32 w-auto object-contain"
                                 onError={(e) => {
                                     e.currentTarget.src = "/quickconnect-logo.png";
@@ -171,7 +170,7 @@ export default function EmployeeLoginPage() {
                                 }}
                             />
                             <p className="text-slate-400 text-sm font-medium">
-                                Sign in to access your QuickConnect Virtual Agency Provider account
+                                Sign in to access your QuickConn Virtual account
                             </p>
                         </div>
 
