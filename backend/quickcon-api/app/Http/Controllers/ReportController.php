@@ -138,8 +138,8 @@ class ReportController extends Controller
 
             $sessionsList = $allTodaySessions
                 ->filter(function($session) {
-                    // Hide non-required sessions if they have no check-ins
-                    return $session->attendance_required || $session->confirmed_count > 0;
+                    // Show all sessions that were either required OR have activity OR have assigned employees
+                    return $session->attendance_required || $session->confirmed_count > 0 || $session->total_count > 0;
                 })
                 ->map(function($session) {
                     return [
@@ -262,7 +262,9 @@ class ReportController extends Controller
             $today = $physicalDate->toDateString(); // Switch to physical date for message
         }
 
-        if ($isWeekend) {
+        // NEW LOGIC: Only show weekend message if NO session exists and NO active record is found.
+        // This allows Admin-created weekend shifts to work correctly.
+        if ($isWeekend && !$todaySession && !$activeRecord) {
             $dayName = Carbon::parse($today)->format('l'); // 'l' gives full day name
             $thisMonth = Carbon::now()->startOfMonth();
             $monthlyStats = AttendanceRecord::where('user_id', $user->id)

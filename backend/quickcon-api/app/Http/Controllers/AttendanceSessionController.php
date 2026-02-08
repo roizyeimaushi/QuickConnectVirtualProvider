@@ -93,14 +93,11 @@ class AttendanceSessionController extends Controller
         if (empty($validated['employee_ids'])) {
             // Only auto-create records if attendance is required
             // On weekends, we leave it empty so it shows as 0/0 and "Optional" in detailed view
-            if ($isRequired) {
-                $employeeIds = \App\Models\User::where('role', 'employee')
-                    ->where('status', 'active')
-                    ->pluck('id')
-                    ->toArray();
-            } else {
-                $employeeIds = [];
-            }
+            // Default: Assign all active employees so they see the session in their dashboard
+            $employeeIds = \App\Models\User::where('role', 'employee')
+                ->where('status', 'active')
+                ->pluck('id')
+                ->toArray();
         } else {
             $employeeIds = array_unique($validated['employee_ids']);
         }
