@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { employeesApi } from "@/lib/api";
 import { useAuth } from "@/components/providers/auth-provider";
+import { getAvatarUrl } from "@/lib/constants";
 import { getInitials } from "@/lib/utils";
 import {
     Search,
