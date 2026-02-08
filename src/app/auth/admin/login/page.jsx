@@ -149,14 +149,14 @@ export default function AdminLoginPage() {
                                 <img
                                     src={getLogoUrl(settings?.system_logo)}
                                     alt="QuickConn Logo"
-                                    className="h-16 w-auto object-contain"
+                                    className="h-28 w-auto object-contain"
                                     onError={(e) => {
                                         e.currentTarget.src = "/quickconnect-logo.png";
                                         e.currentTarget.onerror = null;
                                     }}
                                 />
                             </div>
-                            <CardTitle className="text-4xl font-black tracking-tight font-inter">
+                            <CardTitle className="text-3xl sm:text-4xl font-black tracking-tight font-inter whitespace-nowrap">
                                 <span className="text-emerald-600">QuickConn</span> <span className="text-slate-900">Admin</span>
                             </CardTitle>
                             <CardDescription className="text-slate-500 mt-2 text-base">

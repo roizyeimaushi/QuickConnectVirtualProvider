@@ -163,7 +163,7 @@ export default function EmployeeLoginPage() {
                             <img
                                 src={getLogoUrl(settings?.system_logo)}
                                 alt="QuickConn Logo"
-                                className="h-auto max-h-24 w-auto object-contain"
+                                className="h-auto max-h-32 w-auto object-contain"
                                 onError={(e) => {
                                     e.currentTarget.src = "/quickconnect-logo.png";
                                     e.currentTarget.onerror = null;
