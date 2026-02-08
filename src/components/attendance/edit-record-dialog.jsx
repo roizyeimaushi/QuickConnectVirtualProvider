@@ -206,7 +206,7 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <DialogContent className="w-[calc(100%-1rem)] sm:max-w-lg max-h-[90vh] overflow-y-auto p-4 sm:p-6 rounded-2xl">
                 <DialogHeader className="border-b pb-4 text-left">
                     <DialogTitle className="text-xl sm:text-2xl font-bold tracking-tight">Edit Attendance Record</DialogTitle>
                     <DialogDescription className="text-xs sm:text-sm">
@@ -242,9 +242,9 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                     </div>
 
                     {/* Status and Time Inputs */}
-                    <div className="flex flex-row gap-6">
-                        <div className="flex-1 space-y-2">
-                            <Label htmlFor="status" className="text-xs font-bold uppercase text-muted-foreground">Status Override</Label>
+                    <div className="grid grid-cols-2 gap-3 sm:gap-6">
+                        <div className="space-y-1.5 overflow-hidden">
+                            <Label htmlFor="status" className="text-[10px] sm:text-xs font-bold uppercase text-muted-foreground truncate block">Status Override</Label>
                             <Select
                                 value={formData.status}
                                 onValueChange={(val) => {
@@ -252,8 +252,8 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                                     setIsManual(true);
                                 }}
                             >
-                                <SelectTrigger className="h-11">
-                                    <SelectValue placeholder="Select status" />
+                                <SelectTrigger className="h-10 sm:h-11 px-2 sm:px-3 text-xs sm:text-sm">
+                                    <SelectValue placeholder="Status" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="present">Present</SelectItem>
@@ -264,11 +264,11 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="flex-1 space-y-2">
-                            <Label className="text-xs font-bold uppercase text-muted-foreground invisible">Placeholder</Label>
-                            <div className="flex items-center justify-start h-11 px-3 rounded-md border bg-slate-50 dark:bg-slate-900">
-                                <span className="text-xs font-bold text-muted-foreground mr-2">Calculated:</span>
-                                <Badge variant="outline" className={`capitalize text-[10px] ${totals.autoStatus === 'present' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                        <div className="space-y-1.5 overflow-hidden">
+                            <Label className="text-[10px] sm:text-xs font-bold uppercase text-muted-foreground invisible block">Placeholder</Label>
+                            <div className="flex items-center justify-start h-10 sm:h-11 px-2 sm:px-3 rounded-md border bg-slate-50 dark:bg-slate-900 overflow-hidden">
+                                <span className="text-[10px] sm:text-xs font-bold text-muted-foreground mr-1 sm:mr-2 shrink-0">Calc:</span>
+                                <Badge variant="outline" className={`capitalize text-[9px] sm:text-[10px] px-1 sm:px-2 truncate ${totals.autoStatus === 'present' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                                     totals.autoStatus === 'late' ? 'bg-amber-50 text-amber-700 border-amber-200' :
                                         totals.autoStatus === 'absent' ? 'bg-red-50 text-red-700 border-red-200' :
                                             'bg-blue-50 text-blue-700 border-blue-200'
@@ -279,53 +279,53 @@ export function EditRecordDialog({ record, open, onOpenChange, onSuccess }) {
                         </div>
                     </div>
 
-                    <div className="flex flex-row gap-6">
-                        <div className="flex-1 space-y-2">
-                            <Label htmlFor="time_in" className="text-xs font-bold uppercase text-muted-foreground">Time In</Label>
+                    <div className="grid grid-cols-2 gap-3 sm:gap-6">
+                        <div className="space-y-1.5">
+                            <Label htmlFor="time_in" className="text-[10px] sm:text-xs font-bold uppercase text-muted-foreground truncate block">Time In</Label>
                             <DateTimePicker
                                 value={formData.time_in}
                                 onChange={(val) => setFormData({ ...formData, time_in: val })}
-                                placeholder="Pick time in"
+                                placeholder="Time In"
                             />
                         </div>
-                        <div className="flex-1 space-y-2">
-                            <Label htmlFor="time_out" className="text-xs font-bold uppercase text-muted-foreground">Time Out</Label>
+                        <div className="space-y-1.5">
+                            <Label htmlFor="time_out" className="text-[10px] sm:text-xs font-bold uppercase text-muted-foreground truncate block">Time Out</Label>
                             <DateTimePicker
                                 value={formData.time_out}
                                 onChange={(val) => setFormData({ ...formData, time_out: val })}
-                                placeholder="Pick time out"
+                                placeholder="Time Out"
                             />
                         </div>
                     </div>
 
-                    <div className="flex flex-row gap-6">
-                        <div className="flex-1 space-y-2">
-                            <Label htmlFor="break_start" className="text-xs font-bold uppercase text-muted-foreground">Break Start</Label>
+                    <div className="grid grid-cols-2 gap-3 sm:gap-6">
+                        <div className="space-y-1.5">
+                            <Label htmlFor="break_start" className="text-[10px] sm:text-xs font-bold uppercase text-muted-foreground truncate block">Break Start</Label>
                             <DateTimePicker
                                 value={formData.break_start}
                                 onChange={(val) => setFormData({ ...formData, break_start: val })}
-                                placeholder="Pick break start"
+                                placeholder="Break Start"
                             />
                         </div>
-                        <div className="flex-1 space-y-2">
-                            <Label htmlFor="break_end" className="text-xs font-bold uppercase text-muted-foreground">Break End</Label>
+                        <div className="space-y-1.5">
+                            <Label htmlFor="break_end" className="text-[10px] sm:text-xs font-bold uppercase text-muted-foreground truncate block">Break End</Label>
                             <DateTimePicker
                                 value={formData.break_end}
                                 onChange={(val) => setFormData({ ...formData, break_end: val })}
-                                placeholder="Pick break end"
+                                placeholder="Break End"
                             />
                         </div>
                     </div>
 
                     {/* Calculated Totals */}
-                    <div className="flex flex-row gap-6 p-4 rounded-lg bg-primary/5 border border-primary/20">
-                        <div className="flex-1">
-                            <p className="text-[10px] font-bold text-primary uppercase">Total Worked</p>
-                            <p className="text-2xl font-mono font-bold text-primary">{totals.hours}h</p>
+                    <div className="grid grid-cols-2 gap-3 sm:gap-6 p-3 sm:p-4 rounded-lg bg-primary/5 border border-primary/20">
+                        <div className="overflow-hidden">
+                            <p className="text-[9px] sm:text-[10px] font-bold text-primary uppercase truncate">Total Worked</p>
+                            <p className="text-xl sm:text-2xl font-mono font-bold text-primary">{totals.hours}h</p>
                         </div>
-                        <div className="flex-1">
-                            <p className="text-[10px] font-bold text-primary uppercase">Overtime (Est.)</p>
-                            <p className="text-2xl font-mono font-bold text-primary">{totals.overtime}h</p>
+                        <div className="overflow-hidden">
+                            <p className="text-[9px] sm:text-[10px] font-bold text-primary uppercase truncate">Overtime (Est.)</p>
+                            <p className="text-xl sm:text-2xl font-mono font-bold text-primary">{totals.overtime}h</p>
                         </div>
                     </div>
 
