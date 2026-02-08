@@ -352,9 +352,7 @@ export default function EmployeesPage() {
                                                     <div className="flex items-center gap-3 flex-1 min-w-0">
                                                         <Avatar className="h-12 w-12 shrink-0">
                                                             <AvatarImage src={getAvatarUrl(employee.avatar)} />
-                                                            <AvatarFallback className="bg-primary/5 text-primary text-xs font-bold">
-                                                                {getInitials(employee.first_name, employee.last_name)}
-                                                            </AvatarFallback>
+                                                            <AvatarFallback className="bg-primary/5 text-primary text-xs font-bold">CN</AvatarFallback>
                                                             <AvatarBadge className={employee.is_online ? 'bg-emerald-500' : 'bg-red-500'} />
                                                         </Avatar>
                                                         <div className="min-w-0">
@@ -473,9 +471,7 @@ export default function EmployeesPage() {
                                                             <div className="flex items-center gap-3">
                                                                 <Avatar className="h-9 w-9">
                                                                     <AvatarImage src={getAvatarUrl(employee.avatar)} />
-                                                                    <AvatarFallback className="bg-primary/5 text-primary text-[10px] font-bold">
-                                                                        {getInitials(employee.first_name, employee.last_name)}
-                                                                    </AvatarFallback>
+                                                                    <AvatarFallback className="bg-primary/5 text-primary text-[10px] font-bold">CN</AvatarFallback>
                                                                     <AvatarBadge className={employee.is_online ? 'bg-emerald-500' : 'bg-red-500'} />
                                                                 </Avatar>
                                                                 <div className="text-left">
