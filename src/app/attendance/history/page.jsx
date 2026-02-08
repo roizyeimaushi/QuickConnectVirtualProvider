@@ -71,24 +71,70 @@ import { useToast } from "@/hooks/use-toast";
 
 
 
-function StatsSummary({ totalRecords }) {
+function StatCard({ title, value, description, icon: Icon, colorClass = "bg-primary/10", iconColor = "text-primary" }) {
     return (
-        <div className="grid gap-4 md:grid-cols-4">
-            <Card>
-                <CardContent className="flex items-center gap-4 p-4">
-                    <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                        <History className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div>
-                        <p className="text-2xl font-bold">{totalRecords}</p>
-                        <p className="text-xs text-muted-foreground">Total Records Found</p>
-                    </div>
-                </CardContent>
-            </Card>
-            {/* 
-                Detailed stats require separate aggregation API when using server-side pagination.
-                Hiding misleading partial stats for now.
-            */}
+        <Card className="transition-all hover:shadow-lg hover:border-primary/20 animate-fade-in">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-none">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                    {title}
+                </CardTitle>
+                <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center", colorClass)}>
+                    <Icon className={cn("h-5 w-5", iconColor)} />
+                </div>
+            </CardHeader>
+            <CardContent>
+                <div className="text-3xl font-bold font-mono">
+                    {value}
+                </div>
+                {description && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                        {description}
+                    </p>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
+function StatsSummary({ totalRecords, statusFilter, dateRange, records }) {
+    // Calculate page-level stats for visual enrichment
+    const presentOnPage = records.filter(r => r.status === 'present').length;
+    const hoursOnPage = records.reduce((sum, r) => sum + (parseFloat(r.hours_worked) || 0), 0).toFixed(1);
+
+    return (
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+            <StatCard
+                title="Total Records"
+                value={totalRecords}
+                description="Historical entries"
+                icon={History}
+                colorClass="bg-blue-100 dark:bg-blue-900/30"
+                iconColor="text-blue-600"
+            />
+            <StatCard
+                title="Status Filter"
+                value={statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}
+                description="Active filter"
+                icon={Filter}
+                colorClass="bg-purple-100 dark:bg-purple-900/30"
+                iconColor="text-purple-600"
+            />
+            <StatCard
+                title="Page Present"
+                value={presentOnPage}
+                description="On current page"
+                icon={CheckCircle2}
+                colorClass="bg-emerald-100 dark:bg-emerald-900/30"
+                iconColor="text-emerald-600"
+            />
+            <StatCard
+                title="Hours Logged"
+                value={`${hoursOnPage}h`}
+                description="Summed from current page"
+                icon={Timer}
+                colorClass="bg-amber-100 dark:bg-amber-900/30"
+                iconColor="text-amber-600"
+            />
         </div>
     );
 }
@@ -258,28 +304,25 @@ export default function AttendanceHistoryPage() {
         <DashboardLayout title="Attendance History">
             <div className="space-y-6 animate-fade-in">
                 {/* Header */}
-                <div>
+                <div className="flex flex-col space-y-0 text-left">
                     <h1 className="text-3xl font-bold tracking-tight">Attendance History</h1>
-                    <p className="text-muted-foreground">
-                        View your complete attendance records and statistics
+                    <p className="text-muted-foreground text-sm">
+                        {user?.role === 'admin'
+                            ? "View and manage attendance history across the entire organization."
+                            : "Track your personal attendance performance and historical records."}
                     </p>
                 </div>
 
                 {/* Summary Stats */}
                 {loading && records.length === 0 ? (
-                    <div className="grid gap-4 md:grid-cols-4 animate-pulse">
-                        <Card>
-                            <CardContent className="flex items-center gap-4 p-4">
-                                <Skeleton className="h-10 w-10 bg-slate-200/60 rounded-lg" />
-                                <div className="space-y-2">
-                                    <Skeleton className="h-8 w-12 bg-slate-200/60" />
-                                    <Skeleton className="h-3 w-24 bg-slate-100/60" />
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
+                    <StatsCardSkeleton count={4} />
                 ) : (
-                    <StatsSummary totalRecords={totalRecords} />
+                    <StatsSummary
+                        totalRecords={totalRecords}
+                        statusFilter={statusFilter}
+                        dateRange={dateRange}
+                        records={records}
+                    />
                 )}
 
                 {/* Records Table */}

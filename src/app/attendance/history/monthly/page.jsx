@@ -18,13 +18,36 @@ import { attendanceApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/providers/auth-provider";
 import {
-    Calendar,
-    CheckCircle2,
-    Timer,
-    XCircle,
     TrendingUp,
     BarChart3,
+    History,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+function StatCard({ title, value, description, icon: Icon, colorClass = "bg-primary/10", iconColor = "text-primary" }) {
+    return (
+        <Card className="transition-all hover:shadow-lg hover:border-primary/20 animate-fade-in">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-none">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                    {title}
+                </CardTitle>
+                <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center", colorClass)}>
+                    <Icon className={cn("h-5 w-5", iconColor)} />
+                </div>
+            </CardHeader>
+            <CardContent>
+                <div className="text-3xl font-bold font-mono">
+                    {value}
+                </div>
+                {description && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                        {description}
+                    </p>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
 
 
 
@@ -114,20 +137,20 @@ export default function MonthlyHistoryPage() {
     return (
         <DashboardLayout title="Monthly Summary">
             <div className="space-y-6 animate-fade-in">
-                {/* Header */}
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
+                {/* Header Section */}
+                <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+                    <div className="flex flex-col space-y-0 text-left">
                         <h1 className="text-3xl font-bold tracking-tight">Monthly Summary</h1>
-                        <p className="text-muted-foreground">
-                            Your attendance summary for {getMonthLabel()}
+                        <p className="text-muted-foreground text-sm">
+                            Performance report for {getMonthLabel()}
                         </p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 bg-muted/30 p-1 rounded-lg">
                         <Select
                             value={selectedMonth.toString()}
                             onValueChange={(v) => setSelectedMonth(parseInt(v))}
                         >
-                            <SelectTrigger className="w-[140px]">
+                            <SelectTrigger className="w-[130px] h-9 border-none bg-transparent focus:ring-0">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -142,7 +165,7 @@ export default function MonthlyHistoryPage() {
                             value={selectedYear.toString()}
                             onValueChange={(v) => setSelectedYear(parseInt(v))}
                         >
-                            <SelectTrigger className="w-[100px]">
+                            <SelectTrigger className="w-[90px] h-9 border-none bg-transparent focus:ring-0">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -210,51 +233,39 @@ export default function MonthlyHistoryPage() {
                 ) : (
                     <>
                         {/* Stats Grid */}
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                            <Card>
-                                <CardContent className="flex items-center gap-4 p-6">
-                                    <div className="p-3 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                                        <Calendar className="h-6 w-6 text-blue-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-2xl font-bold">{stats.total}</p>
-                                        <p className="text-sm text-muted-foreground">Total Days</p>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                            <Card>
-                                <CardContent className="flex items-center gap-4 p-6">
-                                    <div className="p-3 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
-                                        <CheckCircle2 className="h-6 w-6 text-emerald-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-2xl font-bold">{stats.present}</p>
-                                        <p className="text-sm text-muted-foreground">Present</p>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                            <Card>
-                                <CardContent className="flex items-center gap-4 p-6">
-                                    <div className="p-3 rounded-lg bg-amber-100 dark:bg-amber-900/30">
-                                        <Timer className="h-6 w-6 text-amber-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-2xl font-bold">{stats.late}</p>
-                                        <p className="text-sm text-muted-foreground">Late</p>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                            <Card>
-                                <CardContent className="flex items-center gap-4 p-6">
-                                    <div className="p-3 rounded-lg bg-red-100 dark:bg-red-900/30">
-                                        <XCircle className="h-6 w-6 text-red-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-2xl font-bold">{stats.absent}</p>
-                                        <p className="text-sm text-muted-foreground">Absent</p>
-                                    </div>
-                                </CardContent>
-                            </Card>
+                        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+                            <StatCard
+                                title="Total Days"
+                                value={stats.total}
+                                description="Scheduled"
+                                icon={History}
+                                colorClass="bg-blue-100 dark:bg-blue-900/30"
+                                iconColor="text-blue-600"
+                            />
+                            <StatCard
+                                title="Present"
+                                value={stats.present}
+                                description="On-time"
+                                icon={CheckCircle2}
+                                colorClass="bg-emerald-100 dark:bg-emerald-900/30"
+                                iconColor="text-emerald-600"
+                            />
+                            <StatCard
+                                title="Late"
+                                value={stats.late}
+                                description="Arrived late"
+                                icon={Timer}
+                                colorClass="bg-amber-100 dark:bg-amber-900/30"
+                                iconColor="text-amber-600"
+                            />
+                            <StatCard
+                                title="Absent"
+                                value={stats.absent}
+                                description="Missed shift"
+                                icon={XCircle}
+                                colorClass="bg-red-100 dark:bg-red-900/30"
+                                iconColor="text-red-600"
+                            />
                         </div>
 
                         {/* Performance Card */}
