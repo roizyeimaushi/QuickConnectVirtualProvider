@@ -16,14 +16,14 @@ const inter = Inter({
 
 export const metadata = {
     title: {
-        default: "QuickConn Virtual",
-        template: "%s | QuickConn Virtual",
+        default: "QuickConnect Virtual Agency Provider",
+        template: "%s | QuickConnect Virtual Agency Provider",
     },
     description:
-        "QuickConn Virtual is a secure attendance sheet system for organizations, enabling administrators to manage employees, enforce 24-hour attendance schedules, and generate audit-ready reports with precision and efficiency.",
+        "QuickConnect Virtual Agency Provider is a secure attendance sheet system for organizations, enabling administrators to manage employees, enforce 24-hour attendance schedules, and generate audit-ready reports with precision and efficiency.",
     keywords:
-        "attendance system, employee attendance, HR management, workforce tracking, QuickConn Virtual",
-    authors: [{ name: "QuickConn Virtual" }],
+        "attendance system, employee attendance, HR management, workforce tracking, QuickConnect Virtual Agency Provider",
+    authors: [{ name: "QuickConnect Virtual Agency Provider" }],
     icons: {
         icon: [
             { url: "/favicon.ico", sizes: "any" },
@@ -32,10 +32,12 @@ export const metadata = {
         apple: "/icons/icon-192x192.png",
     },
     openGraph: {
-        title: "QuickConn Virtual",
+        type: "website",
+        locale: "en_US",
+        url: "https://virtualquickconnect.vercel.app",
+        title: "QuickConnect Virtual Agency Provider",
         description:
             "A professional attendance management platform designed for modern organizations with admin-controlled schedules and secure employee tracking.",
-        type: "website",
     },
     manifest: '/manifest.json',
 };
@@ -50,7 +52,7 @@ export default function RootLayout({ children }) {
                 <meta name="theme-color" content="#2e8b57" />
                 <meta name="apple-mobile-web-app-capable" content="yes" />
                 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-                <meta name="apple-mobile-web-app-title" content="QuickConn Virtual" />
+                <meta name="apple-mobile-web-app-title" content="QuickConnect Virtual Agency Provider" />
                 <meta name="mobile-web-app-capable" content="yes" />
             </head>
             <body

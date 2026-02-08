@@ -215,7 +215,7 @@ export function AppSidebar() {
                                 </div>
                                 <div className="flex flex-col items-start group-data-[collapsible=icon]:hidden transition-all duration-300">
                                     <span className="font-bold text-[16px] text-white tracking-tight leading-none">
-                                        {settings?.company_name || "QuickConn Virtual"}
+                                        {settings?.company_name || "QuickConnect Virtual Agency Provider"}
                                     </span>
                                 </div>
                             </Link>

@@ -74,7 +74,7 @@ export default function NotFound() {
 
                 {/* Footer note */}
                 <p className="mt-12 text-sm text-slate-400">
-                    QuickConn Virtual • Attendance Management System
+                    QuickConnect Virtual Agency Provider • Attendance Management System
                 </p>
             </div>
         </div>
