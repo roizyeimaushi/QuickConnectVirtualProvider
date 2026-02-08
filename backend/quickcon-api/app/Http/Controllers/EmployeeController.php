@@ -13,14 +13,16 @@ class EmployeeController extends Controller
     {
         $query = User::where('role', 'employee')
             ->select('users.*')
-            // Get last attendance date using subquery
+            // Get last real attendance date using subquery (ignore pending/optional gaps)
             ->addSelect(['last_attendance_date' => \App\Models\AttendanceRecord::select('attendance_date')
                 ->whereColumn('user_id', 'users.id')
+                ->whereNotIn('status', ['pending', 'optional'])
                 ->orderBy('attendance_date', 'desc')
                 ->limit(1)
             ])
             ->addSelect(['last_attendance_status' => \App\Models\AttendanceRecord::select('status')
                 ->whereColumn('user_id', 'users.id')
+                ->whereNotIn('status', ['pending', 'optional'])
                 ->orderBy('attendance_date', 'desc')
                 ->limit(1)
             ]);
