@@ -353,7 +353,7 @@ export default function EmployeesPage() {
                                                         <Avatar className="h-12 w-12 shrink-0">
                                                             <AvatarImage src={getAvatarUrl(employee.avatar)} />
                                                             <AvatarFallback className="bg-primary/5 text-primary text-xs font-bold">
-                                                                {getInitials(employee.first_name, employee.last_name)}
+                                                                <img src="https://github.com/shadcn.png" alt="Fallback" className="rounded-full" />
                                                             </AvatarFallback>
                                                             <AvatarBadge className={employee.is_online ? 'bg-emerald-500' : 'bg-red-500'} />
                                                         </Avatar>
@@ -478,7 +478,7 @@ export default function EmployeesPage() {
                                                                 <Avatar className="h-9 w-9">
                                                                     <AvatarImage src={getAvatarUrl(employee.avatar)} />
                                                                     <AvatarFallback className="bg-primary/5 text-primary text-[10px] font-bold">
-                                                                        {getInitials(employee.first_name, employee.last_name)}
+                                                                        <img src="https://github.com/shadcn.png" alt="Fallback" className="rounded-full" />
                                                                     </AvatarFallback>
                                                                     <AvatarBadge className={employee.is_online ? 'bg-emerald-500' : 'bg-red-500'} />
                                                                 </Avatar>

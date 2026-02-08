@@ -280,7 +280,7 @@ const api = new ApiClient();
 export const authApi = {
     login: (credentials) => api.post('/auth/login', credentials),
     logout: () => api.post('/auth/logout'),
-    me: () => api.request('/auth/me', { method: 'GET', headers: { 'Cache-Control': 'no-store' } }),
+    me: (bust = false) => api.request(`/auth/me${bust ? `?t=${Date.now()}` : ''}`, { method: 'GET', headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } }),
     refreshToken: () => api.post('/auth/refresh'),
     heartbeat: () => api.post('/auth/heartbeat'),
     updateProfile: async (data) => {

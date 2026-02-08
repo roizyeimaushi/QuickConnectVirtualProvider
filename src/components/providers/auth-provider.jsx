@@ -45,7 +45,7 @@ export function AuthProvider({ children }) {
     const router = useRouter();
     const pathname = usePathname();
 
-    const fetchUser = useCallback(async () => {
+    const fetchUser = useCallback(async (manualBust = false) => {
         try {
             let token = Cookies.get("quickcon_token");
             const localToken = localStorage.getItem("quickcon_token");
@@ -78,7 +78,7 @@ export function AuthProvider({ children }) {
 
             // Timeout so we don't hang forever if backend is unreachable (e.g. Laravel not running)
             const timeoutMs = 8000;
-            const mePromise = authApi.me();
+            const mePromise = authApi.me(manualBust);
             const timeoutPromise = new Promise((_, reject) =>
                 setTimeout(() => reject({ status: 0, message: 'Request timed out' }), timeoutMs)
             );

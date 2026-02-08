@@ -133,7 +133,7 @@ export function AppSidebar() {
                 <Avatar className="h-8 w-8 rounded-full border border-white/10 shrink-0">
                     <AvatarImage src={getAvatarUrl(user?.avatar)} alt={user?.first_name} />
                     <AvatarFallback className="rounded-full bg-white/10 text-white">
-                        <User className="h-4 w-4" />
+                        <img src="https://github.com/shadcn.png" alt="Fallback" className="rounded-full" />
                     </AvatarFallback>
                     <AvatarBadge className="bg-emerald-500 border-sidebar" />
                 </Avatar>

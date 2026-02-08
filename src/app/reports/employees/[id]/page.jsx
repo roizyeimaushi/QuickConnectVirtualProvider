@@ -232,7 +232,7 @@ export default function EmployeeReportDetailPage() {
                             <Avatar className="h-16 w-16 border-2 border-primary/10">
                                 <AvatarImage src={getAvatarUrl(employee.avatar)} />
                                 <AvatarFallback className="text-lg font-bold">
-                                    {getInitials(employee?.first_name, employee?.last_name)}
+                                    <img src="https://github.com/shadcn.png" alt="Fallback" className="rounded-full" />
                                 </AvatarFallback>
                                 <AvatarBadge className={`size-3.5 border-3 ${employee.is_online ? 'bg-emerald-500' : 'bg-red-500'}`} />
                             </Avatar>

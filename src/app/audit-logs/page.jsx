@@ -385,7 +385,7 @@ export default function AuditLogsPage() {
                                         <CardDescription>Complete audit trail with device and security details.</CardDescription>
                                     </div>
                                     <div className="flex flex-col sm:flex-row flex-wrap items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
-                                        <div className="relative w-full sm:w-auto">
+                                        <div className="relative w-full sm:w-[200px]">
                                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                             <Input
                                                 placeholder="Search logs..."
@@ -484,7 +484,7 @@ export default function AuditLogsPage() {
                                                             <div className="flex items-center gap-2">
                                                                 <Avatar className="h-8 w-8">
                                                                     <AvatarImage src={getAvatarUrl(log.userAvatar)} alt={log.user} />
-                                                                    <AvatarFallback className="text-xs bg-primary/10 text-primary">CN</AvatarFallback>
+                                                                    <AvatarFallback className="text-xs bg-primary/10 text-primary">{getInitials(log.userFirstName, log.userLastName)}</AvatarFallback>
                                                                 </Avatar>
                                                                 <div className="flex flex-col">
                                                                     <span className="font-medium">{log.user}</span>
@@ -564,7 +564,7 @@ export default function AuditLogsPage() {
                                                                         <Avatar className="h-7 w-7">
                                                                             <AvatarImage src={getAvatarUrl(log.userAvatar)} alt={log.user} />
                                                                             <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                                                                                {getInitials(log.user)}
+                                                                                <img src="https://github.com/shadcn.png" alt="Fallback" className="rounded-full" />
                                                                             </AvatarFallback>
                                                                         </Avatar>
                                                                         <div className="flex flex-col items-start">

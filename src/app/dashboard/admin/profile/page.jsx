@@ -105,8 +105,8 @@ export default function AdminProfilePage() {
 
             await authApi.updateProfile(data);
 
-            // Refresh user data (updates sidebar)
-            await refetchUser();
+            // Refresh user data with cache busting (updates sidebar & state)
+            await refetchUser(true);
 
             toast({
                 title: "Profile updated",
@@ -165,9 +165,9 @@ export default function AdminProfilePage() {
                         <div className="flex items-center gap-4">
                             <div className="relative group">
                                 <Avatar className="h-20 w-20 rounded-full border-2 border-primary/20 cursor-pointer">
-                                    <AvatarImage src={avatarPreview || getAvatarUrl(user?.avatar)} alt={user?.first_name} />
+                                    <AvatarImage src={avatarPreview || (user?.avatar ? `${getAvatarUrl(user?.avatar)}?t=${Date.now()}` : getAvatarUrl(null))} alt={user?.first_name} />
                                     <AvatarFallback className="rounded-full bg-primary/10 text-primary text-2xl font-semibold">
-                                        {getInitials(user?.first_name, user?.last_name)}
+                                        <img src="https://github.com/shadcn.png" alt="Fallback" className="rounded-full" />
                                     </AvatarFallback>
                                 </Avatar>
                                 <label htmlFor="avatar-upload" className="absolute inset-0 flex items-center justify-center bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">

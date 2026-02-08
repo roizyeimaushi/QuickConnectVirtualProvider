@@ -87,7 +87,7 @@ export const getLogoUrl = (settingsLogo) => {
  * @returns {string} Resolved avatar URL or fallback
  */
 export const getAvatarUrl = (avatarPath) => {
-    if (!avatarPath) return null;
+    if (!avatarPath) return "https://github.com/shadcn.png";
 
     if (avatarPath.startsWith("http") || avatarPath.startsWith("data:") || avatarPath.startsWith("blob:")) {
         // Security check: If page is HTTPS, upgrade HTTP avatar URLs to avoid mixed content block on mobile
