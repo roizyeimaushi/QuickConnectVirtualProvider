@@ -134,9 +134,9 @@ export default function AdminLoginPage() {
 
                 {/* Login Card */}
                 <div className="relative z-10 w-full max-w-[480px] px-4">
-                    <Card className="border-none shadow-2xl bg-white/95 backdrop-blur-sm shadow-emerald-500/5">
-                        <CardHeader className="pt-10 pb-6 text-center">
-                            <div className="flex justify-center mb-6">
+                    <Card className="border-none shadow-2xl bg-white/95 backdrop-blur-sm shadow-emerald-500/5 overflow-hidden">
+                        <CardHeader className="pt-12 pb-6 text-center">
+                            <div className="flex justify-center mb-8">
                                 <img
                                     src={getLogoUrl(settings?.system_logo)}
                                     alt="QuickConn Logo"
@@ -147,15 +147,15 @@ export default function AdminLoginPage() {
                                     }}
                                 />
                             </div>
-                            <CardTitle className="text-3xl font-bold tracking-tight text-slate-900 font-inter">
-                                Admin <span className="text-emerald-600">Console</span>
+                            <CardTitle className="text-4xl font-black tracking-tight text-slate-900 font-inter">
+                                QuickConn <span className="text-emerald-600">Admin</span>
                             </CardTitle>
                             <CardDescription className="text-slate-500 mt-2 text-base">
                                 Unauthorized access is strictly prohibited
                             </CardDescription>
                         </CardHeader>
 
-                        <CardContent className="px-10 pb-10">
+                        <CardContent className="px-10 pb-12">
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 <div className="space-y-4">
                                     <div className="space-y-2">
