@@ -142,7 +142,7 @@ export default function AdminLoginPage() {
                 </div>
 
                 {/* Login Card */}
-                <div className="relative z-10 w-full max-w-[480px] px-4 animate-in fade-in zoom-in duration-500">
+                <div className="relative z-10 w-full max-w-[480px] px-4">
                     <Card className="border border-white/20 shadow-2xl bg-white/90 backdrop-blur-xl shadow-emerald-500/10 overflow-hidden rounded-[2rem]">
                         <CardHeader className="pt-12 pb-6 text-center">
                             <div className="flex justify-center mb-8">
@@ -156,8 +156,8 @@ export default function AdminLoginPage() {
                                     }}
                                 />
                             </div>
-                            <CardTitle className="text-3xl sm:text-4xl font-black tracking-tight font-inter">
-                                <span className="text-emerald-600">QuickConnect</span> <span className="text-slate-900">Admin</span>
+                            <CardTitle className="text-2xl sm:text-4xl font-black tracking-tight font-inter whitespace-nowrap text-slate-900">
+                                QuickConn Admin
                             </CardTitle>
                             <CardDescription className="text-slate-500 mt-2 text-base">
                                 Unauthorized access is strictly prohibited
