@@ -179,10 +179,14 @@ class BreakController extends Controller
                   $mealUsed = in_array('Meal', $usedTypes);
             }
         } else {
-             // ALWAYS AVAILABLE (Single Fixed Break)
-             $canStartBreak = true;
-             $breakMessage = "Click below to start your fixed break.";
-             $breakReason = 'available';
+             // Check if cumulative limit is reached
+             $hasRemainingTime = ($totalUsedMinutes < $maxMinutes);
+             
+             $canStartBreak = $hasRemainingTime;
+             $breakMessage = $hasRemainingTime 
+                ? "Total break allowance: 90 mins. You have used $totalUsedMinutes mins."
+                : "You have used your total break allowance of 90 minutes.";
+             $breakReason = $hasRemainingTime ? 'available' : 'break_limit_reached';
         }
 
         return response()->json([
@@ -213,7 +217,7 @@ class BreakController extends Controller
             // Usage
             'break_used_minutes' => (int)$totalUsedMinutes,
             'break_remaining_seconds' => $remainingSeconds,
-            'break_already_used' => ($totalUsedMinutes > 0 && !$todayBreak), // One shot rule
+            'break_already_used' => ($totalUsedMinutes >= $maxMinutes), // Only blocked when total limit hit
             'is_on_break' => ($todayBreak && $todayBreak->isActive()),
             'has_break_today' => ($totalUsedMinutes > 0),
             
@@ -237,7 +241,6 @@ class BreakController extends Controller
 
         // Default to 'Regular' type
         $type = $request->input('type', 'Regular');
-        $segmentLimit = (int)(\App\Models\Setting::where('key', 'break_duration')->value('value') ?? 90);
 
         // ============================================================
         // STEP 1: Verify Attendance (Anchor to ACTIVE Session)
@@ -287,18 +290,25 @@ class BreakController extends Controller
         }
         
         // ============================================================
-        // STEP 2: Check Allowance
+        // STEP 2: Check Allowance (Cumulative 90 min Limit)
         // ============================================================
+        $globalLimit = (int)(\App\Models\Setting::where('key', 'break_duration')->value('value') ?? 90);
         
-        // ============================================================
-        // STEP 2: Check Allowance (REMOVED LIMITS FOR UNLIMITED BREAKS)
-        // ============================================================
+        $alreadyUsedMinutes = EmployeeBreak::where('attendance_id', $attendance->id)
+            ->whereNotNull('break_end')
+            ->sum('duration_minutes');
+            
+        $remainingMinutes = max(0, $globalLimit - $alreadyUsedMinutes);
         
-        // CHECK 1: Type usage - REMOVED strictly to allow multiple breaks
-        // $alreadyUsedType = ...
-        
-        // CHECK 2: Global limit - REMOVED strictly to allow 'payroll check' instead of 'UI block'
-        // $totalUsedMinutes = ...
+        if ($remainingMinutes <= 0) {
+             return response()->json([
+                'message' => 'You have already used your total break allowance of 90 minutes.',
+                'error_code' => 'BREAK_LIMIT_REACHED'
+            ], 400);
+        }
+
+        // Set the limit for this specific break segment
+        $segmentLimit = $remainingMinutes;
         
         // Check if already active
         $activeBreak = EmployeeBreak::where('attendance_id', $attendance->id)

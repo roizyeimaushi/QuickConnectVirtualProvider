@@ -58,7 +58,7 @@ class SettingsSeeder extends Seeder
             // Attendance Rules - Break Rules
             // ==========================================
             ['key' => 'max_breaks', 'value' => '1', 'group' => 'attendance', 'type' => 'integer'],
-            ['key' => 'max_break_duration', 'value' => '60', 'group' => 'attendance', 'type' => 'integer'],
+            ['key' => 'max_break_duration', 'value' => '90', 'group' => 'attendance', 'type' => 'integer'],
             ['key' => 'auto_end_break', 'value' => '1', 'group' => 'attendance', 'type' => 'boolean'],
             ['key' => 'prevent_overlap_break', 'value' => '1', 'group' => 'attendance', 'type' => 'boolean'],
 
