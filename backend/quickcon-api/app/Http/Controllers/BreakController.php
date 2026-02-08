@@ -91,20 +91,28 @@ class BreakController extends Controller
         $startFormatted = Carbon::parse($startTime)->format('H:i');
         $endFormatted = Carbon::parse($endTime)->format('H:i');
         
-        $isWithinBreakWindow = true; // Default to open, but check times:
-        if ($startTime !== '00:00:00' || $endTime !== '23:59:59') {
-             $nowScan = Carbon::now()->format('H:i');
-             // Simple string comparison for H:i works in 24h
-             // But let's be careful with overnight windows (e.g. 22:00 to 02:00)
-             // For now assume same-day window or handle appropriately
-             // Let's just trust "Always Open" logic unless strict window is requested
-             // The user wanted "00:00" start.
-             // If we just return what is configured, the frontend can decide to block.
-        }
-
-        // Break window status flags (used in response)
+        // Determine Window Status Logic
+        $isWithinBreakWindow = true; 
         $isBeforeBreakWindow = false;
         $isAfterBreakWindow = false;
+
+        if ($startTime !== '00:00:00' || $endTime !== '23:59:59') {
+             $nowTime = Carbon::now()->format('H:i:s');
+             
+             if ($startTime <= $endTime) {
+                 // Standard Window
+                 $isWithinBreakWindow = ($nowTime >= $startTime && $nowTime < $endTime);
+                 $isBeforeBreakWindow = ($nowTime < $startTime);
+                 $isAfterBreakWindow = ($nowTime >= $endTime);
+             } else {
+                 // Overnight Window
+                 $isWithinBreakWindow = ($nowTime >= $startTime || $nowTime < $endTime);
+                 // For overnight, "before" and "after" are relative to the day transition
+                 // e.g. 23:00 to 01:00. If now is 22:00, it's before. If now is 02:00, it's after.
+                 $isBeforeBreakWindow = ($nowTime < $startTime && $nowTime >= $endTime);
+                 $isAfterBreakWindow = false; // "After" is tricky in overnight, usually just "Outside"
+             }
+        }
 
         // Calculate usage
         // 1. Total finished duration today

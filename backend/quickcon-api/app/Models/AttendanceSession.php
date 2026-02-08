@@ -118,6 +118,15 @@ class AttendanceSession extends Model
 
             if ($newStatus !== $oldStatus) {
                 $session->update(['status' => $newStatus]);
+                
+                // Fire event for real-time UI updates
+                try {
+                    event(new \App\Events\SessionUpdated($session, 'status_synced'));
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::warning("Session Sync: Event broadcast failed - " . $e->getMessage());
+                }
+
+                \Illuminate\Support\Facades\Log::info("Session #{$session->id} status auto-synced: {$oldStatus} -> {$newStatus}");
             }
         }
     }

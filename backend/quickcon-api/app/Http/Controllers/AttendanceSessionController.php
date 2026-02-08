@@ -313,11 +313,15 @@ class AttendanceSessionController extends Controller
                     ->where('status', 'active')
                     ->get();
                 
+                // OPTIMIZATION: Bulk fetch existing records for this date to avoid N+1 queries
+                $employeeIds = $activeEmployees->pluck('id');
+                $existingRecords = \App\Models\AttendanceRecord::whereIn('user_id', $employeeIds)
+                    ->where('attendance_date', $sessionDate)
+                    ->get()
+                    ->keyBy('user_id');
+                
                 foreach ($activeEmployees as $employee) {
-                    // Check for existing record for this user and date
-                    $existingRecord = \App\Models\AttendanceRecord::where('user_id', $employee->id)
-                        ->where('attendance_date', $sessionDate)
-                        ->first();
+                    $existingRecord = $existingRecords->get($employee->id);
 
                     if (!$isAttendanceRequired) {
                         // For non-required sessions (weekends), we don't want "Ghost" records.

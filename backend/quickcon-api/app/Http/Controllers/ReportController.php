@@ -109,11 +109,17 @@ class ReportController extends Controller
                              ?? $allTodaySessions->where('status', 'pending')->where('total_count', '>', 0)->first();
             }
 
-            $todayRecords = AttendanceRecord::where('attendance_date', $today)->get();
+            $presentToday = AttendanceRecord::where('attendance_date', $today)
+                ->whereIn('status', ['present', 'left_early'])
+                ->count();
             
-            $presentToday = $todayRecords->whereIn('status', ['present', 'left_early'])->count();
-            $lateToday = $todayRecords->where('status', 'late')->count();
-            $manualAbsentToday = $todayRecords->whereIn('status', ['absent', 'excused'])->count();
+            $lateToday = AttendanceRecord::where('attendance_date', $today)
+                ->where('status', 'late')
+                ->count();
+            
+            $manualAbsentToday = AttendanceRecord::where('attendance_date', $today)
+                ->whereIn('status', ['absent', 'excused'])
+                ->count();
                                          
             // 4. RESET STATS ON WEEKENDS
             // If it's a weekend and there's no active session, stats should be zero
@@ -691,17 +697,10 @@ class ReportController extends Controller
         $fixed = 0;
         
         foreach ($records as $record) {
-            $in = Carbon::parse($record->time_in);
-            $out = Carbon::parse($record->time_out);
-            $diff = $out->diffInMinutes($in);
+            $correctHours = $record->calculateHoursWorked();
             
-            // Subtract break if applicable
-            $breakMinutes = \App\Models\EmployeeBreak::where('attendance_id', $record->id)
-                ->sum('duration_minutes') ?: 0;
-            
-            $hours = round(($diff - $breakMinutes) / 60, 2);
-            if ($record->hours_worked != $hours) {
-                $record->update(['hours_worked' => $hours]);
+            if ((float) $record->hours_worked !== (float) $correctHours) {
+                $record->update(['hours_worked' => $correctHours]);
                 $fixed++;
             }
         }

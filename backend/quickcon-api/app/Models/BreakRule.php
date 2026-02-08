@@ -40,7 +40,13 @@ class BreakRule extends Model
         $now = now();
         $currentTime = $now->format('H:i:s');
         
-        return $currentTime >= $this->start_time && $currentTime < $this->end_time;
+        if ($this->start_time <= $this->end_time) {
+            // Standard window (e.g., 08:00 to 17:00)
+            return $currentTime >= $this->start_time && $currentTime < $this->end_time;
+        }
+        
+        // Overnight window (e.g., 22:00 to 02:00)
+        return $currentTime >= $this->start_time || $currentTime < $this->end_time;
     }
 
     /**

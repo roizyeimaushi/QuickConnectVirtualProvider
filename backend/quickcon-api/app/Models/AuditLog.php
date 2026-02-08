@@ -390,29 +390,30 @@ class AuditLog extends Model
      */
     public static function verifyChainIntegrity(): array
     {
-        $logs = self::orderBy('id', 'asc')->get();
         $results = ['valid' => true, 'broken_at' => null, 'checked' => 0];
         $previousHash = null;
 
-        foreach ($logs as $log) {
-            $results['checked']++;
-            
-            // Verify individual log integrity
-            if (!$log->verifyIntegrity()) {
-                $results['valid'] = false;
-                $results['broken_at'] = $log->id;
-                break;
-            }
+        self::orderBy('id', 'asc')->chunk(500, function ($logs) use (&$results, &$previousHash) {
+            foreach ($logs as $log) {
+                $results['checked']++;
+                
+                // Verify individual log integrity
+                if (!$log->verifyIntegrity()) {
+                    $results['valid'] = false;
+                    $results['broken_at'] = $log->id;
+                    return false; // Stop chunking
+                }
 
-            // Verify chain link
-            if ($previousHash !== null && $log->previous_hash !== $previousHash) {
-                $results['valid'] = false;
-                $results['broken_at'] = $log->id;
-                break;
-            }
+                // Verify chain link
+                if ($previousHash !== null && $log->previous_hash !== $previousHash) {
+                    $results['valid'] = false;
+                    $results['broken_at'] = $log->id;
+                    return false; // Stop chunking
+                }
 
-            $previousHash = $log->hash;
-        }
+                $previousHash = $log->hash;
+            }
+        });
 
         return $results;
     }

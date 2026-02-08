@@ -15,6 +15,8 @@ class AttendanceRecord extends Model
             // Auto-calculate hours worked if time_in and time_out are present
             if ($record->time_in && $record->time_out) {
                 $record->hours_worked = $record->calculateHoursWorked();
+            } else {
+                $record->hours_worked = 0.00;
             }
         });
     }
