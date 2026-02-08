@@ -563,7 +563,9 @@ export default function AuditLogsPage() {
                                                                     <div className="flex items-center justify-center gap-2">
                                                                         <Avatar className="h-7 w-7">
                                                                             <AvatarImage src={getAvatarUrl(log.userAvatar)} alt={log.user} />
-                                                                            <AvatarFallback className="text-xs bg-primary/10 text-primary">CN</AvatarFallback>
+                                                                            <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                                                                                {getInitials(log.user)}
+                                                                            </AvatarFallback>
                                                                         </Avatar>
                                                                         <div className="flex flex-col items-start">
                                                                             <span className="text-xs font-medium truncate max-w-[80px]">{log.user}</span>

@@ -132,7 +132,9 @@ export function AppSidebar() {
             ) : (
                 <Avatar className="h-8 w-8 rounded-full border border-white/10 shrink-0">
                     <AvatarImage src={getAvatarUrl(user?.avatar)} alt={user?.first_name} />
-                    <AvatarFallback className="rounded-full bg-white/10 text-white text-xs font-bold">CN</AvatarFallback>
+                    <AvatarFallback className="rounded-full bg-white/10 text-white text-xs font-bold">
+                        {getInitials(user?.first_name, user?.last_name)}
+                    </AvatarFallback>
                     <AvatarBadge className="bg-emerald-500 border-sidebar" />
                 </Avatar>
             )}

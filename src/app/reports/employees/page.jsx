@@ -141,7 +141,7 @@ export default function EmployeeReportsPage() {
                                     <div className="flex items-start justify-between">
                                         <div className="flex items-center gap-3">
                                             <Avatar className="h-12 w-12 border">
-                                                <AvatarImage src={employee.avatar} alt={employee.first_name} />
+                                                <AvatarImage src={getAvatarUrl(employee.avatar)} alt={employee.first_name} />
                                                 <AvatarFallback className="bg-primary/5 text-primary">
                                                     {getInitials(employee.first_name, employee.last_name)}
                                                 </AvatarFallback>
