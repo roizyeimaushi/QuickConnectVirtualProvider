@@ -127,9 +127,9 @@ export default function AdminLoginPage() {
                     <img
                         src="/admin-login-bg.jpg"
                         alt="Background"
-                        className="w-full h-full object-cover opacity-10 blur-[2px]"
+                        className="w-full h-full object-cover opacity-60"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-blue-500/10" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-blue-500/5" />
                 </div>
 
                 {/* Login Card */}
@@ -147,8 +147,8 @@ export default function AdminLoginPage() {
                                     }}
                                 />
                             </div>
-                            <CardTitle className="text-4xl font-black tracking-tight text-slate-900 font-inter">
-                                <span className="text-emerald-600">QuickConn</span> Admin
+                            <CardTitle className="text-4xl font-black tracking-tight font-inter">
+                                <span className="text-emerald-600">QuickConn</span> <span className="text-slate-900">Admin</span>
                             </CardTitle>
                             <CardDescription className="text-slate-500 mt-2 text-base">
                                 Unauthorized access is strictly prohibited
