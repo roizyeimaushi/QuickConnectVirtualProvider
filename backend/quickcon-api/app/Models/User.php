@@ -72,7 +72,7 @@ class User extends Authenticatable
     public function getAvatarAttribute($value)
     {
         if (empty($value)) {
-            return 'https://ui-avatars.com/api/?name=' . urlencode($this->first_name . ' ' . $this->last_name) . '&background=0D8ABC&color=fff';
+            return null;
         }
 
         // Dynamically replace localhost/127.0.0.1 with the actual server IP for mobile device compatibility

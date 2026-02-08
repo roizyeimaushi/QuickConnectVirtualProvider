@@ -41,6 +41,7 @@ import { Avatar, AvatarFallback, AvatarImage, AvatarBadge } from "@/components/u
 import { employeesApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { getInitials, debounce, formatDate } from "@/lib/utils";
+import { getAvatarUrl } from "@/lib/constants";
 import {
     Search,
     Plus,
@@ -350,8 +351,10 @@ export default function EmployeesPage() {
                                                 <div className="flex items-start justify-between gap-3">
                                                     <div className="flex items-center gap-3 flex-1 min-w-0">
                                                         <Avatar className="h-12 w-12 shrink-0">
-                                                            <AvatarImage src={employee.avatar} />
-                                                            <AvatarFallback className="bg-primary/5 text-primary text-xs font-bold">CN</AvatarFallback>
+                                                            <AvatarImage src={getAvatarUrl(employee.avatar)} />
+                                                            <AvatarFallback className="bg-primary/5 text-primary text-xs font-bold">
+                                                                {getInitials(employee.first_name, employee.last_name)}
+                                                            </AvatarFallback>
                                                             <AvatarBadge className={employee.is_online ? 'bg-emerald-500' : 'bg-red-500'} />
                                                         </Avatar>
                                                         <div className="min-w-0">
@@ -469,8 +472,10 @@ export default function EmployeesPage() {
                                                         <TableCell>
                                                             <div className="flex items-center gap-3">
                                                                 <Avatar className="h-9 w-9">
-                                                                    <AvatarImage src={employee.avatar} />
-                                                                    <AvatarFallback className="bg-primary/5 text-primary text-[10px] font-bold">CN</AvatarFallback>
+                                                                    <AvatarImage src={getAvatarUrl(employee.avatar)} />
+                                                                    <AvatarFallback className="bg-primary/5 text-primary text-[10px] font-bold">
+                                                                        {getInitials(employee.first_name, employee.last_name)}
+                                                                    </AvatarFallback>
                                                                     <AvatarBadge className={employee.is_online ? 'bg-emerald-500' : 'bg-red-500'} />
                                                                 </Avatar>
                                                                 <div className="text-left">

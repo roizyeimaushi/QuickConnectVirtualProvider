@@ -23,6 +23,7 @@ import { reportsApi } from "@/lib/api";
 import { formatDateTime, formatTime24, getInitials, formatDuration, formatDecimalHours } from "@/lib/utils";
 import { format } from "date-fns";
 import * as XLSX from "xlsx";
+import { getAvatarUrl } from "@/lib/constants";
 import {
     ArrowLeft,
     Download,
@@ -229,8 +230,10 @@ export default function EmployeeReportDetailPage() {
                         </Button>
                         <div className="flex items-center gap-4">
                             <Avatar className="h-16 w-16 border-2 border-primary/10">
-                                <AvatarImage src={employee.avatar} />
-                                <AvatarFallback className="text-lg font-bold">CN</AvatarFallback>
+                                <AvatarImage src={getAvatarUrl(employee.avatar)} />
+                                <AvatarFallback className="text-lg font-bold">
+                                    {getInitials(employee.first_name, employee.last_name)}
+                                </AvatarFallback>
                                 <AvatarBadge className={`size-3.5 border-3 ${employee.is_online ? 'bg-emerald-500' : 'bg-red-500'}`} />
                             </Avatar>
                             <div>

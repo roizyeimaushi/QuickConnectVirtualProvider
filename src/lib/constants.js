@@ -91,7 +91,7 @@ export const getLogoUrl = (settingsLogo) => {
  * @returns {string} Resolved avatar URL or null
  */
 export const getAvatarUrl = (avatarPath) => {
-    if (!avatarPath) return "https://github.com/shadcn.png";
+    if (!avatarPath) return null;
     if (avatarPath.startsWith("http") || avatarPath.startsWith("data:") || avatarPath.startsWith("blob:")) return avatarPath;
 
     // Handle Laravel storage paths

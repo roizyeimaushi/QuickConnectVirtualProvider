@@ -41,6 +41,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { auditApi } from "@/lib/api";
 import { useAuth } from "@/components/providers/auth-provider";
 import { formatDateTime, getInitials } from "@/lib/utils";
+import { getAvatarUrl } from "@/lib/constants";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
     FileText,
@@ -482,8 +483,10 @@ export default function AuditLogsPage() {
                                                         <div className="flex items-center justify-between text-sm pt-2 border-t">
                                                             <div className="flex items-center gap-2">
                                                                 <Avatar className="h-8 w-8">
-                                                                    <AvatarImage src={log.userAvatar} alt={log.user} />
-                                                                    <AvatarFallback className="text-xs bg-primary/10 text-primary">CN</AvatarFallback>
+                                                                    <AvatarImage src={getAvatarUrl(log.userAvatar)} alt={log.user} />
+                                                                    <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                                                                        {getInitials(log.userFirstName, log.userLastName)}
+                                                                    </AvatarFallback>
                                                                 </Avatar>
                                                                 <div className="flex flex-col">
                                                                     <span className="font-medium">{log.user}</span>
@@ -561,8 +564,10 @@ export default function AuditLogsPage() {
                                                                 <TableCell className="text-center">
                                                                     <div className="flex items-center justify-center gap-2">
                                                                         <Avatar className="h-7 w-7">
-                                                                            <AvatarImage src={log.userAvatar} alt={log.user} />
-                                                                            <AvatarFallback className="text-xs bg-primary/10 text-primary">CN</AvatarFallback>
+                                                                            <AvatarImage src={getAvatarUrl(log.userAvatar)} alt={log.user} />
+                                                                            <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                                                                                {getInitials(log.userFirstName, log.userLastName)}
+                                                                            </AvatarFallback>
                                                                         </Avatar>
                                                                         <div className="flex flex-col items-start">
                                                                             <span className="text-xs font-medium truncate max-w-[80px]">{log.user}</span>
@@ -696,8 +701,10 @@ export default function AuditLogsPage() {
                                     <p className="text-sm font-medium text-muted-foreground">User</p>
                                     <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
                                         <Avatar className="h-10 w-10">
-                                            <AvatarImage src={selectedLog.userAvatar} />
-                                            <AvatarFallback className="bg-primary/10 text-primary">CN</AvatarFallback>
+                                            <AvatarImage src={getAvatarUrl(selectedLog.userAvatar)} />
+                                            <AvatarFallback className="bg-primary/10 text-primary">
+                                                {getInitials(selectedLog.userFirstName, selectedLog.userLastName)}
+                                            </AvatarFallback>
                                         </Avatar>
                                         <div>
                                             <p className="font-medium">{selectedLog.user}</p>
