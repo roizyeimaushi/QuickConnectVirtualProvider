@@ -496,7 +496,7 @@ class ReportController extends Controller
                     'user_id' => $record->user_id,
                     'employee_id' => $u->employee_id,
                     'name' => "{$u->first_name} {$u->last_name}",
-                    'department' => $u->department,
+                    // Department removed as requested
                     'employee_type' => $u->employee_type,
                     'schedule' => $record->session?->schedule?->name ?? 'Default',
                     'time_in' => $record->time_in ? $record->time_in->format('H:i') : null,
@@ -519,7 +519,7 @@ class ReportController extends Controller
                     'user_id' => $employee->id,
                     'employee_id' => $employee->employee_id,
                     'name' => "{$employee->first_name} {$employee->last_name}",
-                    'department' => $employee->department,
+                    // Department removed as requested
                     'employee_type' => $employee->employee_type,
                     'schedule' => null,
                     'time_in' => null,
@@ -544,15 +544,37 @@ class ReportController extends Controller
             });
         }
 
-        // Calculate summary metrics based on the merged data
+        // Initialize summary counts
         $summary = [
             'total' => $mergedData->count(),
-            'present' => $mergedData->whereIn('status', ['present', 'left_early'])->count(),
-            'late' => $mergedData->where('status', 'late')->count(),
-            'absent' => $mergedData->where('status', 'absent')->count(),
-            'pending' => $mergedData->where('status', 'pending')->count(),
-            'optional' => $mergedData->where('status', 'optional')->count(),
+            'present' => 0,
+            'late' => 0,
+            'absent' => 0,
+            'excused' => 0,
+            'pending' => 0,
+            'optional' => 0,
         ];
+
+        // Process summary in a single pass with robust status matching
+        foreach ($mergedData as $item) {
+            $rawStatus = $item['status'] ?? '';
+            $status = strtolower(trim((string)$rawStatus));
+
+            if ($status === 'late') {
+                $summary['late']++;
+            } elseif ($status === 'absent') {
+                $summary['absent']++;
+            } elseif ($status === 'excused') {
+                $summary['excused']++;
+            } elseif ($status === 'pending') {
+                $summary['pending']++;
+            } elseif ($status === 'optional') {
+                $summary['optional']++;
+            } else {
+                // Default: Treat 'present', 'left_early', and any unknown/empty status as present
+                $summary['present']++;
+            }
+        }
 
         // Manual Pagination for the merged collection
         $paginatedRecords = new \Illuminate\Pagination\LengthAwarePaginator(

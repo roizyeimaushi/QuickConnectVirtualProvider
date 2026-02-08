@@ -359,7 +359,11 @@ export default function EmployeesPage() {
                                                             <p className="font-medium truncate">
                                                                 {employee.first_name} {employee.last_name}
                                                             </p>
-                                                            <p className="text-sm text-muted-foreground truncate">{employee.position}</p>
+                                                            <div className="flex items-center gap-2 mt-0.5">
+                                                                <p className="text-xs text-muted-foreground truncate">{employee.position}</p>
+                                                                <span className="text-[10px] text-muted-foreground/50">•</span>
+                                                                <span className="text-[10px] uppercase font-bold text-primary/70">{employee.employee_type || "Regular"}</span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                     <DropdownMenu>
@@ -477,6 +481,9 @@ export default function EmployeesPage() {
                                                                 <div className="text-left">
                                                                     <p className="font-medium">
                                                                         {employee.first_name} {employee.last_name}
+                                                                    </p>
+                                                                    <p className="text-[10px] uppercase font-bold text-muted-foreground/60 tracking-wider">
+                                                                        {employee.employee_type || "Regular"}
                                                                     </p>
                                                                 </div>
                                                             </div>

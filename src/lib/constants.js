@@ -32,35 +32,31 @@ export const API_BASE_URL = (() => {
             }
         }
         // Production monolith: same-origin API
+        // NOTE: On Vercel, if this is used without a rewrite, it will hit Vercel's /api
         return '/api';
     }
 
     // If set to a full URL or hostname = separate services mode
-    if (envUrl) {
-        // Fix Render internal hostname issue (e.g. "quickconn-backend-dzag" -> "quickconn-backend-dzag.onrender.com")
-        if (!envUrl.includes('.') && !envUrl.includes('localhost') && !envUrl.startsWith('http')) {
-            envUrl = `${envUrl}.onrender.com`;
-        }
+    let resolvedUrl = envUrl;
 
-        // Ensure protocol
-        if (!envUrl.startsWith('http')) {
-            envUrl = `https://${envUrl}`;
-        }
-
-        // Ensure /api suffix
-        if (!envUrl.endsWith('/api')) {
-            envUrl = `${envUrl}/api`;
-        }
-
-        return envUrl;
+    // Fix Render internal hostname issue
+    if (!resolvedUrl.includes('.') && !resolvedUrl.includes('localhost') && !resolvedUrl.startsWith('http')) {
+        resolvedUrl = `${resolvedUrl}.onrender.com`;
     }
 
-    // Default: development mode (same-hostname with port 8000) — client only
-    if (typeof window !== 'undefined') {
-        return `${window.location.protocol}//${window.location.hostname}:8000/api`;
+    // Ensure protocol
+    if (!resolvedUrl.startsWith('http')) {
+        // Force HTTPS for any production-looking domain unless explicitly HTTP
+        const protocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'https:' : 'http:';
+        resolvedUrl = `${protocol}//${resolvedUrl}`;
     }
-    // Server fallback when no env set (e.g. dev build)
-    return 'http://localhost:8000/api';
+
+    // Ensure /api suffix
+    if (!resolvedUrl.endsWith('/api')) {
+        resolvedUrl = `${resolvedUrl.replace(/\/$/, '')}/api`;
+    }
+
+    return resolvedUrl;
 })();
 
 /**
@@ -70,44 +66,54 @@ export const API_BASE_URL = (() => {
  */
 export const getLogoUrl = (settingsLogo) => {
     if (!settingsLogo) return "/quickconnect-logo.png";
-    if (settingsLogo.startsWith("http")) return settingsLogo;
+    if (settingsLogo.startsWith("http") || settingsLogo.startsWith("data:") || settingsLogo.startsWith("blob:")) return settingsLogo;
 
-    // Handle Laravel storage paths - only if we have a valid backend root
-    const backendRoot = API_BASE_URL.replace("/api", "").replace(/\/$/, "");
-    if (backendRoot && backendRoot !== "" && backendRoot !== "/") {
-        // If it's a root-relative path (starts with /) but NOT /storage, it's a local frontend asset
-        if (settingsLogo.startsWith("/") && !settingsLogo.startsWith("/storage")) {
-            return settingsLogo;
-        }
-        return `${backendRoot}/storage/${settingsLogo.replace(/^\/?storage\//, "")}`;
+    // Handle Laravel storage paths
+    let backendRoot = API_BASE_URL.replace("/api", "").replace(/\/$/, "");
+
+    // If backendRoot is empty (relative), we assume same domain
+    if (!backendRoot || backendRoot === "/") {
+        backendRoot = "";
     }
 
-    return "/quickconnect-logo.png";
+    // Ensure it starts with /storage/ or backend domain/storage/
+    const cleanPath = settingsLogo.replace(/^\/?storage\//, "");
+    return `${backendRoot}/storage/${cleanPath}`;
 };
 
 /**
  * Helper to resolve the correct avatar URL
  * @param {string} avatarPath - Avatar path from user data
- * @returns {string} Resolved avatar URL or null
+ * @returns {string} Resolved avatar URL or fallback
  */
 export const getAvatarUrl = (avatarPath) => {
-    if (!avatarPath) return "https://github.com/shadcn.png";
-    if (avatarPath.startsWith("http") || avatarPath.startsWith("data:") || avatarPath.startsWith("blob:")) return avatarPath;
+    // Falls back to shadcn-style placeholder or initials component in UI
+    if (!avatarPath) return null;
 
-    // Handle Laravel storage paths
-    const backendRoot = API_BASE_URL.replace("/api", "").replace(/\/$/, "");
-    if (backendRoot && backendRoot !== "" && backendRoot !== "/") {
-        // If it's a root-relative path (starts with /) but NOT /storage, it's a local frontend asset
-        if (avatarPath.startsWith("/") && !avatarPath.startsWith("/storage")) {
-            return avatarPath;
+    if (avatarPath.startsWith("http") || avatarPath.startsWith("data:") || avatarPath.startsWith("blob:")) {
+        // Security check: If page is HTTPS, upgrade HTTP avatar URLs to avoid mixed content block on mobile
+        if (typeof window !== 'undefined' && window.location.protocol === 'https:' && avatarPath.startsWith('http://')) {
+            return avatarPath.replace('http://', 'https://');
         }
-
-        // Remove 'storage/' prefix if it's already there to avoid duplication
-        const cleanPath = avatarPath.replace(/^\/?storage\//, "");
-        return `${backendRoot}/storage/${cleanPath}`;
+        return avatarPath;
     }
 
-    return avatarPath;
+    // Handle Laravel storage paths
+    let backendRoot = API_BASE_URL.replace("/api", "").replace(/\/$/, "");
+
+    // If backendRoot is empty (relative), we assume same domain
+    if (!backendRoot || backendRoot === "/") {
+        backendRoot = "";
+    }
+
+    // If it's a root-relative path (starts with /) but NOT /storage, it's a local frontend asset
+    if (avatarPath.startsWith("/") && !avatarPath.startsWith("/storage")) {
+        return avatarPath;
+    }
+
+    // Ensure it starts with /storage/ or backend domain/storage/
+    const cleanPath = avatarPath.replace(/^\/?storage\//, "");
+    return `${backendRoot}/storage/${cleanPath}`;
 };
 
 export const USER_ROLES = {

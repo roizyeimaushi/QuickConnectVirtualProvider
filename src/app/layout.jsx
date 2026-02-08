@@ -15,14 +15,24 @@ const inter = Inter({
 });
 
 export const metadata = {
-    title: "QuickConn Virtual | Attendance Sheet System",
+    title: {
+        default: "QuickConn Virtual",
+        template: "%s | QuickConn Virtual",
+    },
     description:
         "QuickConn Virtual is a secure attendance sheet system for organizations, enabling administrators to manage employees, enforce 24-hour attendance schedules, and generate audit-ready reports with precision and efficiency.",
     keywords:
         "attendance system, employee attendance, HR management, workforce tracking, QuickConn Virtual",
     authors: [{ name: "QuickConn Virtual" }],
+    icons: {
+        icon: [
+            { url: "/favicon.ico", sizes: "any" },
+            { url: "/logo.png", type: "image/png", sizes: "32x32" }
+        ],
+        apple: "/icons/icon-192x192.png",
+    },
     openGraph: {
-        title: "QuickConn Virtual | Attendance Management",
+        title: "QuickConn Virtual",
         description:
             "A professional attendance management platform designed for modern organizations with admin-controlled schedules and secure employee tracking.",
         type: "website",
@@ -34,11 +44,13 @@ export default function RootLayout({ children }) {
     return (
         <html lang="en" suppressHydrationWarning>
             <head>
+                <link rel="icon" href="/favicon.ico" sizes="any" />
+                <link rel="icon" href="/logo.png" type="image/png" />
+                <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
                 <meta name="theme-color" content="#2e8b57" />
                 <meta name="apple-mobile-web-app-capable" content="yes" />
                 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-                <meta name="apple-mobile-web-app-title" content="QuickCon" />
-                <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+                <meta name="apple-mobile-web-app-title" content="QuickConn Virtual" />
                 <meta name="mobile-web-app-capable" content="yes" />
             </head>
             <body

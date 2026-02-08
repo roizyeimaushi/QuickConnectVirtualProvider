@@ -184,9 +184,14 @@ export default function AdminProfilePage() {
                                 <CardTitle className="text-xl">
                                     {user?.first_name} {user?.last_name}
                                 </CardTitle>
-                                <CardDescription className="flex items-center gap-1">
-                                    <BadgeCheck className="h-4 w-4 text-primary" />
-                                    <span className="capitalize">{user?.role}</span>
+                                <CardDescription className="flex flex-col gap-1.5 items-start mt-1">
+                                    <div className="flex items-center gap-1">
+                                        <BadgeCheck className="h-4 w-4 text-primary" />
+                                        <span className="capitalize">{user?.role}</span>
+                                    </div>
+                                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold px-2 py-0.5 rounded-md bg-muted/50 border border-border/50">
+                                        {user?.employee_type || "Regular"}
+                                    </div>
                                 </CardDescription>
                             </div>
                         </div>

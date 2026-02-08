@@ -73,6 +73,12 @@ const statusConfig = {
         color: "#0ea5e9",
         badgeClass: "bg-sky-50 text-sky-700 hover:bg-sky-100 dark:bg-sky-900/40 dark:text-sky-400 border-sky-100"
     },
+    excused: {
+        label: "Excused",
+        icon: CheckCircle2,
+        color: "#3b82f6",
+        badgeClass: "bg-blue-100 text-blue-800 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200"
+    },
 };
 
 export default function DailyReportsPage() {
@@ -142,6 +148,7 @@ export default function DailyReportsPage() {
         { status: "Absent", count: report?.summary?.absent ?? 0, fill: statusConfig.absent.color },
         { status: "Pending", count: report?.summary?.pending ?? 0, fill: statusConfig.pending.color },
         { status: "Day Off", count: report?.summary?.optional ?? 0, fill: statusConfig.optional.color },
+        { status: "Excused", count: report?.summary?.excused ?? 0, fill: statusConfig.excused.color },
     ].filter(item => item.count > 0);
 
     const chartConfig = {
@@ -167,6 +174,10 @@ export default function DailyReportsPage() {
         "Day Off": {
             label: "Day Off",
             color: statusConfig.optional.color,
+        },
+        Excused: {
+            label: "Excused",
+            color: statusConfig.excused.color,
         },
     };
 
@@ -234,11 +245,10 @@ export default function DailyReportsPage() {
                                     const allRecords = paginator?.data ? paginator.data : (Array.isArray(response.records) ? response.records : []);
                                     const rows = (Array.isArray(allRecords) ? allRecords : []).filter(r => r && typeof r === 'object');
 
-                                    const headers = ["ID", "Name", "Department", "Type", "Schedule", "In", "Break S", "Break E", "Out", "Hrs", "Late", "OT", "Status"];
+                                    const headers = ["ID", "Name", "Type", "Schedule", "In", "Break S", "Break E", "Out", "Hrs", "Late", "OT", "Status"];
                                     const rowData = rows.map(r => [
                                         r.employee_id,
                                         r.name,
-                                        r.department || "—",
                                         r.employee_type || "—",
                                         r.schedule || "—",
                                         r.time_in || "—",
@@ -248,7 +258,7 @@ export default function DailyReportsPage() {
                                         r.hours || "0",
                                         r.late_duration || "—",
                                         r.overtime || "—",
-                                        r.status
+                                        r.status || "Present"
                                     ]);
 
                                     const title = [`Daily Attendance Report - ${format(date, "PPPP")}`];
@@ -257,7 +267,7 @@ export default function DailyReportsPage() {
 
                                     // Set column widths
                                     ws['!cols'] = [
-                                        { wch: 12 }, { wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 15 },
+                                        { wch: 12 }, { wch: 25 }, { wch: 15 }, { wch: 15 },
                                         { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 8 },
                                         { wch: 10 }, { wch: 10 }, { wch: 12 }
                                     ];
@@ -335,7 +345,7 @@ export default function DailyReportsPage() {
                                     <XCircle className="h-5 w-5 text-red-600" />
                                 </div>
                                 <p className="text-sm font-medium text-muted-foreground">Absent</p>
-                                <p className="text-2xl font-bold text-red-600">{report.summary.absent}</p>
+                                <p className="text-2xl font-bold text-red-600">{(report.summary.absent ?? 0) + (report.summary.excused ?? 0)}</p>
                             </CardContent>
                         </Card>
                         <Card>
@@ -401,7 +411,7 @@ export default function DailyReportsPage() {
                                                                     y={viewBox.cy}
                                                                     className="fill-foreground text-3xl font-bold"
                                                                 >
-                                                                    {report.summary.total.toLocaleString()}
+                                                                    {(report?.summary?.total ?? 0).toLocaleString()}
                                                                 </tspan>
                                                                 <tspan
                                                                     x={viewBox.cx}
@@ -487,7 +497,7 @@ export default function DailyReportsPage() {
                                 {/* Mobile Card View */}
                                 <div className="block md:hidden space-y-3">
                                     {recordsList.map((record) => {
-                                        const config = statusConfig[record.status] || statusConfig.present;
+                                        const config = statusConfig[record.status?.toLowerCase()] || statusConfig.present;
                                         const StatusIcon = config.icon;
                                         return (
 
@@ -569,7 +579,7 @@ export default function DailyReportsPage() {
                                         </TableHeader>
                                         <TableBody>
                                             {recordsList.map((record) => {
-                                                const config = statusConfig[record.status] || statusConfig.present;
+                                                const config = statusConfig[record.status?.toLowerCase()] || statusConfig.present;
                                                 const StatusIcon = config.icon;
                                                 return (
                                                     <TableRow key={record.id} className="hover:bg-muted/30">

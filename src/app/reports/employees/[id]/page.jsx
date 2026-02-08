@@ -191,7 +191,7 @@ export default function EmployeeReportDetailPage() {
             });
 
             const title = [`Attendance Report: ${employee.first_name} ${employee.last_name} (${employee.employee_id})`];
-            const info = [`Position: ${employee.position} | Department: ${employee.department || "—"}`];
+            const info = [`Position: ${employee.position} | Type: ${employee.employee_type || "Regular"}`];
             const wsData = [title, info, [], headers, ...rowData];
             const ws = XLSX.utils.aoa_to_sheet(wsData);
 
@@ -238,14 +238,19 @@ export default function EmployeeReportDetailPage() {
                                 <h1 className="text-2xl font-bold tracking-tight">
                                     {employee.first_name} {employee.last_name}
                                 </h1>
-                                <div className="flex items-center gap-2 text-muted-foreground">
-                                    <Badge variant="outline" className="font-mono">
-                                        {employee.employee_id}
-                                    </Badge>
-                                    <span className="flex items-center gap-1">
-                                        <Briefcase className="h-3 w-3" />
-                                        {employee.position} ({employee.employee_type || "Regular"})
-                                    </span>
+                                <div className="flex flex-col gap-1.5 items-start mt-1">
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                        <Badge variant="outline" className="font-mono text-[10px]">
+                                            {employee.employee_id}
+                                        </Badge>
+                                        <span className="flex items-center gap-1 text-sm">
+                                            <Briefcase className="h-3.5 w-3.5" />
+                                            {employee.position}
+                                        </span>
+                                    </div>
+                                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold px-2 py-0.5 rounded-md bg-muted/50 border border-border/50">
+                                        {employee.employee_type || "Regular"}
+                                    </div>
                                 </div>
                             </div>
                         </div>
