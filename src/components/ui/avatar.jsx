@@ -57,7 +57,7 @@ function AvatarBadge({
     <span
       data-slot="avatar-badge"
       className={cn(
-        "absolute right-[2px] bottom-[2px] z-10 flex size-2.5 rounded-full border-2 border-background",
+        "absolute -right-0.5 -bottom-0.5 z-10 flex size-3 rounded-full border-2 border-background",
         className
       )}
       {...props} />
