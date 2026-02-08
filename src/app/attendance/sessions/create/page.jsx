@@ -70,11 +70,8 @@ export default function CreateSessionPage() {
                 setSchedules(schedData);
                 setEmployees(empData);
 
-                // Select all employees by default
-                setFormData(prev => ({
-                    ...prev,
-                    employee_ids: empData.map(e => e.id)
-                }));
+                // Removed: setFormData pre-assignment. 
+                // We keep it empty by default as requested to allow placeholder sessions.
 
             } catch (error) {
                 console.error("Failed to load initial data", error);
@@ -103,9 +100,7 @@ export default function CreateSessionPage() {
             newErrors.schedule_id = "Schedule is required";
         }
 
-        if (formData.employee_ids.length === 0) {
-            newErrors.employee_ids = "At least one employee must be assigned";
-        }
+        // Removed mandatory employee assignment for more flexibility
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -326,7 +321,7 @@ export default function CreateSessionPage() {
                                 <Alert>
                                     <AlertCircle className="h-4 w-4" />
                                     <AlertDescription>
-                                        This will create pending attendance records for all selected employees.
+                                        This will create pending attendance records for the selected employees. If none are selected, the session will start empty.
                                     </AlertDescription>
                                 </Alert>
                             </form>

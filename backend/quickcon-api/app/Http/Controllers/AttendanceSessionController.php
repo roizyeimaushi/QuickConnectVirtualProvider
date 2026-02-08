@@ -86,16 +86,9 @@ class AttendanceSessionController extends Controller
         ]);
 
         if (empty($validated['employee_ids'])) {
-            // Only auto-create records if attendance is required (Normal workday)
-            // On weekends, we leave it empty so it only records people who actually clock in.
-            if ($isRequired) {
-                $employeeIds = \App\Models\User::where('role', 'employee')
-                    ->where('status', 'active')
-                    ->pluck('id')
-                    ->toArray();
-            } else {
-                $employeeIds = [];
-            }
+            // Respect the user's choice: If they didn't add employees, the session starts empty.
+            // This is useful for "placeholder" sessions or weekend voluntary shifts.
+            $employeeIds = [];
         } else {
             $employeeIds = array_unique($validated['employee_ids']);
         }

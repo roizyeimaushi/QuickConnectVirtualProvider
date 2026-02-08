@@ -221,10 +221,27 @@ class ReportController extends Controller
 
             // C. Fallback to any active/pending session for the date (Global/Dynamic)
             if (!$todaySession) {
-                $todaySession = AttendanceSession::with('schedule')
+                $fallbackSession = AttendanceSession::with('schedule')
                     ->whereDate('date', $today)
                     ->whereIn('status', ['active', 'locked', 'pending'])
                     ->first();
+                
+                if ($fallbackSession) {
+                    // If it's a required session, we show it (Normal shift)
+                    if ($fallbackSession->attendance_required) {
+                        $todaySession = $fallbackSession;
+                    } else {
+                        // If it's OPTIONAL (weekend), only show it to people assigned to it
+                        $isUserInSession = \App\Models\AttendanceRecord::where('session_id', $fallbackSession->id)
+                            ->where('user_id', $user->id)
+                            ->exists();
+                        
+                        if ($isUserInSession) {
+                            $todaySession = $fallbackSession;
+                        }
+                        // Otherwise, return null so they see "Enjoy your Weekend"
+                    }
+                }
             }
 
             // D. Handle Overnight Roll-over / Early Access Fallback
