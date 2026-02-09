@@ -576,7 +576,7 @@ export default function AttendanceConfirmPage() {
 
     return (
         <DashboardLayout title="Time In">
-            <div className="max-w-4xl mx-auto space-y-6 animate-fade-in pb-10">
+            <div className="max-w-4xl mx-auto space-y-6 pb-10">
                 {/* Header */}
                 <div className="text-center">
                     <h1 className="text-3xl font-bold tracking-tight mb-2">

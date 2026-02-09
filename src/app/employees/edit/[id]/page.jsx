@@ -165,6 +165,7 @@ export default function EditEmployeePage() {
             // Only include password if it's being changed
             if (formData.password) {
                 updateData.password = formData.password;
+                updateData.password_confirmation = formData.confirmPassword;
             }
 
             await employeesApi.update(params.id, updateData);

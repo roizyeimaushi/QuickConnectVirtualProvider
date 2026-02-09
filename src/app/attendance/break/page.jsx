@@ -226,7 +226,7 @@ export default function BreakPage() {
 
     return (
         <DashboardLayout title="Break Time">
-            <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8 animate-fade-in">
+            <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8">
                 <div className="text-center space-y-2">
                     <h1 className="text-4xl font-bold tracking-tight text-primary">Break Time</h1>
                     <p className="text-sm text-muted-foreground">

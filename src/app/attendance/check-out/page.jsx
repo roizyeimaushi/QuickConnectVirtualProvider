@@ -283,7 +283,7 @@ export default function CheckOutPage() {
     if (!loading && !canCheckOut && checkOutMessage.includes("timed out")) {
         return (
             <DashboardLayout title="Time Out">
-                <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
+                <div className="max-w-4xl mx-auto space-y-6">
                     <div className="text-center">
                         <h1 className="text-3xl font-bold tracking-tight mb-2">Time Out</h1>
                         <p className="text-muted-foreground">End your work day</p>
@@ -320,7 +320,7 @@ export default function CheckOutPage() {
 
     return (
         <DashboardLayout title="Time Out">
-            <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
+            <div className="max-w-4xl mx-auto space-y-6">
                 {/* Header */}
                 <div className="text-center">
                     <h1 className="text-3xl font-bold tracking-tight mb-2">

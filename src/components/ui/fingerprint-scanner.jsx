@@ -78,7 +78,7 @@ export function FingerprintScanner({
                     {/* Content: Fingerprint or Success Icon */}
                     <div className="relative z-10 flex items-center justify-center transition-all duration-500">
                         {isSuccess ? (
-                            <div className="animate-in zoom-in duration-500">
+                            <div>
                                 <CheckCircle2 className={cn(
                                     "w-24 h-24 drop-shadow-[0_0_15px_rgba(34,197,94,0.5)]",
                                     isEmerald ? "text-emerald-500" : "text-purple-500 drop-shadow-[0_0_15px_rgba(124,58,237,0.5)]"

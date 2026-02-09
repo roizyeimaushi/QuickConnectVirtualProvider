@@ -332,7 +332,8 @@ export default function EmployeeReportDetailPage() {
                                         const dateStr = record.session?.date ? format(new Date(record.session.date), "MMM d, yyyy") : "—";
                                         const timeIn = record.time_in ? formatTime24(record.time_in) : "—";
                                         const timeOut = record.time_out ? formatTime24(record.time_out) : "—";
-                                        const breakTime = record.break_start ? formatTime24(record.break_start) : "—";
+                                        const breakStart = record.break_start ? formatTime24(record.break_start) : "—";
+                                        const breakEnd = record.break_end ? formatTime24(record.break_end) : "—";
 
                                         return (
                                             <div key={record.id} className="border rounded-lg p-4 space-y-3">
