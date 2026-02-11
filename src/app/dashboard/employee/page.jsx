@@ -116,7 +116,7 @@ const ActionButton = ({ title, subtext, icon: Icon, href, enabled, variant, acti
     );
 };
 
-function TodayStatusCard({ user, session, record, breakStatus, loading, constraints, isWeekend }) {
+function TodayStatusCard({ session, record, breakStatus, loading, constraints, isWeekend }) {
     const [currentTime, setCurrentTime] = useState(formatTime24(new Date()));
     // const [elapsedTime, setElapsedTime] = useState("--"); // Unused
 
