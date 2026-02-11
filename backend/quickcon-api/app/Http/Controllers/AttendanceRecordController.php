@@ -1112,39 +1112,32 @@ class AttendanceRecordController extends Controller
             }
         }
         if ($request->has('break_start') || $request->has('break_end')) {
-             $break = \App\Models\EmployeeBreak::where('attendance_id', $attendanceRecord->id)
-                ->orderBy('created_at', 'desc')
-                ->first();
+             // ADMIN CORRECTION: Enforce Single Break Source of Truth
+             // If Admin changes break times, we wipe all existing segments to prevent "ghost" minutes 
+             // from previous segments adding up (e.g. 46m + 90m = 136m).
+             // We replace it with distinct SINGLE break segment matching the Admin's input.
+             
+             \App\Models\EmployeeBreak::where('attendance_id', $attendanceRecord->id)->delete();
 
-             if ($break) {
-                 if ($request->has('break_start')) {
-                     $break->break_start = $attendanceRecord->break_start;
+             if ($attendanceRecord->break_start) {
+                 $bS = $attendanceRecord->break_start;
+                 $bE = $attendanceRecord->break_end;
+                 
+                 $duration = 0;
+                 if ($bS && $bE) {
+                     $duration = $bS->diffInMinutes($bE, false);
+                     if ($duration < 0) $duration += 1440;
                  }
-                 if ($request->has('break_end')) {
-                     $break->break_end = $attendanceRecord->break_end;
-                 }
-                 // Recalc duration
-                 if ($break->break_start && $break->break_end) {
-                     $break->duration_minutes = ($break->break_start->diffInMinutes($break->break_end, false) < 0 ? $break->break_start->diffInMinutes($break->break_end, false) + 1440 : $break->break_start->diffInMinutes($break->break_end, false));
-                 } else {
-                     $break->duration_minutes = 0;
-                 }
-                 $break->save();
-             } else {
-                 // Create new entry if legacy columns are set but no break record exists
-                 if ($attendanceRecord->break_start) {
-                     \App\Models\EmployeeBreak::create([
-                         'attendance_id' => $attendanceRecord->id,
-                         'user_id' => $attendanceRecord->user_id,
-                         'break_date' => $attendanceRecord->attendance_date,
-                         'break_start' => $attendanceRecord->break_start,
-                         'break_end' => $attendanceRecord->break_end,
-                         'duration_minutes' => ($attendanceRecord->break_start && $attendanceRecord->break_end) 
-                             ? ($attendanceRecord->break_start->diffInMinutes($attendanceRecord->break_end, false) < 0 ? $attendanceRecord->break_start->diffInMinutes($attendanceRecord->break_end, false) + 1440 : $attendanceRecord->break_start->diffInMinutes($attendanceRecord->break_end, false))
-                             : 0,
-                         'break_type' => 'Manual'
-                     ]);
-                 }
+                 
+                 \App\Models\EmployeeBreak::create([
+                     'attendance_id' => $attendanceRecord->id,
+                     'user_id' => $attendanceRecord->user_id,
+                     'break_date' => $attendanceRecord->attendance_date,
+                     'break_start' => $bS,
+                     'break_end' => $bE,
+                     'duration_minutes' => $duration,
+                     'break_type' => 'Manual Correction'
+                 ]);
              }
         }
 
