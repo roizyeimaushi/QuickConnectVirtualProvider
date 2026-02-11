@@ -187,14 +187,19 @@ class BreakController extends Controller
                   $mealUsed = in_array('Meal', $usedTypes);
             }
         } else {
-             // Check if cumulative limit is reached
-             $hasRemainingTime = ($totalUsedMinutes < $maxMinutes);
+             // Check if ANY break has been taken (Single Use Policy)
+             $hasBreakTaken = ($totalUsedMinutes > 0);
              
-             $canStartBreak = $hasRemainingTime;
-             $breakMessage = $hasRemainingTime 
-                ? "Total break allowance: 90 mins. You have used $totalUsedMinutes mins."
-                : "You have used your total break allowance of 90 minutes.";
-             $breakReason = $hasRemainingTime ? 'available' : 'break_limit_reached';
+             if ($hasBreakTaken) {
+                 $canStartBreak = false;
+                 $breakMessage = "You have already used your single break allowance.";
+                 $breakReason = 'break_limit_reached';
+             } else {
+                 $hasRemainingTime = ($maxMinutes > 0);
+                 $canStartBreak = $hasRemainingTime;
+                 $breakMessage = "You have a single break allowance of {$maxMinutes} minutes.";
+                 $breakReason = $hasRemainingTime ? 'available' : 'break_limit_reached';
+             }
         }
 
         return response()->json([
@@ -306,11 +311,19 @@ class BreakController extends Controller
             ->whereNotNull('break_end')
             ->sum('duration_minutes');
             
+        // SINGLE BREAK POLICY CHECK
+        if ($alreadyUsedMinutes > 0) {
+             return response()->json([
+                'message' => 'You have already used your single break allowance.',
+                'error_code' => 'BREAK_LIMIT_REACHED'
+            ], 400);
+        }
+
         $remainingMinutes = max(0, $globalLimit - $alreadyUsedMinutes);
         
         if ($remainingMinutes <= 0) {
              return response()->json([
-                'message' => 'You have already used your total break allowance of 90 minutes.',
+                'message' => 'Zero minutes remaining in break allowance.',
                 'error_code' => 'BREAK_LIMIT_REACHED'
             ], 400);
         }

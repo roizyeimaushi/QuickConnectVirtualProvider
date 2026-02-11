@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { breakApi, reportsApi } from "@/lib/api";
 import { formatTime24 } from "@/lib/utils";
-import { Timer, Coffee, Play, StopCircle, AlertCircle, Clock, Ban, Loader2, PauseCircle, Calendar, ThumbsUp } from "lucide-react";
+import { Timer, Loader2, PauseCircle, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Skeleton from "@/components/ui/skeleton";
 
@@ -41,7 +41,7 @@ export default function BreakPage() {
             try {
                 const response = await breakApi.getStatus();
                 setBreakStatus(response);
-            } catch (error) {
+            } catch {
                 // API fetch failed - likely using fallback data
                 // Suppressing console error as requested since fallback handles it
                 if (dashboardResponse.break_status) {
@@ -64,17 +64,9 @@ export default function BreakPage() {
     }, []);
 
     // Calculate Time Used
-    const maxSeconds = (breakStatus?.break_window?.max_minutes || 90) * 60;
-    const remaining = breakStatus?.break_remaining_seconds || 0;
-    const usedSeconds = Math.max(0, maxSeconds - remaining);
-
-    // Format Used Time
-    const formatDuration = (totalSeconds) => {
-        const hours = Math.floor(totalSeconds / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = Math.floor(totalSeconds % 60);
-        return `${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
-    };
+    // const maxSeconds = (breakStatus?.break_window?.max_minutes || 90) * 60;
+    // const remaining = breakStatus?.break_remaining_seconds || 0;
+    // const usedSeconds = Math.max(0, maxSeconds - remaining);
 
     // Update current time every second
     useEffect(() => {
@@ -135,7 +127,7 @@ export default function BreakPage() {
         try {
             // Ensure payload is correct.
             // 422 often means validation failed. Backend expects 'type' in body.
-            const res = await breakApi.startBreak({ type: type });
+            await breakApi.startBreak({ type: type });
 
             toast({
                 title: `${type} Break Started`,
@@ -192,13 +184,9 @@ export default function BreakPage() {
     };
 
     // Get break window info for display
-    const breakWindow = breakStatus?.break_window;
-    const canStartBreak = breakStatus?.can_start_break;
-    const canEndBreak = breakStatus?.can_end_break;
     const isOnBreak = breakStatus?.is_on_break;
     const breakAlreadyUsed = breakStatus?.break_already_used;
-    const isWithinWindow = breakStatus?.is_within_break_window;
-    const hasCheckedIn = breakStatus?.has_checked_in;
+    const canStartBreak = breakStatus?.can_start_break;
     const hasCheckedOut = breakStatus?.has_checked_out;
     const breakMessage = breakStatus?.break_message;
 
@@ -252,7 +240,7 @@ export default function BreakPage() {
                                 </div>
                                 <h3 className="text-lg font-semibold text-sky-700 dark:text-sky-400 mb-2">No Work Today</h3>
                                 <p className="text-sm text-sky-600/80 dark:text-sky-400/80 max-w-sm">
-                                    It's the weekend! No shifts are scheduled for today. Enjoy your time off!
+                                    It&apos;s the weekend! No shifts are scheduled for today. Enjoy your time off!
                                 </p>
                             </div>
                         ) : hasCheckedOut ? (
@@ -265,9 +253,9 @@ export default function BreakPage() {
                                 <BreakTypeCard
                                     type="Regular"
                                     label="Start Break"
-                                    duration={`${breakStatus?.break_window?.max_minutes || 90} minutes`}
+                                    duration={`${Math.max(0, (breakStatus?.break_window?.max_minutes || 90) - (breakStatus?.break_used_minutes || 0))} minutes remaining`}
                                     icon={<Timer className="h-6 w-6" />}
-                                    isUsed={false}
+                                    isUsed={breakAlreadyUsed}
                                     isActive={isOnBreak}
                                     isDisabled={!canStartBreak || !!submittingType}
                                     timeLeft={timeLeft}

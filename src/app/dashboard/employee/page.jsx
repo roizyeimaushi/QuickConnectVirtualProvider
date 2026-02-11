@@ -309,7 +309,7 @@ function TodayStatusCard({ user, session, record, breakStatus, loading, constrai
                     <div className="flex flex-row sm:flex-col justify-between items-end sm:items-end w-full sm:w-auto border-t border-white/10 sm:border-none pt-5 sm:pt-0 mt-2 sm:mt-0">
                         <div className="text-left sm:text-right order-2 sm:order-1">
                             <p className="text-[10px] md:text-xs opacity-75 font-bold uppercase tracking-widest mb-1">
-                                {formatDate(record?.attendance_date || session?.date || getCurrentDate(), "EEEE, MMM do")}
+                                {formatDate(getCurrentDate(), "EEEE, MMM do")}
                             </p>
                             <p className="text-4xl md:text-5xl font-black font-mono tracking-tighter text-white leading-none">
                                 {currentTime}
