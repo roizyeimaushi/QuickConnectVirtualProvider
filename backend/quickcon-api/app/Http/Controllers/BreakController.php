@@ -314,7 +314,7 @@ class BreakController extends Controller
         // SINGLE BREAK POLICY CHECK
         if ($alreadyUsedMinutes > 0) {
              return response()->json([
-                'message' => 'You have already used your single break allowance.',
+                'message' => 'You have already used your break time.',
                 'error_code' => 'BREAK_LIMIT_REACHED'
             ], 400);
         }

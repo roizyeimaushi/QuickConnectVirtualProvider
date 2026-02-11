@@ -1094,12 +1094,17 @@ class AttendanceRecordController extends Controller
                 
                 $globalLimit = (int)(\App\Models\Setting::where('key', 'break_duration')->value('value') ?? 90);
                 
+                // ADMIN OVERRIDE: We allow admins to save breaks exceeding the limit for accurate record keeping.
+                // The warning below is suppressed/removed to create a smoother correction workflow.
+                
+                /* 
                 if (($bDuration + $otherBreaksDuration) > $globalLimit) {
                     return response()->json([
                         'message' => "Total break duration cannot exceed {$globalLimit} minutes. Current segments + this edit = " . ($bDuration + $otherBreaksDuration) . " minutes.",
                         'error_code' => 'BREAK_LIMIT_EXCEEDED'
                     ], 400);
                 }
+                */
             }
         }
         if ($request->has('break_start') || $request->has('break_end')) {
