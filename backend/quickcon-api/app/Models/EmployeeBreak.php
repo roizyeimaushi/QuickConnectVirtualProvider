@@ -96,6 +96,13 @@ class EmployeeBreak extends Model
 
         $this->break_end = now();
         $diff = Carbon::parse($this->break_start)->diffInMinutes($this->break_end, false);
+        
+        // Enforce Limit even on Manual End
+        if ($this->duration_limit > 0 && $diff > $this->duration_limit) {
+             $diff = $this->duration_limit;
+             $this->break_end = Carbon::parse($this->break_start)->addMinutes($diff);
+        }
+        
         $this->duration_minutes = (int) ($diff < 0 ? $diff + 1440 : $diff);
         $this->save();
     }
