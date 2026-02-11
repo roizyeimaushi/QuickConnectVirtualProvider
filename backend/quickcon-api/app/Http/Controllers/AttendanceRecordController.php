@@ -47,6 +47,9 @@ class AttendanceRecordController extends Controller
         }
 
         // Validate Break Duration (90 mins)
+        // Validate Break Duration (90 mins)
+        // ADMIN OVERRIDE: Allow creating records with breaks > 90 mins
+        /*
         if ($validated['break_start'] && $validated['break_end']) {
             $bStart = Carbon::parse($validated['break_start']);
             $bEnd = Carbon::parse($validated['break_end']);
@@ -62,6 +65,7 @@ class AttendanceRecordController extends Controller
                 ], 400);
             }
         }
+        */
 
         $record = AttendanceRecord::create([
             'user_id' => $validated['user_id'],
