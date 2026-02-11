@@ -3,27 +3,27 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+// import { Button } from "@/components/ui/button"; // Unused
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import Skeleton from "@/components/ui/skeleton";
 
 import { useAuth } from "@/components/providers/auth-provider";
 import { attendanceApi, reportsApi, breakApi } from "@/lib/api";
-import { formatDate, formatTime24, getCurrentDate, getCurrentTime, isSameDay } from "@/lib/utils";
+import { formatTime24, formatDate, getCurrentDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import {
     CheckCircle2,
     Clock,
-    Calendar,
-    TrendingUp,
+    // Calendar, // Unused
+    // TrendingUp, // Unused
     History,
     Timer,
     AlertCircle,
     Fingerprint,
-    ArrowRight,
-    Sparkles,
+    // ArrowRight, // Unused
+    // Sparkles, // Unused
     Coffee,
     LogOut,
     ThumbsUp
@@ -118,8 +118,7 @@ const ActionButton = ({ title, subtext, icon: Icon, href, enabled, variant, acti
 
 function TodayStatusCard({ user, session, record, breakStatus, loading, constraints, isWeekend }) {
     const [currentTime, setCurrentTime] = useState(formatTime24(new Date()));
-    // const [timeLeft, setTimeLeft] = useState(null); // Removed state for derived value
-    const [elapsedTime, setElapsedTime] = useState("--");
+    // const [elapsedTime, setElapsedTime] = useState("--"); // Unused
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -169,7 +168,7 @@ function TodayStatusCard({ user, session, record, breakStatus, loading, constrai
     const isBreakActive = breakStatus?.active;
     // Enforce single break policy: if a break occurred today and is not currently active, it is used.
     const breakUsed = breakStatus?.already_used || (breakStatus?.has_break_today && !isBreakActive);
-    const isLate = record && record.minutes_late > 0;
+    // const isLate = record && record.minutes_late > 0; // Unused
 
     // Strict Logic for Button Enabling
     const canCheckIn = !hasCheckedIn && constraints?.allowed !== false;
@@ -292,7 +291,7 @@ function TodayStatusCard({ user, session, record, breakStatus, loading, constrai
             <div className={`${headerColor} text-white p-5 md:p-8 transition-colors duration-500`}>
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-2">
                     <div className="space-y-1.5">
-                        <h3 className="text-lg md:text-xl font-bold tracking-tight">Today's Status</h3>
+                        <h3 className="text-lg md:text-xl font-bold tracking-tight">Today&apos;s Status</h3>
                         <div className="flex flex-wrap items-center gap-2">
                             <Badge className={`${statusColor} hover:${statusColor} border-none text-xs md:text-sm px-3 py-1 font-bold`}>
                                 <StatusIcon className="h-3.5 w-3.5 mr-1.5" />
@@ -530,7 +529,7 @@ export default function EmployeeDashboardPage() {
                         meal_used: breakStatusData.meal_used,
                     });
                 }
-            } catch (breakError) {
+            } catch {
                 // If break API fails, fallback to dashboard response data
                 // Use break_status from the API (new 12PM-1PM policy)
                 if (response.break_status) {
@@ -555,7 +554,7 @@ export default function EmployeeDashboardPage() {
                     try {
                         const breakRes = await attendanceApi.getActiveBreak(record.id);
                         if (breakRes) setActiveBreak(breakRes);
-                    } catch (e) {
+                    } catch {
                         // No active break
                     }
                 } else {
@@ -664,7 +663,7 @@ export default function EmployeeDashboardPage() {
                         Welcome back, {user?.first_name}!
                     </h1>
                     <p className="text-muted-foreground">
-                        Here's your attendance overview for today.
+                        Here&apos;s your attendance overview for today.
                     </p>
                 </div>
 
