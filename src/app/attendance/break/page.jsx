@@ -185,7 +185,8 @@ export default function BreakPage() {
 
     // Get break window info for display
     const isOnBreak = breakStatus?.is_on_break;
-    const breakAlreadyUsed = breakStatus?.break_already_used;
+    // Enforce single break policy: if a break occurred today and is not currently active, it is used.
+    const breakAlreadyUsed = breakStatus?.break_already_used || (breakStatus?.has_break_today && !isOnBreak);
     const canStartBreak = breakStatus?.can_start_break;
     const hasCheckedOut = breakStatus?.has_checked_out;
     const breakMessage = breakStatus?.break_message;
@@ -252,7 +253,7 @@ export default function BreakPage() {
                                 {/* Break Card */}
                                 <BreakTypeCard
                                     type="Regular"
-                                    label="Start Break"
+                                    label="Break"
                                     duration={`${Math.max(0, (breakStatus?.break_window?.max_minutes || 90) - (breakStatus?.break_used_minutes || 0))} minutes remaining`}
                                     icon={<Timer className="h-6 w-6" />}
                                     isUsed={breakAlreadyUsed}

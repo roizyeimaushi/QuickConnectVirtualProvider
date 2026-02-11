@@ -36,9 +36,89 @@ import {
 } from "@/components/ui/tooltip";
 
 
+
+// Reusable Action Button Component
+const ActionButton = ({ title, subtext, icon: Icon, href, enabled, variant, activeState, tooltip }) => {
+    const baseStyles = "relative flex flex-col items-center justify-center p-6 h-40 w-full rounded-xl border-2 transition-all duration-300 group";
+    const variants = {
+        emerald: "border-emerald-100 bg-emerald-50 hover:bg-emerald-100 hover:border-emerald-300 text-emerald-800",
+        amber: "border-amber-100 bg-amber-50 hover:bg-amber-100 hover:border-amber-300 text-amber-800",
+        purple: "border-purple-100 bg-purple-50 hover:bg-purple-100 hover:border-purple-300 text-purple-800",
+        disabled: "border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed grayscale"
+    };
+
+    const activeStyles = enabled ? "hover:scale-105 active:scale-95 shadow-md hover:shadow-xl" : "cursor-not-allowed opacity-60";
+    const colorClass = enabled ? variants[variant] : variants.disabled;
+
+    const content = (
+        <>
+            {/* Scanner corners for Time In/Out */}
+            {(variant === 'emerald' || variant === 'purple') && enabled && (
+                <>
+                    <div className={cn(
+                        "absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 transition-all duration-500 group-hover:scale-110",
+                        variant === 'emerald' ? "border-emerald-500/50" : "border-purple-500/50"
+                    )} />
+                    <div className={cn(
+                        "absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 transition-all duration-500 group-hover:scale-110",
+                        variant === 'emerald' ? "border-emerald-500/50" : "border-purple-500/50"
+                    )} />
+                    <div className={cn(
+                        "absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 transition-all duration-500 group-hover:scale-110",
+                        variant === 'emerald' ? "border-emerald-500/50" : "border-purple-500/50"
+                    )} />
+                    <div className={cn(
+                        "absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 transition-all duration-500 group-hover:scale-110",
+                        variant === 'emerald' ? "border-emerald-500/50" : "border-purple-500/50"
+                    )} />
+                </>
+            )}
+
+            <div className={`
+                h-14 w-14 rounded-full flex items-center justify-center mb-3 transition-transform duration-300 
+                ${enabled ? "bg-white shadow-sm group-hover:scale-110" : "bg-gray-200"}
+            `}>
+                <Icon className={`h-7 w-7 ${enabled ? "" : "text-gray-400"}`} />
+            </div>
+            <h3 className="font-bold text-lg">{title}</h3>
+            {subtext && <p className="text-xs opacity-80 mt-1 font-medium text-center max-w-[120px]">{subtext}</p>}
+
+            {activeState && (
+                <div className="absolute top-3 right-3 h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                </div>
+            )}
+        </>
+    );
+
+    if (enabled && href) {
+        return (
+            <Link href={href} className="w-full focus:outline-none">
+                <div className={`${baseStyles} ${colorClass} ${activeStyles}`}>
+                    {content}
+                </div>
+            </Link>
+        );
+    }
+
+    return (
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <div className={`${baseStyles} ${colorClass} ${activeStyles}`}>
+                        {content}
+                    </div>
+                </TooltipTrigger>
+                {tooltip && <TooltipContent><p>{tooltip}</p></TooltipContent>}
+            </Tooltip>
+        </TooltipProvider>
+    );
+};
+
 function TodayStatusCard({ user, session, record, breakStatus, loading, constraints, isWeekend }) {
     const [currentTime, setCurrentTime] = useState(formatTime24(new Date()));
-    const [timeLeft, setTimeLeft] = useState(null);
+    // const [timeLeft, setTimeLeft] = useState(null); // Removed state for derived value
     const [elapsedTime, setElapsedTime] = useState("--");
 
     useEffect(() => {
@@ -49,17 +129,19 @@ function TodayStatusCard({ user, session, record, breakStatus, loading, constrai
     }, []);
 
     // Sync initial time from props
-    const [secondsLeft, setSecondsLeft] = useState(Math.floor(breakStatus?.remaining_seconds || 0));
+    // We use the "state derived from props" pattern here to avoid useEffect state setting warnings
+    const [prevBreakSeconds, setPrevBreakSeconds] = useState(null);
+    const [secondsLeft, setSecondsLeft] = useState(0);
 
-    useEffect(() => {
-        if (breakStatus?.remaining_seconds !== undefined) {
-            setSecondsLeft(Math.floor(breakStatus.remaining_seconds));
-        }
-    }, [breakStatus?.remaining_seconds]);
+    const incomingSeconds = breakStatus?.remaining_seconds;
+    if (incomingSeconds !== undefined && incomingSeconds !== prevBreakSeconds) {
+        setPrevBreakSeconds(incomingSeconds);
+        setSecondsLeft(Math.floor(incomingSeconds));
+    }
 
     useEffect(() => {
         let interval;
-        if (breakStatus?.active && secondsLeft > 0) {
+        if (breakStatus?.active) {
             interval = setInterval(() => {
                 setSecondsLeft((prev) => {
                     if (prev <= 0) return 0;
@@ -71,19 +153,13 @@ function TodayStatusCard({ user, session, record, breakStatus, loading, constrai
     }, [breakStatus?.active]);
 
     // Format for display
-    useEffect(() => {
-        // Always show timer if break is active
-        if (breakStatus?.active) {
-            const hours = Math.floor(secondsLeft / 3600);
-            const minutes = Math.floor((secondsLeft % 3600) / 60);
-            const seconds = Math.floor(secondsLeft % 60);
-            setTimeLeft(
-                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-            );
-        } else {
-            setTimeLeft(null);
-        }
-    }, [secondsLeft, breakStatus?.active]);
+    let formattedTimeLeft = null;
+    if (breakStatus?.active) {
+        const hours = Math.floor(secondsLeft / 3600);
+        const minutes = Math.floor((secondsLeft % 3600) / 60);
+        const seconds = Math.floor(secondsLeft % 60);
+        formattedTimeLeft = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
 
     if (loading) return null;
 
@@ -91,7 +167,8 @@ function TodayStatusCard({ user, session, record, breakStatus, loading, constrai
     const hasCheckedIn = record && record.time_in;
     const hasCheckedOut = record && record.time_out;
     const isBreakActive = breakStatus?.active;
-    const breakUsed = breakStatus?.already_used;
+    // Enforce single break policy: if a break occurred today and is not currently active, it is used.
+    const breakUsed = breakStatus?.already_used || (breakStatus?.has_break_today && !isBreakActive);
     const isLate = record && record.minutes_late > 0;
 
     // Strict Logic for Button Enabling
@@ -167,84 +244,7 @@ function TodayStatusCard({ user, session, record, breakStatus, loading, constrai
         }
     }
 
-    // Reusable Action Button Component
-    const ActionButton = ({ title, subtext, icon: Icon, href, enabled, variant, activeState, tooltip }) => {
-        const baseStyles = "relative flex flex-col items-center justify-center p-6 h-40 w-full rounded-xl border-2 transition-all duration-300 group";
-        const variants = {
-            emerald: "border-emerald-100 bg-emerald-50 hover:bg-emerald-100 hover:border-emerald-300 text-emerald-800",
-            amber: "border-amber-100 bg-amber-50 hover:bg-amber-100 hover:border-amber-300 text-amber-800",
-            purple: "border-purple-100 bg-purple-50 hover:bg-purple-100 hover:border-purple-300 text-purple-800",
-            disabled: "border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed grayscale"
-        };
 
-        const activeStyles = enabled ? "hover:scale-105 active:scale-95 shadow-md hover:shadow-xl" : "cursor-not-allowed opacity-60";
-        const colorClass = enabled ? variants[variant] : variants.disabled;
-
-        const Content = () => (
-            <>
-                {/* Scanner corners for Time In/Out */}
-                {(variant === 'emerald' || variant === 'purple') && enabled && (
-                    <>
-                        <div className={cn(
-                            "absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 transition-all duration-500 group-hover:scale-110",
-                            variant === 'emerald' ? "border-emerald-500/50" : "border-purple-500/50"
-                        )} />
-                        <div className={cn(
-                            "absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 transition-all duration-500 group-hover:scale-110",
-                            variant === 'emerald' ? "border-emerald-500/50" : "border-purple-500/50"
-                        )} />
-                        <div className={cn(
-                            "absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 transition-all duration-500 group-hover:scale-110",
-                            variant === 'emerald' ? "border-emerald-500/50" : "border-purple-500/50"
-                        )} />
-                        <div className={cn(
-                            "absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 transition-all duration-500 group-hover:scale-110",
-                            variant === 'emerald' ? "border-emerald-500/50" : "border-purple-500/50"
-                        )} />
-                    </>
-                )}
-
-                <div className={`
-                    h-14 w-14 rounded-full flex items-center justify-center mb-3 transition-transform duration-300 
-                    ${enabled ? "bg-white shadow-sm group-hover:scale-110" : "bg-gray-200"}
-                `}>
-                    <Icon className={`h-7 w-7 ${enabled ? "" : "text-gray-400"}`} />
-                </div>
-                <h3 className="font-bold text-lg">{title}</h3>
-                {subtext && <p className="text-xs opacity-80 mt-1 font-medium text-center max-w-[120px]">{subtext}</p>}
-
-                {activeState && (
-                    <div className="absolute top-3 right-3 h-3 w-3">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                    </div>
-                )}
-            </>
-        );
-
-        if (enabled && href) {
-            return (
-                <Link href={href} className="w-full focus:outline-none">
-                    <div className={`${baseStyles} ${colorClass} ${activeStyles}`}>
-                        <Content />
-                    </div>
-                </Link>
-            );
-        }
-
-        return (
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <div className={`${baseStyles} ${colorClass} ${activeStyles}`}>
-                            <Content />
-                        </div>
-                    </TooltipTrigger>
-                    {tooltip && <TooltipContent><p>{tooltip}</p></TooltipContent>}
-                </Tooltip>
-            </TooltipProvider>
-        );
-    };
 
     if (loading) {
         return (
@@ -319,7 +319,7 @@ function TodayStatusCard({ user, session, record, breakStatus, loading, constrai
                         {isBreakActive && (
                             <div className="flex items-center gap-2 bg-white/20 px-3 py-1.5 rounded-full backdrop-blur-md animate-pulse order-1 sm:order-2">
                                 <Timer className="h-3.5 w-3.5" />
-                                <span className="font-mono font-bold text-sm">{timeLeft}</span>
+                                <span className="font-mono font-bold text-sm">{formattedTimeLeft}</span>
                             </div>
                         )}
                     </div>
