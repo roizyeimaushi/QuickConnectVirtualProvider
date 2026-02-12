@@ -12,7 +12,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Notification;
 
 class AttendanceRecordController extends Controller
 {
@@ -427,6 +429,22 @@ class AttendanceRecordController extends Controller
 
             DB::commit();
             event(new AttendanceUpdated($record, 'confirmed'));
+
+            // ============================================================
+            // LATE ARRIVAL NOTIFICATION: Alert admins when employee is late
+            // ============================================================
+            if ($status === 'late') {
+                $lateAlerts = filter_var(Setting::where('key', 'late_alerts')->value('value'), FILTER_VALIDATE_BOOLEAN);
+                if ($lateAlerts) {
+                    try {
+                        $record->load('user');
+                        $admins = User::where('role', 'admin')->get();
+                        Notification::send($admins, new \App\Notifications\LateArrivalNotification($record));
+                    } catch (\Throwable $e) {
+                        Log::warning('Failed to send late arrival notification: ' . $e->getMessage());
+                    }
+                }
+            }
 
             return response()->json([
                 'message' => 'Attendance confirmed successfully',
