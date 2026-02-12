@@ -1,8 +1,5 @@
-"use client";
-
 import useSWR, { mutate as globalMutate } from 'swr';
-import { API_BASE_URL } from './constants';
-import Cookies from 'js-cookie';
+import { useEffect, useCallback, useState } from 'react';
 
 /**
  * SWR Configuration & Custom Hooks for Real-Time Data
@@ -13,6 +10,7 @@ import Cookies from 'js-cookie';
  * - Polling intervals for critical data
  * - Optimistic updates
  * - Error retry with exponential backoff
+ * - Unified error handling via ApiClient (401/403/network errors)
  */
 
 // ============================================
@@ -20,35 +18,15 @@ import Cookies from 'js-cookie';
 // ============================================
 
 /**
- * Universal fetcher for SWR that uses auth token
+ * Universal fetcher for SWR that delegates to the ApiClient.
+ * This ensures all data fetching — both SWR reads and API mutations —
+ * goes through the same centralized error handling pipeline
+ * (401 redirects, 403 structured errors, network error wrapping).
  */
 const fetcher = async (url) => {
-    const token = typeof window !== 'undefined'
-        ? (localStorage.getItem('quickcon_token') || Cookies.get('quickcon_token'))
-        : null;
-
-    const headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-    };
-
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    const response = await fetch(`${API_BASE_URL}${url}`, {
-        headers,
-        credentials: 'include',
-    });
-
-    if (!response.ok) {
-        const error = new Error('An error occurred while fetching the data.');
-        error.info = await response.json().catch(() => ({}));
-        error.status = response.status;
-        throw error;
-    }
-
-    return response.json();
+    // Dynamic import to avoid circular dependency (api.js imports from swr)
+    const { default: api } = await import('./api');
+    return api.get(url);
 };
 
 // ============================================
@@ -477,7 +455,7 @@ export function invalidateEmployeeCache() {
 // VISIBILITY-BASED REFRESH HOOK
 // ============================================
 
-import { useEffect, useCallback } from 'react';
+
 
 /**
  * Hook that triggers refresh when page becomes visible
@@ -501,7 +479,7 @@ export function useVisibilityRefresh(refreshFn) {
 // ONLINE STATUS HOOK
 // ============================================
 
-import { useState } from 'react';
+
 
 /**
  * Hook that tracks online/offline status

@@ -14,7 +14,7 @@ export function SettingsProvider({ children }) {
             if (!isPolling) setLoading(true);
             const data = await settingsApi.getAll();
             setSettings(data);
-        } catch (error) {
+        } catch {
             // console.warn("Failed to fetch settings (using defaults)", error);
         } finally {
             if (!isPolling) setLoading(false);
@@ -23,7 +23,15 @@ export function SettingsProvider({ children }) {
 
     useEffect(() => {
         fetchSettings();
-        const interval = setInterval(() => fetchSettings(true), 5000);
+
+        // Poll every 60 seconds (not 5s) to reduce server load
+        const interval = setInterval(() => {
+            // Only poll when tab is visible to avoid wasting resources
+            if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+                fetchSettings(true);
+            }
+        }, 60000);
+
         return () => clearInterval(interval);
     }, []);
 

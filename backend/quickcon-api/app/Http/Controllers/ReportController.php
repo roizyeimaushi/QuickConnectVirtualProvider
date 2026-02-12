@@ -128,12 +128,14 @@ class ReportController extends Controller
                 $lateToday = 0;
                 $absentToday = 0;
                 $pendingToday = 0;
-                $confirmedCount = 0;
+                $totalProcessed = 0;
             } else {
                 $absentToday = $manualAbsentToday;
-                $confirmedCount = $presentToday + $lateToday + $absentToday;
-                $remainingCount = max(0, $totalEmployees - $confirmedCount);
-                $pendingToday = $remainingCount;
+                // Processed = anyone who has a record with a definitive status
+                $totalProcessed = AttendanceRecord::where('attendance_date', $today)
+                    ->whereNotIn('status', ['pending', 'optional'])
+                    ->count();
+                $pendingToday = max(0, $totalEmployees - $totalProcessed);
             }
 
             $activeSessions = AttendanceSession::where('status', 'active')
@@ -199,7 +201,10 @@ class ReportController extends Controller
         AttendanceSession::syncStatuses();
 
         // 2. Boundary & Logic Today
-        $boundary = (int) (Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
+        static $boundary = null;
+        if ($boundary === null) {
+            $boundary = (int) (Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
+        }
         $today = $now->hour < $boundary ? Carbon::yesterday()->toDateString() : Carbon::today()->toDateString();
         $realToday = Carbon::today()->toDateString();
 
@@ -471,7 +476,8 @@ class ReportController extends Controller
         $totalEmployees = $allEmployees->count();
 
         // Get existing attendance records for the date
-        $existingRecords = AttendanceRecord::with(['user', 'session.schedule'])
+        // Eager load breaks to avoid N+1 queries during hours calculation
+        $existingRecords = AttendanceRecord::with(['user', 'session.schedule', 'breaks'])
             ->where('attendance_date', $date)
             ->get()
             ->keyBy('user_id');
@@ -612,8 +618,10 @@ class ReportController extends Controller
         $employeeIds = $allEmployees->pluck('id');
 
         // Optimization: Fetch all records for the month in ONE query
+        // Selecting only necessary columns to reduce memory footprint
         $allRecords = AttendanceRecord::whereIn('user_id', $employeeIds)
             ->whereBetween('attendance_date', [$startDate->toDateString(), $endDate->toDateString()])
+            ->select('id', 'user_id', 'status', 'attendance_date')
             ->get()
             ->groupBy('user_id');
 

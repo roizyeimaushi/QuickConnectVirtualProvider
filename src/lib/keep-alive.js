@@ -46,6 +46,12 @@ export const startKeepAlive = () => {
     // Only run in browser
     if (typeof window === 'undefined') return;
 
+    // Safety: clear any leaked interval from HMR (development hot reload)
+    if (keepAliveInterval) {
+        clearInterval(keepAliveInterval);
+        keepAliveInterval = null;
+    }
+
     // Initial ping
     pingHealth();
 
@@ -75,9 +81,11 @@ export const stopKeepAlive = () => {
  */
 export const isKeepAliveRunning = () => isKeepAliveActive;
 
-export default {
+const keepAliveUtils = {
     pingHealth,
     startKeepAlive,
     stopKeepAlive,
     isKeepAliveRunning,
 };
+
+export default keepAliveUtils;

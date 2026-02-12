@@ -38,10 +38,10 @@ export function SWRProvider({ children }) {
     }, [toast]);
 
     // Global success handler - called when data is successfully fetched
-    const onSuccess = useCallback((data, key) => {
-        // Optional: Log successful fetches in development
-        if (process.env.NODE_ENV === 'development') {
-            // console.debug(`SWR Success [${key}]`);
+    // Dispatches a custom event so ConnectionStatus can track real sync times
+    const onSuccess = useCallback(() => {
+        if (typeof window !== 'undefined') {
+            window.dispatchEvent(new Event('swr:sync'));
         }
     }, []);
 

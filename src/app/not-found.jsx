@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Home, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -20,10 +21,13 @@ export default function NotFound() {
             <div className="relative z-10 text-center max-w-lg mx-auto">
                 {/* Logo */}
                 <div className="mb-8">
-                    <img
+                    <Image
                         src="/quickconnect-logo.png"
                         alt="QuickConnect"
+                        width={200}
+                        height={64}
                         className="h-16 w-auto mx-auto object-contain"
+                        priority
                     />
                 </div>
 
@@ -63,7 +67,6 @@ export default function NotFound() {
                         variant="outline"
                         size="lg"
                         className="border-slate-300 hover:bg-slate-50 hover:border-emerald-300 transition-all duration-300 px-8"
-                        onClick={() => window.history.back()}
                     >
                         <button type="button" onClick={() => window.history.back()}>
                             <ArrowLeft className="mr-2 h-5 w-5" />

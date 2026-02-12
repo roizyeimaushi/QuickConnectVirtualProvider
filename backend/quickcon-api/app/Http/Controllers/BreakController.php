@@ -20,7 +20,10 @@ class BreakController extends Controller
     {
         $now = Carbon::now();
         // Customizable Shift Boundary (Default 14:00)
-        $boundary = (int) (\App\Models\Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
+        static $boundary = null;
+        if ($boundary === null) {
+            $boundary = (int) (\App\Models\Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
+        }
         
         if ($now->hour < $boundary) {
             return Carbon::yesterday()->toDateString();
@@ -36,14 +39,6 @@ class BreakController extends Controller
         return Carbon::now()->format('H:i:s');
     }
 
-    /**
-     * Get break status for current user.
-     * Returns break window info and whether user can take/end break.
-     */
-    /**
-     * Get break status for current user.
-     * Returns break window info and whether user can take/end break.
-     */
     public function getStatus(Request $request)
     {
         $user = $request->user();
@@ -390,12 +385,6 @@ class BreakController extends Controller
         ]);
     }
 
-    /**
-     * End break manually.
-     */
-    /**
-     * End break manually.
-     */
     public function endBreak(Request $request)
     {
         try {
@@ -512,6 +501,7 @@ class BreakController extends Controller
         
         $break->break_end = $endTime;
         $diff = $breakStart->diffInMinutes($endTime, false);
+        if ($breakStart->gt($endTime) && $diff > 0) $diff = -$diff;
         $break->duration_minutes = $diff < 0 ? $diff + 1440 : $diff;
         $break->save();
 
@@ -613,6 +603,7 @@ class BreakController extends Controller
         
         if ($end) {
             $diff = $start->diffInMinutes($end, false);
+            if ($start->gt($end) && $diff > 0) $diff = -$diff;
             $newDuration = $diff < 0 ? $diff + 1440 : $diff;
             
             // Validate Cumulative Limit (90 mins)

@@ -48,58 +48,52 @@ class AttendanceRecordController extends Controller
             ], 409);
         }
 
-        // Validate Break Duration (90 mins)
-        // Validate Break Duration (90 mins)
-        // ADMIN OVERRIDE: Allow creating records with breaks > 90 mins
-        /*
-        if ($validated['break_start'] && $validated['break_end']) {
-            $bStart = Carbon::parse($validated['break_start']);
-            $bEnd = Carbon::parse($validated['break_end']);
-            $bDuration = $bStart->diffInMinutes($bEnd, false);
-            if ($bDuration < 0) $bDuration += 1440;
-            
-            $globalLimit = (int)(\App\Models\Setting::where('key', 'break_duration')->value('value') ?? 90);
-            
-            if ($bDuration > $globalLimit) {
-                return response()->json([
-                    'message' => "Total break duration cannot exceed {$globalLimit} minutes. You entered {$bDuration} minutes.",
-                    'error_code' => 'BREAK_LIMIT_EXCEEDED'
-                ], 400);
+        return DB::transaction(function() use ($validated, $request) {
+            $record = AttendanceRecord::create([
+                'user_id' => $validated['user_id'],
+                'session_id' => $validated['session_id'],
+                'attendance_date' => $validated['attendance_date'],
+                'status' => $validated['status'],
+                'excuse_reason' => $request->input('excuse_reason'),
+                'time_in' => $validated['time_in'] ? Carbon::parse($validated['time_in']) : null,
+                'time_out' => $validated['time_out'] ? Carbon::parse($validated['time_out']) : null,
+                'break_start' => $validated['break_start'] ? Carbon::parse($validated['break_start']) : null,
+                'break_end' => $validated['break_end'] ? Carbon::parse($validated['break_end']) : null,
+                'notes' => strip_tags($validated['reason']),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            // Sync with structured breaks table if break times provided
+            if ($record->break_start && $record->break_end) {
+                \App\Models\EmployeeBreak::create([
+                    'attendance_id' => $record->id,
+                    'user_id' => $record->user_id,
+                    'break_date' => $record->attendance_date,
+                    'break_start' => $record->break_start,
+                    'break_end' => $record->break_end,
+                    'duration_minutes' => $record->getTotalBreakMinutes(),
+                    'status' => 'completed',
+                ]);
             }
-        }
-        */
 
-        $record = AttendanceRecord::create([
-            'user_id' => $validated['user_id'],
-            'session_id' => $validated['session_id'],
-            'attendance_date' => $validated['attendance_date'],
-            'status' => $validated['status'],
-            'excuse_reason' => $request->input('excuse_reason'),
-            'time_in' => $validated['time_in'] ? Carbon::parse($validated['time_in']) : null,
-            'time_out' => $validated['time_out'] ? Carbon::parse($validated['time_out']) : null,
-            'break_start' => $validated['break_start'] ? Carbon::parse($validated['break_start']) : null,
-            'break_end' => $validated['break_end'] ? Carbon::parse($validated['break_end']) : null,
-            'notes' => strip_tags($validated['reason']),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+            // Sanitize reason to prevent XSS in audit logs
+            $sanitizedReason = strip_tags($validated['reason']);
 
-        // Sanitize reason to prevent XSS in audit logs
-        $sanitizedReason = strip_tags($validated['reason']);
+            AuditLog::log(
+                'create_attendance',
+                "Admin {$request->user()->first_name} created manual record ({$record->status}) for user #{$record->user_id}. Reason: {$sanitizedReason}",
+                AuditLog::STATUS_SUCCESS,
+                $request->user()->id,
+                'AttendanceRecord',
+                $record->id
+            );
 
-        AuditLog::log(
-            'create_attendance',
-            "Admin {$request->user()->first_name} created manual record ({$record->status}) for user #{$record->user_id}. Reason: {$sanitizedReason}",
-            AuditLog::STATUS_SUCCESS,
-            $request->user()->id,
-            'AttendanceRecord',
-            $record->id
-        );
-
-        return response()->json([
-            'message' => 'Attendance record created successfully',
-            'record' => $record->load(['session.schedule', 'user'])
-        ], 201);
+            return response()->json([
+                'message' => 'Attendance record created successfully',
+                'record' => $record->load(['session.schedule', 'user'])
+            ], 201);
+        });
     }
     /**
      * Get today's date string (SERVER-SIDE ONLY).
@@ -110,7 +104,10 @@ class AttendanceRecordController extends Controller
         $now = Carbon::now();
         // Customizable Shift Boundary (Default 14:00 for Night Shift Agencies)
         // If current hour < Boundary, it counts as Previous Day
-        $boundary = (int) (Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
+        static $boundary = null;
+        if ($boundary === null) {
+            $boundary = (int) (Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
+        }
         
         if ($now->hour < $boundary) {
             return Carbon::yesterday()->toDateString();
@@ -289,9 +286,12 @@ class AttendanceRecordController extends Controller
             
             // WEEKEND CHECK
             $dayOfWeek = $baseDate->dayOfWeek;
-            if ($dayOfWeek === Carbon::SATURDAY || $dayOfWeek === Carbon::SUNDAY) {
-                // Return weekend skip if it's Saturday or Sunday nights
-                // (admins can still override by creating sessions, but default buttons are blocked)
+            $weekendAllowed = filter_var($settings->get('weekend_checkin', false), FILTER_VALIDATE_BOOLEAN);
+            if (!$weekendAllowed && ($dayOfWeek === Carbon::SATURDAY || $dayOfWeek === Carbon::SUNDAY)) {
+                return response()->json([
+                    'message' => 'Check-in is not allowed on weekends.',
+                    'error_code' => 'WEEKEND_DISABLED'
+                ], 403);
             }
             
             // VALIDATION: Windows
@@ -731,7 +731,10 @@ class AttendanceRecordController extends Controller
             // ============================================================
             // OVERTIME CALCULATION
             // ============================================================
-            $allowOvertime = filter_var(\App\Models\Setting::where('key', 'allow_overtime')->value('value'), FILTER_VALIDATE_BOOLEAN);
+            $otSettings = Setting::whereIn('key', ['allow_overtime', 'min_overtime_minutes', 'ot_rounding', 'require_ot_approval'])
+                ->pluck('value', 'key');
+            
+            $allowOvertime = filter_var($otSettings->get('allow_overtime', false), FILTER_VALIDATE_BOOLEAN);
             
             if ($allowOvertime && $attendanceRecord->session && $attendanceRecord->session->schedule) {
                 $schedule = $attendanceRecord->session->schedule;
@@ -746,9 +749,9 @@ class AttendanceRecordController extends Controller
 
                 if ($now->gt($shiftEnd)) {
                     $rawOtMinutes = $shiftEnd->diffInMinutes($now);
-                    $minOtMinutes = (int) (\App\Models\Setting::where('key', 'min_overtime_minutes')->value('value') ?: 60);
-                    $roundingRule = \App\Models\Setting::where('key', 'ot_rounding')->value('value') ?: 'none';
-                    $requireApproval = filter_var(\App\Models\Setting::where('key', 'require_ot_approval')->value('value'), FILTER_VALIDATE_BOOLEAN);
+                    $minOtMinutes = (int) ($otSettings->get('min_overtime_minutes', 60) ?: 60);
+                    $roundingRule = $otSettings->get('ot_rounding', 'none') ?: 'none';
+                    $requireApproval = filter_var($otSettings->get('require_ot_approval', true), FILTER_VALIDATE_BOOLEAN);
 
                     if ($rawOtMinutes >= $minOtMinutes) {
                         $finalOtMinutes = $rawOtMinutes;
@@ -761,7 +764,7 @@ class AttendanceRecordController extends Controller
                         $attendanceRecord->overtime_minutes = $finalOtMinutes;
                         $attendanceRecord->overtime_status = $requireApproval ? 'pending' : 'approved';
                     }
-                } elseif ($now->lt($shiftEnd) && $attendanceRecord->status !== 'excused') {
+                } elseif ($now->lt($shiftEnd) && !in_array($attendanceRecord->status, ['excused', 'late'])) {
                     if ($shiftEnd->diffInMinutes($now) > 5) {
                         $attendanceRecord->status = 'left_early';
                     }
@@ -902,18 +905,21 @@ class AttendanceRecordController extends Controller
             ], 400);
         }
 
-        // Start break
-        $attendanceRecord->break_start = $now;
-        $attendanceRecord->break_end = null;
-        $attendanceRecord->save();
+        DB::transaction(function() use ($attendanceRecord, $user, $now) {
+            // Start break
+            $attendanceRecord->update([
+                'break_start' => $now,
+                'break_end' => null,
+            ]);
 
-        // Also create entry in new breaks table
-        \App\Models\EmployeeBreak::create([
-            'attendance_id' => $attendanceRecord->id,
-            'user_id' => $user->id,
-            'break_date' => $attendanceRecord->attendance_date,
-            'break_start' => $now,
-        ]);
+            // Also create entry in new breaks table
+            \App\Models\EmployeeBreak::create([
+                'attendance_id' => $attendanceRecord->id,
+                'user_id' => $user->id,
+                'break_date' => $attendanceRecord->attendance_date,
+                'break_start' => $now,
+            ]);
+        });
 
         // Broadcast real-time break update
         event(new BreakUpdated($attendanceRecord, 'started'));
@@ -1071,128 +1077,134 @@ class AttendanceRecordController extends Controller
 
         $changes = [];
 
-        if ($request->has('status')) {
-            $attendanceRecord->status = $request->status;
-            $changes[] = "status to {$request->status}";
-        }
+        DB::transaction(function() use ($attendanceRecord, $request, &$changes) {
+            if ($request->has('status')) {
+                $attendanceRecord->status = $request->status;
+                $changes[] = "status to {$request->status}";
+            }
 
-        if ($request->has('time_in')) {
-            $attendanceRecord->time_in = $request->time_in ? Carbon::parse($request->time_in) : null;
-            $changes[] = "time_in to {$request->time_in}";
-        }
+            if ($request->has('time_in')) {
+                $attendanceRecord->time_in = $request->time_in ? Carbon::parse($request->time_in) : null;
+                $changes[] = "time_in to {$request->time_in}";
+            }
 
-        if ($request->has('time_out')) {
-            $attendanceRecord->time_out = $request->time_out ? Carbon::parse($request->time_out) : null;
-            $changes[] = "time_out to {$request->time_out}";
-        }
+            if ($request->has('time_out')) {
+                $attendanceRecord->time_out = $request->time_out ? Carbon::parse($request->time_out) : null;
+                $changes[] = "time_out to {$request->time_out}";
+            }
 
-        if ($request->has('break_start')) {
-            $attendanceRecord->break_start = $request->break_start ? Carbon::parse($request->break_start) : null;
-            $changes[] = "break_start to {$request->break_start}";
-        }
+            if ($request->has('break_start')) {
+                $attendanceRecord->break_start = $request->break_start ? Carbon::parse($request->break_start) : null;
+                $changes[] = "break_start to {$request->break_start}";
+            }
 
-        if ($request->has('break_end')) {
-            $attendanceRecord->break_end = $request->break_end ? Carbon::parse($request->break_end) : null;
-            $changes[] = "break_end to {$request->break_end}";
-        }
+            if ($request->has('break_end')) {
+                $attendanceRecord->break_end = $request->break_end ? Carbon::parse($request->break_end) : null;
+                $changes[] = "break_end to {$request->break_end}";
+            }
 
-        if ($request->has('break_start') || $request->has('break_end')) {
-            $bStart = $request->has('break_start') ? ($request->break_start ? Carbon::parse($request->break_start) : null) : $attendanceRecord->break_start;
-            $bEnd = $request->has('break_end') ? ($request->break_end ? Carbon::parse($request->break_end) : null) : $attendanceRecord->break_end;
-            
-            if ($bStart && $bEnd) {
-                $bDuration = $bStart->diffInMinutes($bEnd, false);
-                if ($bDuration < 0) $bDuration += 1440;
+            if ($request->has('break_start') || $request->has('break_end')) {
+                $bStart = $request->has('break_start') ? ($request->break_start ? Carbon::parse($request->break_start) : null) : $attendanceRecord->break_start;
+                $bEnd = $request->has('break_end') ? ($request->break_end ? Carbon::parse($request->break_end) : null) : $attendanceRecord->break_end;
                 
-                // For main record update, we check if this specific segment (which maps to the latest segment) 
-                // plus other segments exceeds 90.
-                $latestBreakId = \App\Models\EmployeeBreak::where('attendance_id', $attendanceRecord->id)
-                    ->orderBy('created_at', 'desc')
-                    ->value('id');
-                
-                $otherBreaksDuration = \App\Models\EmployeeBreak::where('attendance_id', $attendanceRecord->id)
-                    ->where('id', '!=', $latestBreakId)
-                    ->sum('duration_minutes');
-                
-                $globalLimit = (int)(\App\Models\Setting::where('key', 'break_duration')->value('value') ?? 90);
-                
-                // ADMIN OVERRIDE: We allow admins to save breaks exceeding the limit for accurate record keeping.
-                // The warning below is suppressed/removed to create a smoother correction workflow.
-                
-                /* 
-                if (($bDuration + $otherBreaksDuration) > $globalLimit) {
-                    return response()->json([
-                        'message' => "Total break duration cannot exceed {$globalLimit} minutes. Current segments + this edit = " . ($bDuration + $otherBreaksDuration) . " minutes.",
-                        'error_code' => 'BREAK_LIMIT_EXCEEDED'
-                    ], 400);
+                if ($bStart && $bEnd) {
+                    $bDuration = $bStart->diffInMinutes($bEnd, false);
+                    if ($bStart->gt($bEnd) && $bDuration > 0) $bDuration = -$bDuration;
+                    if ($bDuration < 0) $bDuration += 1440;
+                    
+                    // For main record update, we check if this specific segment (which maps to the latest segment) 
+                    // plus other segments exceeds 90.
+                    $latestBreakId = \App\Models\EmployeeBreak::where('attendance_id', $attendanceRecord->id)
+                        ->orderBy('created_at', 'desc')
+                        ->value('id');
+                    
+                    $otherBreaksDuration = \App\Models\EmployeeBreak::where('attendance_id', $attendanceRecord->id)
+                        ->where('id', '!=', $latestBreakId)
+                        ->sum('duration_minutes');
+                    
+                    $globalLimit = (int)(\App\Models\Setting::where('key', 'break_duration')->value('value') ?? 90);
+                    
+                    // ADMIN OVERRIDE: We allow admins to save breaks exceeding the limit for accurate record keeping.
+                    // The warning below is suppressed/removed to create a smoother correction workflow.
+                    
+                    /* 
+                    if (($bDuration + $otherBreaksDuration) > $globalLimit) {
+                        return response()->json([
+                            'message' => "Total break duration cannot exceed {$globalLimit} minutes. Current segments + this edit = " . ($bDuration + $otherBreaksDuration) . " minutes.",
+                            'error_code' => 'BREAK_LIMIT_EXCEEDED'
+                        ], 400);
+                    }
+                    */
                 }
-                */
             }
-        }
-        if ($request->has('break_start') || $request->has('break_end')) {
-             // ADMIN CORRECTION: Enforce Single Break Source of Truth
-             // If Admin changes break times, we wipe all existing segments to prevent "ghost" minutes 
-             // from previous segments adding up (e.g. 46m + 90m = 136m).
-             // We replace it with distinct SINGLE break segment matching the Admin's input.
-             
-             \App\Models\EmployeeBreak::where('attendance_id', $attendanceRecord->id)->delete();
+            if ($request->has('break_start') || $request->has('break_end')) {
+                // ADMIN CORRECTION: Enforce Single Break Source of Truth
+                // If Admin changes break times, we wipe all existing segments to prevent "ghost" minutes 
+                // from previous segments adding up (e.g. 46m + 90m = 136m).
+                // We replace it with distinct SINGLE break segment matching the Admin's input.
+                
+                \App\Models\EmployeeBreak::where('attendance_id', $attendanceRecord->id)->delete();
 
-             if ($attendanceRecord->break_start) {
-                 $bS = $attendanceRecord->break_start;
-                 $bE = $attendanceRecord->break_end;
-                 
-                 $duration = 0;
-                 if ($bS && $bE) {
-                     $duration = $bS->diffInMinutes($bE, false);
-                     if ($duration < 0) $duration += 1440;
-                 }
-                 
-                 \App\Models\EmployeeBreak::create([
-                     'attendance_id' => $attendanceRecord->id,
-                     'user_id' => $attendanceRecord->user_id,
-                     'break_date' => $attendanceRecord->attendance_date,
-                     'break_start' => $bS,
-                     'break_end' => $bE,
-                     'duration_minutes' => $duration,
-                     'break_type' => 'Manual Correction'
-                 ]);
-             }
-        }
-
-        // Recalculate hours worked if times changed (Fixed for overnight shifts)
-        if ($attendanceRecord->time_in && $attendanceRecord->time_out) {
-            $timeIn = Carbon::parse($attendanceRecord->time_in);
-            $timeOut = Carbon::parse($attendanceRecord->time_out);
-            // Handle overnight shifts
-            $diffInMinutes = $timeIn->diffInMinutes($timeOut, false);
-            if ($diffInMinutes < 0) $diffInMinutes += 1440;
-            
-            if ($attendanceRecord->break_start && $attendanceRecord->break_end) {
-                $breakStart = Carbon::parse($attendanceRecord->break_start);
-                $breakEnd = Carbon::parse($attendanceRecord->break_end);
-                $breakMinutes = $breakStart->diffInMinutes($breakEnd, false);
-                if ($breakMinutes < 0) $breakMinutes += 1440;
-                $diffInMinutes = max(0, $diffInMinutes - $breakMinutes);
+                if ($attendanceRecord->break_start) {
+                    $bS = $attendanceRecord->break_start;
+                    $bE = $attendanceRecord->break_end;
+                    
+                    $duration = 0;
+                    if ($bS && $bE) {
+                        $duration = $bS->diffInMinutes($bE, false);
+                        if ($bS->gt($bE) && $duration > 0) $duration = -$duration;
+                        if ($duration < 0) $duration += 1440;
+                    }
+                    
+                    \App\Models\EmployeeBreak::create([
+                        'attendance_id' => $attendanceRecord->id,
+                        'user_id' => $attendanceRecord->user_id,
+                        'break_date' => $attendanceRecord->attendance_date,
+                        'break_start' => $bS,
+                        'break_end' => $bE,
+                        'duration_minutes' => $duration,
+                        'break_type' => 'Manual Correction'
+                    ]);
+                }
             }
-            
-            $attendanceRecord->hours_worked = round($diffInMinutes / 60, 2);
-        }
 
-        $attendanceRecord->notes = strip_tags($request->reason);
+            // Recalculate hours worked if times changed (Fixed for overnight shifts)
+            if ($attendanceRecord->time_in && $attendanceRecord->time_out) {
+                $timeIn = Carbon::parse($attendanceRecord->time_in);
+                $timeOut = Carbon::parse($attendanceRecord->time_out);
+                // Handle overnight shifts
+                $diffInMinutes = $timeIn->diffInMinutes($timeOut, false);
+                if ($timeIn->gt($timeOut) && $diffInMinutes > 0) $diffInMinutes = -$diffInMinutes;
+                if ($diffInMinutes < 0) $diffInMinutes += 1440;
+                
+                if ($attendanceRecord->break_start && $attendanceRecord->break_end) {
+                    $breakStart = Carbon::parse($attendanceRecord->break_start);
+                    $breakEnd = Carbon::parse($attendanceRecord->break_end);
+                    $breakMinutes = $breakStart->diffInMinutes($breakEnd, false);
+                    if ($breakStart->gt($breakEnd) && $breakMinutes > 0) $breakMinutes = -$breakMinutes;
+                    if ($breakMinutes < 0) $breakMinutes += 1440;
+                    $diffInMinutes = max(0, $diffInMinutes - $breakMinutes);
+                }
+                
+                $attendanceRecord->hours_worked = round($diffInMinutes / 60, 2);
+            }
+
+            $attendanceRecord->notes = strip_tags($request->reason);
             $attendanceRecord->save();
+        });
 
-            $correctionType = $request->input('correction_type', 'Manual Adjustment');
+        $correctionType = $request->input('correction_type', 'Manual Adjustment');
 
-            AuditLog::log(
-                'update_attendance',
-                "Admin {$request->user()->name} updated record via [{$correctionType}]: " . implode(', ', $changes) . ". Reason: " . strip_tags($request->reason),
-                AuditLog::STATUS_SUCCESS,
-                $request->user()->id,
-                'AttendanceRecord',
-                $attendanceRecord->id,
-                null,
-                ['correction_type' => $correctionType]
-            );
+        AuditLog::log(
+            'update_attendance',
+            "Admin {$request->user()->name} updated record via [{$correctionType}]: " . implode(', ', $changes) . ". Reason: " . strip_tags($request->reason),
+            AuditLog::STATUS_SUCCESS,
+            $request->user()->id,
+            'AttendanceRecord',
+            $attendanceRecord->id,
+            null,
+            ['correction_type' => $correctionType]
+        );
 
             return response()->json([
                 'message' => 'Attendance record updated successfully',
@@ -1422,8 +1434,22 @@ class AttendanceRecordController extends Controller
             $maxBreakSeconds = $breakLimitMinutes * 60;
             
             if ($breakDurationSeconds > $maxBreakSeconds) {
-                $record->break_end = $breakStart->copy()->addSeconds($maxBreakSeconds);
-                $record->save();
+                $endTime = $breakStart->copy()->addSeconds($maxBreakSeconds);
+                
+                DB::transaction(function() use ($record, $endTime, $maxBreakSeconds) {
+                    $record->update(['break_end' => $endTime]);
+                    
+                    // Sync with EmployeeBreak table
+                    \App\Models\EmployeeBreak::where('attendance_id', $record->id)
+                        ->whereNull('break_end')
+                        ->update([
+                            'break_end' => $endTime, 
+                            'duration_minutes' => (int)($maxBreakSeconds / 60)
+                        ]);
+                });
+                
+                // Fire event for real-time UI
+                event(new \App\Events\BreakUpdated($record, 'ended'));
                 
                 $isOnBreak = false;
                 $breakRemainingSeconds = 0;

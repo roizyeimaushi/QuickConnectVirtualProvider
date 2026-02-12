@@ -61,11 +61,15 @@ class EmployeeHistoryExport implements FromCollection, WithHeadings, WithMapping
         $hoursWorked = $record->hours_worked;
         if ($record->time_in && $record->time_out && !in_array($record->status, ['pending', 'absent'])) {
              $totalMinutes = $record->time_in->diffInMinutes($record->time_out, false);
+             // Handle Carbon 3 absolute diff vs sign
+             if ($record->time_in->gt($record->time_out) && $totalMinutes > 0) $totalMinutes = -$totalMinutes;
              if ($totalMinutes < 0) $totalMinutes += 1440;
              
              $breakMinutes = $record->breaks()->sum('duration_minutes');
              if ($breakMinutes == 0 && $record->break_start && $record->break_end) {
                  $bDiff = $record->break_start->diffInMinutes($record->break_end, false);
+                 // Handle Carbon 3 absolute diff vs sign
+                 if ($record->break_start->gt($record->break_end) && $bDiff > 0) $bDiff = -$bDiff;
                  $breakMinutes = $bDiff < 0 ? $bDiff + 1440 : $bDiff;
              }
              

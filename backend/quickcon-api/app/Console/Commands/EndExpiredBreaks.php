@@ -7,6 +7,7 @@ use App\Models\EmployeeBreak;
 use App\Models\AuditLog;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
 class EndExpiredBreaks extends Command
 {
@@ -47,30 +48,32 @@ class EndExpiredBreaks extends Command
             $maxEndTime = $breakStart->copy()->addMinutes($limit);
 
             if ($now->gte($maxEndTime)) {
-                // Break exceeded its limit - auto-end it
-                $break->update([
-                    'break_end' => $maxEndTime,
-                    'duration_minutes' => $limit,
-                    'updated_at' => now(),
-                ]);
-
-                // Also update the legacy break_end in AttendanceRecord for compatibility
-                $attendance = $break->attendance;
-                if ($attendance) {
-                    $attendance->update([
+                DB::transaction(function () use ($break, $maxEndTime, $limit) {
+                    // Break exceeded its limit - auto-end it
+                    $break->update([
                         'break_end' => $maxEndTime,
+                        'duration_minutes' => $limit,
+                        'updated_at' => now(),
                     ]);
-                }
 
-                AuditLog::log(
-                    'auto_end_break',
-                    "System automatically ended {$break->break_type} break for employee (User ID: {$break->user_id}) after {$limit} minute limit",
-                    null,
-                    'EmployeeBreak',
-                    $break->id,
-                    ['break_end' => null],
-                    ['break_end' => $maxEndTime->toDateTimeString()]
-                );
+                    // Also update the legacy break_end in AttendanceRecord for compatibility
+                    $attendance = $break->attendance;
+                    if ($attendance) {
+                        $attendance->update([
+                            'break_end' => $maxEndTime,
+                        ]);
+                    }
+
+                    AuditLog::log(
+                        'auto_end_break',
+                        "System automatically ended {$break->break_type} break for employee (User ID: {$break->user_id}) after {$limit} minute limit",
+                        null,
+                        'EmployeeBreak',
+                        $break->id,
+                        ['break_end' => null],
+                        ['break_end' => $maxEndTime->toDateTimeString()]
+                    );
+                });
 
                 $this->info("Auto-ended break ID: {$break->id} (Type: {$break->break_type}, Limit: {$limit} mins)");
                 $endedCount++;

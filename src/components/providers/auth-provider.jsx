@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { authApi } from "@/lib/api";
 import { USER_ROLES, ROUTES } from "@/lib/constants";
@@ -43,7 +43,6 @@ export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
-    const pathname = usePathname();
 
     const fetchUser = useCallback(async (manualBust = false) => {
         try {
@@ -243,6 +242,11 @@ export function AuthProvider({ children }) {
     const isEmployee = user?.role === USER_ROLES.EMPLOYEE;
     const isAuthenticated = !!user;
 
+    // Expose the current auth token so providers (SSE, WebSocket) can use it
+    const currentToken = typeof window !== 'undefined'
+        ? (Cookies.get("quickcon_token") || localStorage.getItem("quickcon_token") || null)
+        : null;
+
     const value = {
         user,
         loading,
@@ -251,6 +255,7 @@ export function AuthProvider({ children }) {
         isAdmin,
         isEmployee,
         isAuthenticated,
+        token: currentToken,
         refetchUser: fetchUser,
         demoMode: DEMO_MODE,
     };

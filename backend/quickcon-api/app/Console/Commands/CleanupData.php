@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
 class CleanupData extends Command
 {
@@ -41,19 +42,28 @@ class CleanupData extends Command
 
         $this->info("Cleaning up data older than: " . $cutoff->toDateString());
 
-        // Cleanup Logic
-        $records = \App\Models\AttendanceRecord::where('attendance_date', '<', $cutoff)->delete();
-        $sessions = \App\Models\AttendanceSession::where('date', '<', $cutoff)->delete();
-        $breaks = \App\Models\EmployeeBreak::where('break_date', '<', $cutoff)->delete();
-        $notifications = \Illuminate\Support\Facades\DB::table('notifications')->where('created_at', '<', $cutoff)->delete();
-        $auditLogs = \App\Models\AuditLog::where('created_at', '<', $cutoff)->delete();
+        // Wrap all deletions in a transaction to ensure atomicity
+        DB::transaction(function () use ($cutoff, $policy) {
+            // Delete in correct order to respect foreign key constraints:
+            // 1. Breaks (references attendance_records)
+            // 2. Attendance Records (references sessions)
+            // 3. Sessions
+            // 4. Notifications & Audit Logs (independent)
+            $breaks = \App\Models\EmployeeBreak::where('break_date', '<', $cutoff)->delete();
+            $records = \App\Models\AttendanceRecord::where('attendance_date', '<', $cutoff)->delete();
+            $sessions = \App\Models\AttendanceSession::where('date', '<', $cutoff)->delete();
+            $notifications = DB::table('notifications')->where('created_at', '<', $cutoff)->delete();
+            $auditLogs = \App\Models\AuditLog::where('created_at', '<', $cutoff)->delete();
 
-        $this->info("Deleted $records attendance records.");
-        $this->info("Deleted $sessions sessions.");
-        $this->info("Deleted $breaks breaks.");
-        $this->info("Deleted $notifications notifications.");
-        $this->info("Deleted $auditLogs audit logs.");
+            $this->info("Deleted $breaks breaks.");
+            $this->info("Deleted $records attendance records.");
+            $this->info("Deleted $sessions sessions.");
+            $this->info("Deleted $notifications notifications.");
+            $this->info("Deleted $auditLogs audit logs.");
 
-        \App\Models\AuditLog::log('system_cleanup', "Auto-cleanup executed (Policy: $policy)", null);
+            \App\Models\AuditLog::log('system_cleanup', "Auto-cleanup executed (Policy: $policy)", null);
+        });
+
+        return 0;
     }
 }

@@ -14,6 +14,8 @@ class AttendanceRecord extends Model
         static::saving(function ($record) {
             // Auto-calculate hours worked if time_in and time_out are present
             if ($record->time_in && $record->time_out) {
+                // We use a helper to ensure we don't recalculate twice if not needed
+                // But booted() triggers on every save, so we just run the calc.
                 $record->hours_worked = $record->calculateHoursWorked();
             } else {
                 $record->hours_worked = 0.00;
@@ -68,7 +70,11 @@ class AttendanceRecord extends Model
      */
     public function scopeToday($query)
     {
-        return $query->whereDate('attendance_date', now()->toDateString());
+        $boundary = (int) (\App\Models\Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
+        $now = now();
+        $today = ($now->hour < $boundary ? \Carbon\Carbon::yesterday() : \Carbon\Carbon::today())->toDateString();
+        
+        return $query->whereDate('attendance_date', $today);
     }
 
     /**
@@ -139,6 +145,10 @@ class AttendanceRecord extends Model
         // Fallback to legacy break_start/break_end columns if no structured breaks exist
         if ($breakMins === 0 && $this->break_start && $this->break_end) {
             $diff = $this->break_start->diffInMinutes($this->break_end, false);
+            // Handle Carbon 3 absolute diff vs sign
+            if ($this->break_start->gt($this->break_end) && $diff > 0) {
+                $diff = -$diff;
+            }
             $breakMins = $diff < 0 ? $diff + 1440 : $diff;
         }
         
@@ -156,6 +166,11 @@ class AttendanceRecord extends Model
         }
 
         $grossMinutes = $this->time_in->diffInMinutes($this->time_out, false);
+        // Handle Carbon 3 absolute diff vs sign compatibility
+        if ($this->time_in->gt($this->time_out) && $grossMinutes > 0) {
+            $grossMinutes = -$grossMinutes;
+        }
+        
         if ($grossMinutes < 0) {
             $grossMinutes += 1440; // Handle overnight rollover
         }

@@ -35,9 +35,6 @@ class EmployeeBreak extends Model
         ];
     }
 
-    /**
-     * Relationship to attendance record.
-     */
     public function attendance()
     {
         return $this->belongsTo(AttendanceRecord::class, 'attendance_id');
@@ -51,13 +48,14 @@ class EmployeeBreak extends Model
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Scope to get today's break for a user.
-     */
     public function scopeToday($query, int $userId)
     {
+        $boundary = (int) (\App\Models\Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
+        $now = now();
+        $today = ($now->hour < $boundary ? \Carbon\Carbon::yesterday() : \Carbon\Carbon::today())->toDateString();
+        
         return $query->where('user_id', $userId)
-                    ->where('break_date', now()->toDateString());
+                    ->where('break_date', $today);
     }
 
     /**
@@ -96,6 +94,10 @@ class EmployeeBreak extends Model
 
         $this->break_end = now();
         $diff = Carbon::parse($this->break_start)->diffInMinutes($this->break_end, false);
+        // Handle Carbon 3 absolute diff vs sign
+        if (Carbon::parse($this->break_start)->gt($this->break_end) && $diff > 0) {
+            $diff = -$diff;
+        }
         
         // Enforce Limit even on Manual End
         if ($this->duration_limit > 0 && $diff > $this->duration_limit) {
@@ -110,9 +112,6 @@ class EmployeeBreak extends Model
     /**
      * Get remaining break count for the day (seconds).
      * Respects both Global Limit (90m) and Segment Limit (15m/60m).
-     */
-    /**
-     * Get remaining break count for the day (seconds).
      */
     public function getRemainingSeconds(): int
     {

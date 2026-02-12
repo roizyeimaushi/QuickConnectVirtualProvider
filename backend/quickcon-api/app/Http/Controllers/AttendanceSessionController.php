@@ -219,30 +219,32 @@ class AttendanceSessionController extends Controller
 
     public function destroy(AttendanceSession $attendanceSession)
     {
-        // First, delete any associated attendance records
-        $recordCount = $attendanceSession->records()->count();
-        
-        // Also delete any breaks associated with those records
-        $recordIds = $attendanceSession->records()->pluck('id');
-        \App\Models\EmployeeBreak::whereIn('attendance_id', $recordIds)->delete();
-        
-        // Delete the attendance records
-        $attendanceSession->records()->delete();
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($attendanceSession) {
+            // First, delete any associated attendance records
+            $recordCount = $attendanceSession->records()->count();
+            
+            // Also delete any breaks associated with those records
+            $recordIds = $attendanceSession->records()->pluck('id');
+            \App\Models\EmployeeBreak::whereIn('attendance_id', $recordIds)->delete();
+            
+            // Delete the attendance records
+            $attendanceSession->records()->delete();
 
-        AuditLog::log(
-            'delete_session',
-            "Deleted attendance session for {$attendanceSession->date->format('Y-m-d')}" . ($recordCount > 0 ? " (including {$recordCount} attendance records)" : ""),
-            AuditLog::STATUS_SUCCESS,
-            auth()->id(),
-            'AttendanceSession',
-            $attendanceSession->id,
-            $attendanceSession->toArray(),
-            null
-        );
+            AuditLog::log(
+                'delete_session',
+                "Deleted attendance session for {$attendanceSession->date->format('Y-m-d')}" . ($recordCount > 0 ? " (including {$recordCount} attendance records)" : ""),
+                AuditLog::STATUS_SUCCESS,
+                auth()->id(),
+                'AttendanceSession',
+                $attendanceSession->id,
+                $attendanceSession->toArray(),
+                null
+            );
 
-        $attendanceSession->delete();
+            $attendanceSession->delete();
 
-        return response()->json(['message' => 'Session and associated records deleted successfully']);
+            return response()->json(['message' => 'Session and associated records deleted successfully']);
+        });
     }
 
     public function lock(Request $request, AttendanceSession $attendanceSession)

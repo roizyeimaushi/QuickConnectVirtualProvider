@@ -15,14 +15,20 @@ let echoInstance = null;
  * @param {string} token - Bearer token for authentication
  * @returns {Echo} - Laravel Echo instance
  */
-export function initializeEcho(token) {
+export function initializeEcho(token, forceNew = false) {
     if (typeof window === 'undefined') {
         return null;
     }
 
-    // Return existing instance if already initialized
-    if (echoInstance) {
+    // Return existing instance if already initialized (unless forceNew is requested)
+    if (echoInstance && !forceNew) {
         return echoInstance;
+    }
+
+    // Disconnect existing instance before creating a new one
+    if (echoInstance) {
+        echoInstance.disconnect();
+        echoInstance = null;
     }
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
@@ -114,7 +120,7 @@ export function leaveChannel(channelName) {
     }
 }
 
-export default {
+const echoUtils = {
     initializeEcho,
     getEcho,
     disconnectEcho,
@@ -122,3 +128,5 @@ export default {
     subscribeToPrivateChannel,
     leaveChannel,
 };
+
+export default echoUtils;

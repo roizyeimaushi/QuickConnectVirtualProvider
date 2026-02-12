@@ -7,6 +7,10 @@ use App\Models\AttendanceSession;
 use App\Models\AuditLog;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
+use App\Models\Setting;
+use App\Models\User;
 
 class MarkAbsentEmployees extends Command
 {
@@ -57,6 +61,10 @@ class MarkAbsentEmployees extends Command
 
         $totalAbsent = 0;
 
+        // Check Notification Settings once
+        $absentAlerts = filter_var(Setting::where('key', 'absent_alerts')->value('value'), FILTER_VALIDATE_BOOLEAN);
+        $admins = $absentAlerts ? User::where('role', 'admin')->get() : collect();
+
         foreach ($sessions as $session) {
             $schedule = $session->schedule;
             if (!$schedule) continue;
@@ -83,31 +91,29 @@ class MarkAbsentEmployees extends Command
                                             ->whereNull('time_in')
                                             ->get();
             
-            // Check Notification Settings
-            $absentAlerts = filter_var(\App\Models\Setting::where('key', 'absent_alerts')->value('value'), FILTER_VALIDATE_BOOLEAN);
-
             foreach ($pendingRecords as $record) {
-                $record->update([
-                    'status' => 'absent',
-                    'attendance_date' => $sessionDate, // Ensure date is set
-                    'updated_at' => now(),
-                ]);
+                DB::transaction(function () use ($record, $sessionDate, $absentAlerts, $admins) {
+                    $record->update([
+                        'status' => 'absent',
+                        'attendance_date' => $sessionDate, // Ensure date is set
+                        'updated_at' => now(),
+                    ]);
 
-                // Send Alert
-                if ($absentAlerts) {
-                    $admins = \App\Models\User::where('role', 'admin')->get();
-                    \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\AbsentNotification($record));
-                }
+                    // Send Alert
+                    if ($absentAlerts && $admins->isNotEmpty()) {
+                        Notification::send($admins, new \App\Notifications\AbsentNotification($record));
+                    }
 
-                AuditLog::log(
-                    'auto_mark_absent',
-                    "System automatically marked employee (User ID: {$record->user_id}) as absent - no check-in by cutoff time",
-                    null,
-                    'AttendanceRecord',
-                    $record->id,
-                    ['status' => 'pending'],
-                    ['status' => 'absent']
-                );
+                    AuditLog::log(
+                        'auto_mark_absent',
+                        "System automatically marked employee (User ID: {$record->user_id}) as absent - no check-in by cutoff time",
+                        null,
+                        'AttendanceRecord',
+                        $record->id,
+                        ['status' => 'pending'],
+                        ['status' => 'absent']
+                    );
+                });
 
                 $totalAbsent++;
             }

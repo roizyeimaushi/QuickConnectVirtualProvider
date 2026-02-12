@@ -242,21 +242,27 @@ class EmployeeController extends Controller
 
     public function nextEmployeeId()
     {
-        // Get the highest employee_id number from the database
-        // Use PostgreSQL-compatible syntax (SUBSTRING returns text, cast to integer)
+        // Get the latest employee_id starting with QCV-
+        // ORDER BY length then value is a common trick for "numeric" strings in SQL
         $lastEmployee = User::where('employee_id', 'like', 'QCV-%')
-            ->orderByRaw("CAST(SUBSTRING(employee_id FROM 5) AS INTEGER) DESC")
+            ->orderByRaw('LENGTH(employee_id) DESC')
+            ->orderBy('employee_id', 'desc')
             ->first();
 
         if ($lastEmployee) {
-            // Extract the number from QCV-XXX format
-            $lastNumber = (int) substr($lastEmployee->employee_id, 4);
-            $nextNumber = $lastNumber + 1;
+            // Extract the number part using regex for robustness
+            if (preg_match('/QCV-(\d+)/', $lastEmployee->employee_id, $matches)) {
+                $lastNumber = (int) $matches[1];
+                $nextNumber = $lastNumber + 1;
+            } else {
+                // Fallback: If for some reason it's not QCV-XXX, try to count
+                $nextNumber = User::where('employee_id', 'like', 'QCV-%')->count() + 1;
+            }
         } else {
             $nextNumber = 1;
         }
 
-        // Format as QCV-001, QCV-002, etc.
+        // Format as QCV-001, QCV-002, etc. (at least 3 digits)
         $nextId = 'QCV-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
 
         return response()->json(['next_employee_id' => $nextId]);

@@ -15,18 +15,18 @@ class NotificationController extends Controller
 
     /**
      * Server-Sent Events endpoint for real-time notifications
+     * 
+     * SHORT-LIVED APPROACH: Holds the PHP worker for max ~30 seconds,
+     * then ends the stream. The frontend auto-reconnects creating a
+     * polling-like SSE pattern that doesn't exhaust the PHP-FPM worker pool.
+     * 
+     * For true long-lived connections, use WebSocket (Laravel Reverb) instead.
      */
     public function stream(Request $request)
     {
         $user = $request->user();
         
         return new StreamedResponse(function() use ($user) {
-            // Set headers for SSE
-            header('Content-Type: text/event-stream');
-            header('Cache-Control: no-cache');
-            header('Connection: keep-alive');
-            header('X-Accel-Buffering: no');
-            
             // Keep track of last notification count
             $lastUnreadCount = -1;
             $lastNotificationId = null;
@@ -34,14 +34,20 @@ class NotificationController extends Controller
             // Send initial connection message
             echo "event: connected\n";
             echo "data: " . json_encode(['status' => 'connected', 'timestamp' => now()->toISOString()]) . "\n\n";
-            ob_flush();
+            if (ob_get_level()) ob_flush();
             flush();
             
-            // Keep connection alive and check for new notifications
+            // Short-lived loop: only hold the worker for ~30 seconds (3 iterations × 10s)
+            // The frontend auto-reconnects when the stream ends, creating effective polling
             $iterations = 0;
-            $maxIterations = 30; // 5 minutes max (checking every 10 seconds)
+            $maxIterations = 3;
             
             while ($iterations < $maxIterations) {
+                // Check connection is still alive before doing work
+                if (connection_aborted()) {
+                    break;
+                }
+
                 // Refresh user model to get latest notifications
                 $user->refresh();
                 
@@ -49,7 +55,7 @@ class NotificationController extends Controller
                 $latestNotification = $user->notifications()->first();
                 $currentLatestId = $latestNotification ? $latestNotification->id : null;
                 
-                // Check if there are new notifications
+                // Check if there are new or changed notifications
                 if ($currentUnreadCount !== $lastUnreadCount || $currentLatestId !== $lastNotificationId) {
                     $notifications = $user->notifications()->limit(20)->get();
                     
@@ -59,29 +65,26 @@ class NotificationController extends Controller
                         'unreadCount' => $currentUnreadCount,
                         'timestamp' => now()->toISOString()
                     ]) . "\n\n";
-                    ob_flush();
+                    if (ob_get_level()) ob_flush();
                     flush();
                     
                     $lastUnreadCount = $currentUnreadCount;
                     $lastNotificationId = $currentLatestId;
                 }
                 
-                // Send heartbeat every 3 iterations (30 seconds)
-                if ($iterations % 3 === 0 && $iterations > 0) {
-                    echo "event: heartbeat\n";
-                    echo "data: " . json_encode(['timestamp' => now()->toISOString()]) . "\n\n";
-                    ob_flush();
-                    flush();
-                }
-                
-                // Check connection is still alive
-                if (connection_aborted()) {
-                    break;
-                }
-                
                 $iterations++;
-                sleep(10); // Check every 10 seconds to reduce PHP worker blocking
+
+                // Don't sleep after the last iteration — just end gracefully
+                if ($iterations < $maxIterations) {
+                    sleep(10);
+                }
             }
+
+            // Send end-of-stream so frontend knows to reconnect
+            echo "event: end\n";
+            echo "data: " . json_encode(['reason' => 'cycle_complete', 'timestamp' => now()->toISOString()]) . "\n\n";
+            if (ob_get_level()) ob_flush();
+            flush();
         }, 200, [
             'Content-Type' => 'text/event-stream',
             'Cache-Control' => 'no-cache',

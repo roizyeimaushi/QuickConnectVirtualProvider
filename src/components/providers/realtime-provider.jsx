@@ -19,33 +19,47 @@ export function RealTimeProvider({ children }) {
     const channelsRef = useRef({});
     const echoRef = useRef(null);
 
+    const prevTokenRef = useRef(null);
+
+    // Helper to update connection state (called from effect callbacks, not synchronously in effect body)
+    const updateConnectionState = useCallback((connected) => {
+        setIsConnected(connected);
+        setConnectionStatus(connected ? 'connected' : 'disconnected');
+    }, []);
+
     // Initialize Echo when authenticated
     useEffect(() => {
         if (!isAuthenticated || !token) {
             if (echoRef.current) {
                 disconnectEcho();
                 echoRef.current = null;
-                setIsConnected(false);
-                setConnectionStatus('disconnected');
             }
+            prevTokenRef.current = null;
+            // Defer state update to avoid cascading render in effect body
+            queueMicrotask(() => updateConnectionState(false));
             return;
         }
 
-        // Initialize Echo
-        const echo = initializeEcho(token);
+        // Detect if token has changed (re-login, refresh)
+        const tokenChanged = prevTokenRef.current !== null && prevTokenRef.current !== token;
+        prevTokenRef.current = token;
+
+        // Initialize Echo (force new instance if token changed)
+        const echo = initializeEcho(token, tokenChanged);
         if (echo) {
             echoRef.current = echo;
-            setIsConnected(true);
-            setConnectionStatus('connected');
+            // Defer state update to avoid cascading render in effect body
+            queueMicrotask(() => updateConnectionState(true));
             console.log('[RealTime] Connected to WebSocket server');
         }
 
         return () => {
             disconnectEcho();
             echoRef.current = null;
-            setIsConnected(false);
+            // Cleanup uses queueMicrotask to avoid synchronous setState in effect
+            queueMicrotask(() => updateConnectionState(false));
         };
-    }, [isAuthenticated, token]);
+    }, [isAuthenticated, token, updateConnectionState]);
 
     // Subscribe to public attendance channel
     useEffect(() => {
@@ -197,7 +211,11 @@ export function useRealTime() {
 export function useChannel(channelName, eventName, callback, isPrivate = false) {
     const { isConnected } = useRealTime();
     const callbackRef = useRef(callback);
-    callbackRef.current = callback;
+
+    // Update ref inside an effect, not during render
+    useEffect(() => {
+        callbackRef.current = callback;
+    });
 
     useEffect(() => {
         const echo = getEcho();

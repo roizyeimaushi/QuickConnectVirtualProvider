@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Wifi, WifiOff, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useOnlineStatus, invalidateAllCache } from '@/lib/swr-hooks';
@@ -14,35 +14,35 @@ import {
 
 /**
  * Connection Status Indicator
- * Shows real-time connection status and provides manual refresh option
+ * Shows real-time connection status and provides manual refresh option.
+ * "Last sync" tracks actual SWR data fetches, not a fake timer.
  */
 export function ConnectionStatus({ className }) {
     const isOnline = useOnlineStatus();
-    const [lastSync, setLastSync] = useState(new Date());
+    const [lastSync, setLastSync] = useState(null);
+    const [, setTick] = useState(0);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
-    // Update last sync time when page becomes visible
+    // Listen for actual SWR fetch successes via a custom event
+    // (dispatched from swr-provider.jsx onSuccess callback)
     useEffect(() => {
-        const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible') {
-                setLastSync(new Date());
-            }
+        const handleSyncEvent = () => {
+            setLastSync(new Date());
         };
 
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('swr:sync', handleSyncEvent);
+        return () => window.removeEventListener('swr:sync', handleSyncEvent);
     }, []);
 
-    // Update sync time periodically
+    // Tick every 10s to keep the relative time display updated
     useEffect(() => {
         const interval = setInterval(() => {
-            setLastSync(new Date());
-        }, 30000); // Every 30 seconds
-
+            setTick(t => t + 1);
+        }, 10000);
         return () => clearInterval(interval);
     }, []);
 
-    const handleManualRefresh = async () => {
+    const handleManualRefresh = useCallback(async () => {
         setIsRefreshing(true);
         invalidateAllCache();
         setLastSync(new Date());
@@ -51,9 +51,11 @@ export function ConnectionStatus({ className }) {
         setTimeout(() => {
             setIsRefreshing(false);
         }, 1000);
-    };
+    }, []);
 
     const formatSyncTime = (date) => {
+        if (!date) return 'Waiting...';
+
         const now = new Date();
         const diff = Math.floor((now - date) / 1000);
 
