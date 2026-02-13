@@ -42,6 +42,13 @@ echo "Running database migrations..."
 # Increase memory limit for migrations if needed
 php -d memory_limit=512M artisan migrate --force --no-interaction || echo "⚠️ Migration failed - check DB credentials in Railway Dashboard"
 
+# Optional: Auto-seed if users table is empty (helpful for initial setup)
+USER_COUNT=$(php artisan tinker --execute="echo App\Models\User::count();" | tail -n 1)
+if [ "$USER_COUNT" = "0" ]; then
+    echo "No users found. Running database seeder..."
+    php artisan db:seed --force --no-interaction
+fi
+
 # 6. OPTIMIZE
 echo "Optimizing framework..."
 php artisan config:cache --no-interaction

@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
 
         // Create Admin User
         $admin = User::updateOrCreate(
-            ['email' => 'admin@quickconn.net'],
+            ['email' => 'admin@sagepressllc.com'],
             [
                 'employee_id' => 'SYSADM-001',
                 'first_name' => 'Admin',
