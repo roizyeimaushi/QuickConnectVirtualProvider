@@ -17,7 +17,7 @@ import Image from "next/image";
 import { Eye, EyeOff, AlertCircle, Mail, Lock } from "lucide-react";
 import { useSettingsContext } from "@/components/providers/settings-provider";
 import { getLogoUrl } from "@/lib/constants";
-import { useToast } from "@/components/ui/use-toast"; // Added this import based on the use of `toast`
+import { useToast } from "@/hooks/use-toast";
 
 export default function EmployeeLoginPage() {
     const { settings } = useSettingsContext();
