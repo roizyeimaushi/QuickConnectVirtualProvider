@@ -24,6 +24,7 @@ import * as XLSX from "xlsx";
 import {
     Calendar as CalendarIcon,
     Download,
+    FileSpreadsheet,
     Clock,
     Users,
     CheckCircle2,
@@ -34,6 +35,7 @@ import {
     ChevronRight,
     Coffee,
 } from "lucide-react";
+import Link from "next/link";
 
 import { Label, Pie, PieChart } from "recharts";
 import {
@@ -227,6 +229,16 @@ export default function DailyReportsPage() {
                                 />
                             </PopoverContent>
                         </Popover>
+                        <Button
+                            variant="outline"
+                            className="w-full sm:w-auto"
+                            asChild
+                        >
+                            <Link href="/reports/export">
+                                <FileSpreadsheet className="mr-2 h-4 w-4" />
+                                Range Export
+                            </Link>
+                        </Button>
                         <Button
                             className="w-full sm:w-auto"
                             onClick={async () => {

@@ -156,6 +156,7 @@ export function getNavigationItems(user) {
                     items: [
                         { title: "Attendance Reports", url: "/reports/daily" },
                         { title: "Employee Reports", url: "/reports/employees" },
+                        { title: "Export to Excel", url: "/reports/export" },
                     ],
                 },
                 {
