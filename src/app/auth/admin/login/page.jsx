@@ -93,8 +93,8 @@ export default function AdminLoginPage() {
         } catch (err) {
             let errorMessage = "The provided credentials are incorrect.";
 
-            if (err?.status === 0 || (err?.message && err.message.includes("Cannot reach the server"))) {
-                errorMessage = `Cannot reach the API server. Please ensure the backend is running at ${API_BASE_URL}.`;
+            if (err?.status === 0 || (err?.message && err.message.includes("Connection failed"))) {
+                errorMessage = `Cannot reach the API server. The backend might be waking up (Cold Start). Please wait 10 seconds and try again.`;
             } else if (err?.errors?.email?.[0]) {
                 errorMessage = err.errors.email[0];
             } else if (err?.message && err.message !== "An error occurred" && err.message !== "Request failed") {

@@ -109,104 +109,109 @@ class ApiClient {
         };
 
 
-        try {
-            const response = await fetch(url, config);
+        let retries = 0;
+        const maxRetries = 1; // Try once more if it's a network error (could be cold start)
 
-            // Handle 401 Unauthorized
-            if (response.status === 401) {
-                const hadToken = this.getToken();
-                this.removeToken();
-                // Only redirect if user was logged in (had a token)
-                if (hadToken && typeof window !== 'undefined' && !window.location.pathname.includes('/auth/')) {
-                    window.location.href = '/auth/login';
+        const performRequest = async () => {
+            try {
+                const response = await fetch(url, config);
+
+                // Handle 401 Unauthorized
+                if (response.status === 401) {
+                    const hadToken = this.getToken();
+                    this.removeToken();
+                    // Only redirect if user was logged in (had a token)
+                    if (hadToken && typeof window !== 'undefined' && !window.location.pathname.includes('/auth/')) {
+                        window.location.href = '/auth/login';
+                    }
+                    throw {
+                        status: 401,
+                        message: 'Unauthorized - Please log in again',
+                        errors: {},
+                    };
                 }
-                throw {
-                    status: 401,
-                    message: 'Unauthorized - Please log in again',
-                    errors: {},
-                };
-            }
 
-            // Handle 403 Forbidden (insufficient permissions)
-            if (response.status === 403) {
-                let data = {};
-                try {
-                    data = await response.json();
-                } catch (_) { }
+                // Handle 403 Forbidden (insufficient permissions)
+                if (response.status === 403) {
+                    let data = {};
+                    try {
+                        data = await response.json();
+                    } catch (_) { }
 
-                throw {
-                    status: 403,
-                    message: data.message || 'Access denied - You do not have permission to access this resource',
-                    errors: data.errors || {},
-                    ...data
-                };
-            }
+                    throw {
+                        status: 403,
+                        message: data.message || 'Access denied - You do not have permission to access this resource',
+                        errors: data.errors || {},
+                        ...data
+                    };
+                }
 
-            // Handle Blob for downloads (Check content-type or if specifically requested as blob)
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-                let data = {};
-                try {
-                    data = await response.json();
-                } catch (parseError) {
-                    // JSON parsing failed
+                // Handle JSON responses
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    let data = {};
+                    try {
+                        data = await response.json();
+                    } catch (parseError) {
+                        if (!response.ok) {
+                            throw {
+                                status: response.status,
+                                message: `Request failed with status ${response.status}`,
+                                errors: {},
+                            };
+                        }
+                    }
                     if (!response.ok) {
                         throw {
                             status: response.status,
-                            message: `Request failed with status ${response.status}`,
-                            errors: {},
+                            message: data.message || `Request failed with status ${response.status}`,
+                            errors: data.errors || {},
+                            ...data
                         };
                     }
+                    return data;
+                } else {
+                    if (!response.ok) {
+                        throw { status: response.status, message: `Request failed with status ${response.status}` };
+                    }
+                    return response.blob();
                 }
-                if (!response.ok) {
+
+            } catch (error) {
+                // If it's a structured error we already threw, just pass it up
+                if (error && typeof error === 'object' && error.status !== undefined) {
+                    throw error;
+                }
+
+                // Transparently handle network failures (status 0)
+                const isNetworkError = error instanceof TypeError && 
+                    (error.message === 'Failed to fetch' || error.message?.includes('Network') || error.message?.includes('Aborted'));
+
+                if (isNetworkError && retries < maxRetries) {
+                    retries++;
+                    console.warn(`[API] Network error. Retrying... (${retries}/${maxRetries})`);
+                    // Small delay before retry to let server wake up
+                    await new Promise(r => setTimeout(r, 1000));
+                    return performRequest();
+                }
+
+                if (isNetworkError) {
                     throw {
-                        status: response.status,
-                        message: data.message || `Request failed with status ${response.status}`,
-                        errors: data.errors || {},
-                        ...data // Spread other fields like error_code
+                        status: 0,
+                        message: 'Connection failed. The server might be waking up (Cold Start) or unreachable. Please try again in a few seconds.',
+                        errors: {},
                     };
                 }
-                return data;
-            } else {
-                if (!response.ok) {
-                    throw { status: response.status, message: `Request failed with status ${response.status}` };
-                }
-                // Return blob for backup downloads etc.
-                return response.blob();
-            }
 
-        } catch (error) {
-            // Already structured error from above (has status property)
-            if (error && typeof error === 'object' && error.status !== undefined) {
-                throw error;
-            }
-
-            // Network / CORS Error
-            if (error instanceof TypeError && (error.message === 'Failed to fetch' || error.message?.includes('Network'))) {
-                throw {
-                    status: 0,
-                    message: 'Network error: Cannot reach the server. Please check your connection.',
-                    errors: {},
-                };
-            }
-
-            // Handle Error objects (from new Error())
-            if (error instanceof Error) {
                 throw {
                     status: 500,
                     message: error.message || 'An unexpected error occurred',
                     errors: {},
                 };
             }
+        };
 
-            // Fallback for any other type of error (including empty objects)
-            console.warn('API client caught unexpected error type:', error);
-            throw {
-                status: 500,
-                message: typeof error === 'string' ? error : 'An unexpected error occurred',
-                errors: {},
-            };
-        }
+        return performRequest();
     }
 
     /**

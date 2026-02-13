@@ -19,27 +19,27 @@ Route::get('/break-rules', [BreakController::class, 'getRules']);
 // Health Check for Render Deployment
 // Returns 200 OK to pass health check, even if DB not ready
 // This prevents timeout during initial deploy/migration
-Route::get('/health', function () {
+Route::get('/health', function (Request $request) {
     $response = [
         'status' => 'healthy',
         'timestamp' => now()->toIso8601String(),
         'app' => 'QuickConnect API',
-        'php_version' => phpversion(),
+        'php' => phpversion(),
     ];
     
-    try {
-        \Illuminate\Support\Facades\DB::connection()->getPdo();
-        $response['database'] = 'connected';
-    } catch (\Exception $e) {
-        // Still return 200 so health check passes
-        // Log the error for debugging
-        $response['database'] = 'pending';
-        $response['database_status'] = 'Connection initializing...';
-        \Log::warning('Health check: DB not ready - ' . $e->getMessage());
+    // Only check DB if requested (prevents Render health check timeout)
+    if ($request->has('check_db')) {
+        try {
+            \Illuminate\Support\Facades\DB::connection()->getPdo();
+            $response['database'] = 'connected';
+        } catch (\Exception $e) {
+            $response['database'] = 'pending';
+            $response['database_error'] = $e->getMessage();
+        }
     }
     
-    // Always return 200 OK for health check
-    return response()->json($response, 200);
+    return response()->json($response, 200)
+        ->header('Cache-Control', 'no-cache, no-store, must-revalidate');
 });
 
 // Broadcasting Auth Route (for WebSocket channel authorization)
