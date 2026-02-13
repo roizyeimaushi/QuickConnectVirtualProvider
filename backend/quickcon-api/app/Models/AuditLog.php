@@ -188,8 +188,16 @@ class AuditLog extends Model
         if (\Illuminate\Support\Facades\Schema::hasColumn('audit_logs', 'hash')) {
             $logData['hash'] = self::generateHash($logData);
         }
+
+        // Filter log data to only include columns that actually exist in the DB
+        // This prevents errors during the migration window when code is ahead of DB
+        $columns = \Illuminate\Support\Facades\Cache::remember('audit_logs_columns', 60, function() {
+            return \Illuminate\Support\Facades\Schema::getColumnListing('audit_logs');
+        });
         
-        $log = self::create($logData);
+        $filteredData = array_intersect_key($logData, array_flip($columns));
+        
+        $log = self::create($filteredData);
         
         // Update cache with the new hash for the next call
         \Illuminate\Support\Facades\Cache::put('last_audit_log_hash', $log->hash, 60);
