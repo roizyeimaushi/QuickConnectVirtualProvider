@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\AttendanceExport;
+use App\Models\AuditLog;
 
 class ReportController extends Controller
 {

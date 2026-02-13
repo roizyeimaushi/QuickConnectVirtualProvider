@@ -101,11 +101,18 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Sho
 
     public function map($record): array
     {
+        $employeeId = $record->user?->employee_id ?? 'N/A';
+        $employeeName = $record->user?->full_name ?? 'Unknown Employee';
+        $date = $record->attendance_date?->format('Y-m-d') 
+            ?? $record->session?->date?->format('Y-m-d') 
+            ?? 'N/A';
+        $scheduleName = $record->session?->schedule?->name ?? 'N/A';
+
         $row = [
-            $record->user->employee_id,
-            $record->user->full_name,
-            $record->attendance_date?->format('Y-m-d') ?? $record->session->date->format('Y-m-d'),
-            $record->session->schedule->name ?? 'N/A',
+            $employeeId,
+            $employeeName,
+            $date,
+            $scheduleName,
         ];
 
         // Fetch time format setting
@@ -113,41 +120,23 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Sho
         $format = ($timeFormatSetting === '12h') ? 'h:i A' : 'H:i';
 
         if ($this->options['include_times']) {
-            $row[] = $record->time_in?->format($format);
+            $row[] = $record->time_in?->format($format) ?? '—';
         }
 
         if ($this->options['include_breaks']) {
-            $row[] = $record->break_start?->format($format);
-            $row[] = $record->break_end?->format($format);
+            $row[] = $record->break_start?->format($format) ?? '—';
+            $row[] = $record->break_end?->format($format) ?? '—';
         }
 
         if ($this->options['include_times']) {
-            $row[] = $record->time_out?->format($format);
+            $row[] = $record->time_out?->format($format) ?? '—';
         }
 
         $row[] = ucfirst($record->status);
-        $row[] = $record->minutes_late;
+        $row[] = $record->minutes_late ?? 0;
 
-        // FIXED HOURS ON THE FLY (Excel)
-        $hoursWorked = $record->hours_worked;
-        if ($record->time_in && $record->time_out && !in_array($record->status, ['pending', 'absent'])) {
-            $totalMinutes = $record->time_in->diffInMinutes($record->time_out, false);
-            // Handle Carbon 3 absolute diff vs sign
-            if ($record->time_in->gt($record->time_out) && $totalMinutes > 0) $totalMinutes = -$totalMinutes;
-            if ($totalMinutes < 0) $totalMinutes += 1440;
-            
-            $breakMinutes = $record->breaks()->sum('duration_minutes');
-            if ($breakMinutes == 0 && $record->break_start && $record->break_end) {
-                $bDiff = $record->break_start->diffInMinutes($record->break_end, false);
-                // Handle Carbon 3 absolute diff vs sign
-                if ($record->break_start->gt($record->break_end) && $bDiff > 0) $bDiff = -$bDiff;
-                $breakMinutes = $bDiff < 0 ? $bDiff + 1440 : $bDiff;
-            }
-            
-            $netMinutes = max(0, $totalMinutes - $breakMinutes);
-            $hoursWorked = round($netMinutes / 60, 2);
-        }
-
+        // Use the model method for consistent calculation
+        $hoursWorked = $record->calculateHoursWorked();
         $row[] = $hoursWorked;
 
         return $row;
