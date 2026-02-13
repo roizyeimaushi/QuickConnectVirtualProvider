@@ -42,7 +42,6 @@ php artisan storage:link --no-interaction || true
 # 7. CONFIGURE PORTS
 export PORT=${PORT:-8080}
 sed -i "s/listen 8080/listen $PORT/g" /etc/nginx/http.d/default.conf
-sed -i "s/listen \[::\]:8080/listen $PORT/g" /etc/nginx/http.d/default.conf
 
 echo "=== Starting Services on Port $PORT ==="
 exec /usr/bin/supervisord -c /etc/supervisord.conf

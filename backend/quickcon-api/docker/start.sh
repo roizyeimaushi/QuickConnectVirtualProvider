@@ -57,7 +57,6 @@ chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /run/php
 export PORT=${PORT:-8080}
 # Replace ONLY IPv4 listen to avoid IPv6 errors if container lacks IPv6
 sed -i "s/listen 8080/listen $PORT/g" /etc/nginx/http.d/default.conf
-sed -i "s/listen \[::\]:8080/listen $PORT/g" /etc/nginx/http.d/default.conf
 
 echo "=== Starting Services on Port $PORT ==="
 exec /usr/bin/supervisord -c /etc/supervisord.conf
