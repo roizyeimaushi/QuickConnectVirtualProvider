@@ -10,24 +10,74 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { employeesApi } from "@/lib/api";
+import { employeesApi, reportsApi } from "@/lib/api";
 import { useAuth } from "@/components/providers/auth-provider";
+import { useToast } from "@/hooks/use-toast";
 import { getAvatarUrl } from "@/lib/constants";
 import { getInitials } from "@/lib/utils";
+import { format, startOfMonth, endOfMonth } from "date-fns";
 import {
     Search,
     Download,
     FileText,
     Briefcase,
-    ArrowRight
+    ArrowRight,
+    FileSpreadsheet,
+    Loader2
 } from "lucide-react";
 
 export default function EmployeeReportsPage() {
     const { user, loading: authLoading, isAdmin } = useAuth();
+    const { toast } = useToast();
     const router = useRouter();
     const [search, setSearch] = useState("");
     const [loading, setLoading] = useState(true);
+    const [exportLoading, setExportLoading] = useState(false);
     const [employees, setEmployees] = useState([]);
+
+    const handleExportAll = async () => {
+        try {
+            setExportLoading(true);
+            const now = new Date();
+            const start = format(startOfMonth(now), "yyyy-MM-dd");
+            const end = format(endOfMonth(now), "yyyy-MM-dd");
+
+            const blob = await reportsApi.exportToExcel({
+                start_date: start,
+                end_date: end,
+                includePresent: true,
+                includeLate: true,
+                includeAbsent: true,
+                includeTimes: true,
+                includeBreaks: true,
+            });
+
+            // Create download link
+            const url = window.URL.createObjectURL(new Blob([blob]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `all_employees_attendance_${start}_to_${end}.xlsx`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+            window.URL.revokeObjectURL(url);
+
+            toast({
+                title: "Export successful",
+                description: `Monthly report for ${format(now, "MMMM yyyy")} generated.`,
+                variant: "success",
+            });
+        } catch (error) {
+            console.error("Export error:", error);
+            toast({
+                title: "Export failed",
+                description: "Could not generate bulk export. Please try again.",
+                variant: "destructive",
+            });
+        } finally {
+            setExportLoading(false);
+        }
+    };
 
     useEffect(() => {
         if (!authLoading) {
@@ -83,6 +133,18 @@ export default function EmployeeReportsPage() {
                             Individual attendance performance and history
                         </p>
                     </div>
+                    <Button 
+                        onClick={handleExportAll} 
+                        disabled={exportLoading}
+                        className="bg-green-600 hover:bg-green-700 text-white gap-2 font-bold"
+                    >
+                        {exportLoading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                            <FileSpreadsheet className="h-4 w-4" />
+                        )}
+                        Export Current Month
+                    </Button>
                 </div>
 
                 {/* Filters */}
