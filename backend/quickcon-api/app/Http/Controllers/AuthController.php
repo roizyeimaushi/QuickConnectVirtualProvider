@@ -314,6 +314,7 @@ class AuthController extends Controller
             $user->last_name = $request->last_name;
             $user->email = $request->email;
 
+            $uploadWarning = null;
             if ($request->hasFile('avatar')) {
                 try {
                     // Use Cloudinary if configured
@@ -326,9 +327,8 @@ class AuthController extends Controller
                         $user->avatar = $path;
                     }
                 } catch (\Exception $e) {
-                    Log::warning("Avatar upload failed: " . $e->getMessage());
-                    // Don't fail the entire update just because avatar upload failed
-                    // Profile name/email changes should still save
+                    $uploadWarning = "Avatar upload failed: " . $e->getMessage();
+                    Log::warning($uploadWarning);
                 }
             }
 
@@ -345,8 +345,9 @@ class AuthController extends Controller
             );
 
             return response()->json([
-                'message' => 'Profile updated successfully',
-                'user' => $user
+                'message' => $uploadWarning ? "Profile updated but avatar upload failed" : 'Profile updated successfully',
+                'user' => $user,
+                'warning' => $uploadWarning
             ]);
         } catch (\Exception $e) {
             Log::error("Profile update failed: " . $e->getMessage());

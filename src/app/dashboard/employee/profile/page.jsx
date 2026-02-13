@@ -102,15 +102,15 @@ export default function EmployeeProfilePage() {
                 data.append('avatar', avatarFile);
             }
 
-            await authApi.updateProfile(data);
+            const result = await authApi.updateProfile(data);
 
             // Refresh user data (updates sidebar)
-            await refetchUser();
+            await refetchUser(true);
 
             toast({
                 title: "Profile updated",
-                description: "Your profile has been updated successfully.",
-                variant: "success",
+                description: result.message || "Your profile has been updated successfully.",
+                variant: result.warning ? "warning" : "success",
             });
         } catch (error) {
             console.error("Profile update error details:", JSON.stringify(error, null, 2));
