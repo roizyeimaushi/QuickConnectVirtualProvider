@@ -11,6 +11,7 @@ use App\Http\Controllers\BreakController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\SettingsController;
+use Illuminate\Http\Request;
 use App\Http\Controllers\NotificationController;
 // Public Routes
 Route::get('/settings', [SettingsController::class, 'index']);
