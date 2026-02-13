@@ -75,17 +75,28 @@ class User extends Authenticatable
             return null;
         }
 
+        // If it's already a full URL (Cloudinary), return as is
+        if (str_starts_with($value, 'http')) {
+            return $value;
+        }
+
         // Dynamically replace localhost/127.0.0.1 with the actual server IP for mobile device compatibility
         $requestHost = request()->getHost();
         if ($requestHost !== 'localhost' && $requestHost !== '127.0.0.1') {
             if (str_contains($value, 'localhost')) {
-                return str_replace('localhost', $requestHost, $value);
+                $value = str_replace('localhost', $requestHost, $value);
             } elseif (str_contains($value, '127.0.0.1')) {
-                return str_replace('127.0.0.1', $requestHost, $value);
+                $value = str_replace('127.0.0.1', $requestHost, $value);
             }
         }
 
-        return $value;
+        // If it's a relative path, ensure it's prefixed with storage
+        // But first check if it already contains 'storage/' to avoid duplicates
+        if (!str_starts_with($value, 'storage/')) {
+            return asset('storage/' . $value);
+        }
+
+        return asset($value);
     }
 
     public function getFullNameAttribute(): string

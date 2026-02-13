@@ -49,7 +49,15 @@ class SettingsController extends Controller
             }
         }
 
-
+        // Handle full URL for logo
+        if (isset($settings['system_logo']) && !empty($settings['system_logo'])) {
+            $logo = $settings['system_logo'];
+            if (!str_starts_with($logo, 'http')) {
+                // Remove leading slash if present to avoid double slash
+                $logoPath = ltrim($logo, '/');
+                $settings['system_logo'] = asset('storage/' . $logoPath);
+            }
+        }
         
         return response()->json($settings);
     }
@@ -144,7 +152,7 @@ class SettingsController extends Controller
 
         if ($request->file('logo')) {
             // Support Cloudinary for Render Free Tier
-            if (config('filesystems.disks.cloudinary')) {
+            if (env('CLOUDINARY_URL')) {
                 $result = $request->file('logo')->storeOnCloudinary('logos');
                 $url = $result->getSecurePath();
             } else {

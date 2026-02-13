@@ -314,7 +314,7 @@ class AuthController extends Controller
 
         if ($request->hasFile('avatar')) {
             // Use Cloudinary for Render Free Tier (persistence)
-            if (config('filesystems.disks.cloudinary')) {
+            if (env('CLOUDINARY_URL')) {
                 $result = $request->file('avatar')->storeOnCloudinary('avatars');
                 $user->avatar = $result->getSecurePath();
             } else {

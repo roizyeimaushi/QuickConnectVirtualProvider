@@ -50,10 +50,15 @@ php artisan route:cache --no-interaction
 php artisan db:seed --class=SettingsSeeder --force --no-interaction 2>/dev/null || true
 php artisan db:seed --class=EnsureAdminUserSeeder --force --no-interaction 2>/dev/null || true
 
-# Ensure storage directories exist (fix for missing avatars)
+# Ensure storage and run directories exist with correct permissions
+echo "Preparing environment..."
+mkdir -p storage/logs storage/framework/{cache,sessions,views} bootstrap/cache
 mkdir -p storage/app/public/avatars
-chown -R www-data:www-data storage/app/public
-chmod -R 775 storage/app/public
+mkdir -p /run/php
+
+# Set permissions
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /run/php
+chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /run/php
 
 # Recreate storage link cleanly
 rm -rf public/storage
