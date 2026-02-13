@@ -672,8 +672,51 @@ class ReportController extends Controller
 
     public function exportExcel(Request $request)
     {
-        // Placeholder for Maatwebsite/Laravel-Excel implementation
-        return response()->json(['message' => 'Excel export feature coming soon. Use browser print for now.'], 501);
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'required|date',
+            'user_id' => 'nullable|integer',
+            'include_present' => 'nullable',
+            'include_late' => 'nullable',
+            'include_absent' => 'nullable',
+            'include_times' => 'nullable',
+            'include_breaks' => 'nullable',
+        ]);
+
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        $userId = $request->input('user_id');
+        
+        // Helper to handle mixed checkbox/bool inputs from frontend
+        $toBool = function($val, $default = true) {
+            if ($val === null) return $default;
+            if (is_bool($val)) return $val;
+            return filter_var($val, FILTER_VALIDATE_BOOLEAN);
+        };
+
+        $options = [
+            'include_present' => $toBool($request->input('include_present')),
+            'include_late' => $toBool($request->input('include_late')),
+            'include_absent' => $toBool($request->input('include_absent')),
+            'include_times' => $toBool($request->input('include_times')),
+            'include_breaks' => $toBool($request->input('include_breaks')),
+        ];
+
+        $fileName = "attendance_report_{$startDate}_to_{$endDate}.xlsx";
+
+        // Audit the export action
+        AuditLog::log(
+            'export_excel',
+            "Admin exported attendance records from {$startDate} to {$endDate}",
+            AuditLog::STATUS_SUCCESS,
+            auth()->id(),
+            'AttendanceRecord',
+            null,
+            null,
+            ['start_date' => $startDate, 'end_date' => $endDate, 'filters' => $options]
+        );
+        
+        return Excel::download(new AttendanceExport($startDate, $endDate, $userId, $options), $fileName);
     }
 
     public function reconcileDatabaseHours()
