@@ -42,8 +42,8 @@ RUN echo "[www]" > /usr/local/etc/php-fpm.d/www.conf \
     && echo "catch_workers_output = yes" >> /usr/local/etc/php-fpm.d/www.conf
 
 # Copy config and app
-COPY docker/nginx.render.conf /etc/nginx/http.d/default.conf
-COPY docker/supervisord.render.conf /etc/supervisord.conf
+COPY docker/nginx.conf /etc/nginx/http.d/default.conf
+COPY docker/supervisord.conf /etc/supervisord.conf
 COPY docker/start.sh /start.sh
 RUN chmod +x /start.sh
 
