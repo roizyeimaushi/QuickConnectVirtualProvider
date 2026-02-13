@@ -13,10 +13,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('attendance_records', function (Blueprint $table) {
-            $table->date('attendance_date')->nullable()->after('user_id');
-            $table->index('attendance_date');
-        });
+        if (!Schema::hasColumn('attendance_records', 'attendance_date')) {
+            Schema::table('attendance_records', function (Blueprint $table) {
+                $table->date('attendance_date')->nullable()->after('user_id');
+                $table->index('attendance_date');
+            });
+        }
 
         // Backfill existing records with the session date (MySQL/TiDB syntax)
         DB::statement("
@@ -32,9 +34,15 @@ return new class extends Migration
         });
 
         // Add unique constraint for one attendance per employee per date
-        Schema::table('attendance_records', function (Blueprint $table) {
-            $table->unique(['user_id', 'attendance_date'], 'unique_user_attendance_date');
-        });
+        // Note: unique constraint might already exist if migration partially succeeded, 
+        // but Laravel unique() will error if it exists. Better to check or ignore.
+        try {
+            Schema::table('attendance_records', function (Blueprint $table) {
+                $table->unique(['user_id', 'attendance_date'], 'unique_user_attendance_date');
+            });
+        } catch (\Exception $e) {
+            // Probably already exists
+        }
     }
 
     public function down(): void
