@@ -696,11 +696,11 @@ class ReportController extends Controller
         };
 
         $options = [
-            'include_present' => $toBool($request->input('include_present')),
-            'include_late' => $toBool($request->input('include_late')),
-            'include_absent' => $toBool($request->input('include_absent')),
-            'include_times' => $toBool($request->input('include_times')),
-            'include_breaks' => $toBool($request->input('include_breaks')),
+            'include_present' => $toBool($request->input('include_present') ?? $request->input('includePresent')),
+            'include_late' => $toBool($request->input('include_late') ?? $request->input('includeLate')),
+            'include_absent' => $toBool($request->input('include_absent') ?? $request->input('includeAbsent')),
+            'include_times' => $toBool($request->input('include_times') ?? $request->input('includeTimes')),
+            'include_breaks' => $toBool($request->input('include_breaks') ?? $request->input('includeBreaks')),
         ];
 
         $fileName = "attendance_report_{$startDate}_to_{$endDate}.xlsx";
