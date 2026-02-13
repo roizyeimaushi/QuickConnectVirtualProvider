@@ -15,9 +15,10 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Eye, EyeOff, Loader2, AlertCircle, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, AlertCircle, Mail, Lock } from "lucide-react";
+import Image from "next/image";
 import { useSettingsContext } from "@/components/providers/settings-provider";
-import { getLogoUrl, API_BASE_URL } from "@/lib/constants";
+import { getLogoUrl } from "@/lib/constants";
 
 export default function AdminLoginPage() {
     const { settings } = useSettingsContext();
@@ -133,10 +134,12 @@ export default function AdminLoginPage() {
             <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-slate-50">
                 {/* Background Decoration */}
                 <div className="absolute inset-0 z-0">
-                    <img
+                    <Image
                         src="/admin-login-bg.jpg"
                         alt="Background"
-                        className="w-full h-full object-cover opacity-60"
+                        fill
+                        className="object-cover opacity-60"
+                        priority
                     />
                     <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-blue-500/5" />
                 </div>
@@ -146,14 +149,13 @@ export default function AdminLoginPage() {
                     <Card className="border border-white/20 shadow-2xl bg-white/90 backdrop-blur-xl shadow-emerald-500/10 overflow-hidden rounded-[2rem]">
                         <CardHeader className="pt-12 pb-6 text-center">
                             <div className="flex justify-center mb-8">
-                                <img
+                                <Image
                                     src={getLogoUrl(settings?.system_logo)}
                                     alt="QuickConn Logo"
+                                    width={200}
+                                    height={112}
                                     className="h-28 w-auto object-contain"
-                                    onError={(e) => {
-                                        e.currentTarget.src = "/quickconnect-logo.png";
-                                        e.currentTarget.onerror = null;
-                                    }}
+                                    unoptimized
                                 />
                             </div>
                             <CardTitle className="text-2xl sm:text-4xl font-black tracking-tight font-inter whitespace-nowrap">

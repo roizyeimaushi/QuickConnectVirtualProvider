@@ -110,7 +110,8 @@ class ApiClient {
 
 
         let retries = 0;
-        const maxRetries = 1; // Try once more if it's a network error (could be cold start)
+        const maxRetries = 3; // Retry more times for cold starts
+        const retryDelay = 3000; // 3 seconds between retries
 
         const performRequest = async () => {
             try {
@@ -120,7 +121,6 @@ class ApiClient {
                 if (response.status === 401) {
                     const hadToken = this.getToken();
                     this.removeToken();
-                    // Only redirect if user was logged in (had a token)
                     if (hadToken && typeof window !== 'undefined' && !window.location.pathname.includes('/auth/')) {
                         window.location.href = '/auth/login';
                     }
@@ -131,16 +131,16 @@ class ApiClient {
                     };
                 }
 
-                // Handle 403 Forbidden (insufficient permissions)
+                // Handle 403 Forbidden
                 if (response.status === 403) {
                     let data = {};
                     try {
                         data = await response.json();
-                    } catch (_) { }
+                    } catch { }
 
                     throw {
                         status: 403,
-                        message: data.message || 'Access denied - You do not have permission to access this resource',
+                        message: data.message || 'Access denied',
                         errors: data.errors || {},
                         ...data
                     };
@@ -152,7 +152,7 @@ class ApiClient {
                     let data = {};
                     try {
                         data = await response.json();
-                    } catch (parseError) {
+                    } catch {
                         if (!response.ok) {
                             throw {
                                 status: response.status,
@@ -178,27 +178,24 @@ class ApiClient {
                 }
 
             } catch (error) {
-                // If it's a structured error we already threw, just pass it up
                 if (error && typeof error === 'object' && error.status !== undefined) {
                     throw error;
                 }
 
-                // Transparently handle network failures (status 0)
                 const isNetworkError = error instanceof TypeError && 
                     (error.message === 'Failed to fetch' || error.message?.includes('Network') || error.message?.includes('Aborted'));
 
                 if (isNetworkError && retries < maxRetries) {
                     retries++;
-                    console.warn(`[API] Network error. Retrying... (${retries}/${maxRetries})`);
-                    // Small delay before retry to let server wake up
-                    await new Promise(r => setTimeout(r, 1000));
+                    console.warn(`[API] Connection attempt ${retries}/${maxRetries} failed. Retrying in ${retryDelay/1000}s...`);
+                    await new Promise(r => setTimeout(r, retryDelay));
                     return performRequest();
                 }
 
                 if (isNetworkError) {
                     throw {
                         status: 0,
-                        message: 'Connection failed. The server might be waking up (Cold Start) or unreachable. Please try again in a few seconds.',
+                        message: 'The API server is currently waking up (Cold Start). This usually takes 30-60 seconds on the first load. Please wait a moment and try again.',
                         errors: {},
                     };
                 }

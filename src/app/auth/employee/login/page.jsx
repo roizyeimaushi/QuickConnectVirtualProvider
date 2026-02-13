@@ -13,11 +13,11 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
+import Image from "next/image";
 import { Eye, EyeOff, AlertCircle, Mail, Lock } from "lucide-react";
 import { useSettingsContext } from "@/components/providers/settings-provider";
-import { getLogoUrl, API_BASE_URL } from "@/lib/constants";
+import { getLogoUrl } from "@/lib/constants";
+import { useToast } from "@/components/ui/use-toast"; // Added this import based on the use of `toast`
 
 export default function EmployeeLoginPage() {
     const { settings } = useSettingsContext();
@@ -132,10 +132,12 @@ export default function EmployeeLoginPage() {
             <div className="min-h-screen h-screen w-full flex flex-col md:flex-row overflow-hidden bg-white">
                 {/* Left Side - Image and Branding */}
                 <div className="hidden md:block md:w-1/2 h-full relative overflow-hidden bg-slate-200">
-                    <img
+                    <Image
                         src="/employee-login-side.png"
                         alt="QuickConn Workspace"
-                        className="absolute inset-0 w-full h-full object-cover"
+                        fill
+                        className="object-cover"
+                        priority
                     />
 
                     {/* Overlay with Text */}
@@ -160,14 +162,13 @@ export default function EmployeeLoginPage() {
                     <div className="w-full max-w-[420px] space-y-8 py-8">
                         {/* Logo */}
                         <div className="flex justify-center flex-col items-center space-y-6">
-                            <img
+                            <Image
                                 src={getLogoUrl(settings?.system_logo)}
                                 alt="QuickConn Logo"
+                                width={200}
+                                height={112}
                                 className="h-auto max-h-32 w-auto object-contain"
-                                onError={(e) => {
-                                    e.currentTarget.src = "/quickconnect-logo.png";
-                                    e.currentTarget.onerror = null;
-                                }}
+                                unoptimized
                             />
                             <p className="text-slate-400 text-sm font-medium">
                                 Sign in to access your QuickConn Virtual account
