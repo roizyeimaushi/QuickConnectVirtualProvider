@@ -52,7 +52,7 @@ class ApiClient {
     removeToken() {
         if (typeof window === 'undefined') return;
         localStorage.removeItem('quickcon_token');
-        try { Cookies.remove('quickcon_token'); } catch (_) { }
+        try { Cookies.remove('quickcon_token'); } catch { }
     }
 
     /**
