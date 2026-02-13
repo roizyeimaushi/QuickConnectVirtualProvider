@@ -308,38 +308,51 @@ class AuthController extends Controller
             'avatar' => 'nullable|image|max:2048', // 2MB max
         ]);
 
-        $user->first_name = $request->first_name;
-        $user->last_name = $request->last_name;
-        $user->email = $request->email;
+        try {
+            $user->first_name = $request->first_name;
+            $user->last_name = $request->last_name;
+            $user->email = $request->email;
 
-        if ($request->hasFile('avatar')) {
-            // Use Cloudinary for Render Free Tier (persistence)
-            if (env('CLOUDINARY_URL')) {
-                $result = $request->file('avatar')->storeOnCloudinary('avatars');
-                $user->avatar = $result->getSecurePath();
-            } else {
-                // Fallback to local (will be wiped on restart)
-                $path = $request->file('avatar')->store('avatars', 'public');
-                $user->avatar = $path;
+            if ($request->hasFile('avatar')) {
+                try {
+                    // Use Cloudinary if configured
+                    if (config('cloudinary.cloud_url') || env('CLOUDINARY_URL')) {
+                        $result = $request->file('avatar')->storeOnCloudinary('avatars');
+                        $user->avatar = $result->getSecurePath();
+                    } else {
+                        // Fallback to local storage
+                        $path = $request->file('avatar')->store('avatars', 'public');
+                        $user->avatar = $path;
+                    }
+                } catch (\Exception $e) {
+                    Log::warning("Avatar upload failed: " . $e->getMessage());
+                    // Don't fail the entire update just because avatar upload failed
+                    // Profile name/email changes should still save
+                }
             }
+
+            $user->save();
+            
+            // Log the action
+            AuditLog::log(
+                'update_profile',
+                "{$user->first_name} {$user->last_name} updated their profile",
+                AuditLog::STATUS_SUCCESS,
+                $user->id,
+                'User',
+                $user->id
+            );
+
+            return response()->json([
+                'message' => 'Profile updated successfully',
+                'user' => $user
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Profile update failed: " . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to update profile: ' . $e->getMessage()
+            ], 500);
         }
-
-        $user->save();
-        
-        // Log the action
-        AuditLog::log(
-            'update_profile',
-            "{$user->first_name} {$user->last_name} updated their profile",
-            AuditLog::STATUS_SUCCESS,
-            $user->id,
-            'User',
-            $user->id
-        );
-
-        return response()->json([
-            'message' => 'Profile updated successfully',
-            'user' => $user
-        ]);
     }
 
     /**

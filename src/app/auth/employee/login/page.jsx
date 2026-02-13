@@ -169,6 +169,7 @@ export default function EmployeeLoginPage() {
                                 height={112}
                                 className="h-auto max-h-32 w-auto object-contain"
                                 unoptimized
+                                onError={(e) => { e.currentTarget.src = "/quickconnect-logo.png"; }}
                             />
                             <p className="text-slate-400 text-sm font-medium">
                                 Sign in to access your QuickConn Virtual account

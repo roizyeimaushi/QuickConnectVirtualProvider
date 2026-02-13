@@ -151,24 +151,29 @@ class SettingsController extends Controller
         ]);
 
         if ($request->file('logo')) {
-            // Support Cloudinary for Render Free Tier
-            if (env('CLOUDINARY_URL')) {
-                $result = $request->file('logo')->storeOnCloudinary('logos');
-                $url = $result->getSecurePath();
-            } else {
-                $path = $request->file('logo')->store('logos', 'public');
-                $url = $path;
+            try {
+                // Support Cloudinary for persistent storage on Railway/Render
+                if (config('cloudinary.cloud_url') || env('CLOUDINARY_URL')) {
+                    $result = $request->file('logo')->storeOnCloudinary('logos');
+                    $url = $result->getSecurePath();
+                } else {
+                    $path = $request->file('logo')->store('logos', 'public');
+                    $url = $path;
+                }
+
+                Setting::updateOrCreate(
+                    ['key' => 'system_logo'],
+                    ['value' => $url, 'group' => 'general']
+                );
+
+                return response()->json(['url' => $url, 'message' => 'Logo uploaded successfully']);
+            } catch (\Exception $e) {
+                Log::error("Logo upload failed: " . $e->getMessage());
+                return response()->json(['message' => 'Logo upload failed: ' . $e->getMessage()], 500);
             }
-
-            Setting::updateOrCreate(
-                ['key' => 'system_logo'],
-                ['value' => $url, 'group' => 'general']
-            );
-
-            return response()->json(['url' => $url, 'message' => 'Logo uploaded successfully']);
         }
 
-        return response()->json(['message' => 'Upload failed'], 400);
+        return response()->json(['message' => 'Upload failed - no file received'], 400);
     }
 
     /**

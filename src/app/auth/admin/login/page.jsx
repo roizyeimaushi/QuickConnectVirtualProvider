@@ -156,6 +156,7 @@ export default function AdminLoginPage() {
                                     height={112}
                                     className="h-28 w-auto object-contain"
                                     unoptimized
+                                    onError={(e) => { e.currentTarget.src = "/quickconnect-logo.png"; }}
                                 />
                             </div>
                             <CardTitle className="text-2xl sm:text-4xl font-black tracking-tight font-inter whitespace-nowrap">

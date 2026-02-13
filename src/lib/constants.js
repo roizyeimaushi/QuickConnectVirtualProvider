@@ -69,18 +69,30 @@ export const API_BASE_URL = (() => {
  * @returns {string} Resolved logo URL
  */
 export const getLogoUrl = (settingsLogo) => {
-    if (!settingsLogo) return "/quickconnect-logo.png";
-    if (settingsLogo.startsWith("http") || settingsLogo.startsWith("data:") || settingsLogo.startsWith("blob:")) return settingsLogo;
+    const fallback = "/quickconnect-logo.png";
+    if (!settingsLogo) return fallback;
 
-    // Handle Laravel storage paths
+    // If it's a data URI or blob, use as-is
+    if (settingsLogo.startsWith("data:") || settingsLogo.startsWith("blob:")) return settingsLogo;
+
+    // If it's a full URL (Cloudinary, etc.), use it — but skip broken ephemeral storage URLs
+    if (settingsLogo.startsWith("http")) {
+        // Detect known ephemeral storage patterns that are likely broken after redeploy
+        const isEphemeralStorage = /\/(storage|public)\/(logo|logos)\//i.test(settingsLogo) &&
+            (settingsLogo.includes('railway.app') || settingsLogo.includes('onrender.com'));
+        if (isEphemeralStorage) {
+            // These files get wiped on redeploy — fall back to local logo
+            return fallback;
+        }
+        return settingsLogo;
+    }
+
+    // Handle Laravel relative storage paths (e.g. "logos/abc.png")
     let backendRoot = API_BASE_URL.replace("/api", "").replace(/\/$/, "");
-
-    // If backendRoot is empty (relative), we assume same domain
     if (!backendRoot || backendRoot === "/") {
         backendRoot = "";
     }
 
-    // Ensure it starts with /storage/ or backend domain/storage/
     const cleanPath = settingsLogo.replace(/^\/?storage\//, "");
     return `${backendRoot}/storage/${cleanPath}`;
 };
