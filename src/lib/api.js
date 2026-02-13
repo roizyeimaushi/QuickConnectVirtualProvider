@@ -110,8 +110,8 @@ class ApiClient {
 
 
         let retries = 0;
-        const maxRetries = 3; // Retry more times for cold starts
-        const retryDelay = 3000; // 3 seconds between retries
+        const maxRetries = 6; // Increased from 3
+        const retryDelay = 8000; // Increased to 8 seconds (Total wait: ~48 seconds)
 
         const performRequest = async () => {
             try {

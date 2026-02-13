@@ -64,6 +64,6 @@ EXPOSE 10000
 
 # Faster health check (shorter intervals during startup)
 HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=6 \
-    CMD curl -sf http://localhost:10000/api/health || exit 1
+    CMD curl -sf http://localhost:${PORT:-10000}/api/health || exit 1
 
 CMD ["/start.sh"]

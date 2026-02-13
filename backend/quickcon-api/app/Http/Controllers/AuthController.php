@@ -313,23 +313,15 @@ class AuthController extends Controller
         $user->email = $request->email;
 
         if ($request->hasFile('avatar')) {
-            // Delete old avatar if exists
-            if ($user->avatar) {
-                // Extract relative path to delete from storage
-                // It might be a full URL (old format) or a relative path (new format)
-                $oldPath = $user->avatar;
-                if (str_contains($oldPath, '/storage/')) {
-                    $oldPath = explode('/storage/', $oldPath)[1];
-                }
-                
-                if ($oldPath && Storage::disk('public')->exists($oldPath)) {
-                    Storage::disk('public')->delete($oldPath);
-                }
+            // Use Cloudinary for Render Free Tier (persistence)
+            if (config('filesystems.disks.cloudinary')) {
+                $result = $request->file('avatar')->storeOnCloudinary('avatars');
+                $user->avatar = $result->getSecurePath();
+            } else {
+                // Fallback to local (will be wiped on restart)
+                $path = $request->file('avatar')->store('avatars', 'public');
+                $user->avatar = $path;
             }
-            
-            $path = $request->file('avatar')->store('avatars', 'public');
-            // Store ONLY the path, not the full URL, to allow different devices to resolve the IP correctly
-            $user->avatar = $path;
         }
 
         $user->save();

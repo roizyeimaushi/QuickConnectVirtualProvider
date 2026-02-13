@@ -143,9 +143,14 @@ class SettingsController extends Controller
         ]);
 
         if ($request->file('logo')) {
-            $path = $request->file('logo')->store('logos', 'public');
-            // Store ONLY the path to allow relative resolution on different devices
-            $url = $path;
+            // Support Cloudinary for Render Free Tier
+            if (config('filesystems.disks.cloudinary')) {
+                $result = $request->file('logo')->storeOnCloudinary('logos');
+                $url = $result->getSecurePath();
+            } else {
+                $path = $request->file('logo')->store('logos', 'public');
+                $url = $path;
+            }
 
             Setting::updateOrCreate(
                 ['key' => 'system_logo'],

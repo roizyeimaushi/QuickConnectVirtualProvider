@@ -32,9 +32,16 @@ export function initializeEcho(token, forceNew = false) {
     }
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-    const reverbHost = process.env.NEXT_PUBLIC_REVERB_HOST || 'localhost';
-    const reverbPort = process.env.NEXT_PUBLIC_REVERB_PORT || '8080';
-    const reverbScheme = process.env.NEXT_PUBLIC_REVERB_SCHEME || 'http';
+    
+    // Automatically derive reverb host from API URL if not provided
+    let defaultHost = 'localhost';
+    if (apiUrl && apiUrl.includes('onrender.com')) {
+        defaultHost = apiUrl.replace('https://', '').replace('http://', '').split('/')[0];
+    }
+
+    const reverbHost = process.env.NEXT_PUBLIC_REVERB_HOST || defaultHost;
+    const reverbPort = process.env.NEXT_PUBLIC_REVERB_PORT || (reverbHost === 'localhost' ? '8080' : '443');
+    const reverbScheme = process.env.NEXT_PUBLIC_REVERB_SCHEME || (reverbHost === 'localhost' ? 'http' : 'https');
     const reverbKey = process.env.NEXT_PUBLIC_REVERB_KEY || 'y8f9rilu0kvciolzehfx';
 
     try {
