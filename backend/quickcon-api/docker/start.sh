@@ -1,72 +1,63 @@
 #!/bin/bash
 # ============================================
-# FAST Render Startup Script for Laravel
+# ROBUST Railway Startup Script for Laravel
 # ============================================
 
 set -e
 
-echo "=== QuickConnect API Starting (Fast Mode) ==="
+echo "=== QuickConnect API Starting (Railway Mode) ==="
 
-# Quick APP_KEY check and FIX
-# We must export the new key to override the bad env var from Render
+# 1. FIX APP_KEY
 if [ -z "$APP_KEY" ] || [[ ! "$APP_KEY" =~ ^base64: ]]; then
     echo "Detected invalid/missing APP_KEY. Regenerating..."
-    # Generate new key and grab it
     NEW_KEY="base64:$(php -r 'echo base64_encode(random_bytes(32));')"
-    
-    # Export to current shell so php artisan config:cache sees it
     export APP_KEY="$NEW_KEY"
-    
-    # Also write to .env so other independent calls might see it
-    if grep -q "APP_KEY=" .env; then
-        sed -i "s|^APP_KEY=.*|APP_KEY=$NEW_KEY|" .env
-    else
-        echo "APP_KEY=$NEW_KEY" >> .env
-    fi
-    echo "APP_KEY passed to environment."
+    echo "APP_KEY set to: $APP_KEY"
 fi
 
-# Debug Database Connection (Non-sensitive info)
-echo "Checking DB config..."
-echo "DB_HOST: ${DB_HOST:-not_set}"
-echo "DB_PORT: ${DB_PORT:-not_set}"
-echo "DB_DATABASE: ${DB_DATABASE:-not_set}"
+# 2. FORCE DEBUG (For 500 error investigation - Remove later if desired)
+export APP_DEBUG=true
+export APP_ENV=production
 
-# Run migrations
-if [ "${FORCE_RESET_DB:-false}" = "true" ]; then
-    echo "⚠️ FORCE_RESET_DB is set! Wiping database and reseeding..."
-    php artisan migrate:fresh --seed --force --no-interaction
-else
-    echo "Running standard migrations..."
-    php artisan migrate --force --no-interaction 2>&1 || echo "Migration pending - will retry"
+# 3. FIX SSL CA PATH (If using TiDB/MySQL SSL)
+if [ -n "$MYSQL_ATTR_SSL_CA" ]; then
+    echo "Detecting SSL CA path..."
+    # If the path looks like a Windows path or just filename, point it to storage
+    export MYSQL_ATTR_SSL_CA="/var/www/html/storage/cacert.pem"
+    echo "SSL CA Path forced to: $MYSQL_ATTR_SSL_CA"
 fi
 
-# Quick optimization (skip if already cached)
-echo "Caching config..."
-php artisan config:cache --no-interaction
-php artisan route:cache --no-interaction
-
-# Seed only if needed (runs fast if already seeded)
-php artisan db:seed --class=SettingsSeeder --force --no-interaction 2>/dev/null || true
-php artisan db:seed --class=EnsureAdminUserSeeder --force --no-interaction 2>/dev/null || true
-
-# Ensure storage and run directories exist with correct permissions
-echo "Preparing environment..."
+# 4. PREPARE DIRECTORIES
+echo "Preparing storage directories..."
 mkdir -p storage/logs storage/framework/{cache,sessions,views} bootstrap/cache
 mkdir -p storage/app/public/avatars
 mkdir -p /run/php
 
-# Set permissions
+# Ensure symlink works
+rm -rf public/storage
+php artisan storage:link --no-interaction || true
+
+# 5. RUN MIGRATIONS
+echo "Running database migrations..."
+# Increase memory limit for migrations if needed
+php -d memory_limit=512M artisan migrate --force --no-interaction || echo "⚠️ Migration failed - check DB credentials in Railway Dashboard"
+
+# 6. OPTIMIZE
+echo "Optimizing framework..."
+php artisan config:cache --no-interaction
+php artisan route:cache --no-interaction
+php artisan view:cache --no-interaction
+
+# 7. PERMISSIONS
+echo "Setting permissions..."
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /run/php
 chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /run/php
 
-# Recreate storage link cleanly
-rm -rf public/storage
-php artisan storage:link
-
-# Set port
+# 8. CONFIGURE NGINX PORT
 export PORT=${PORT:-8080}
+# Replace ONLY IPv4 listen to avoid IPv6 errors if container lacks IPv6
 sed -i "s/listen 8080/listen $PORT/g" /etc/nginx/http.d/default.conf
+sed -i "s/listen \[::\]:8080/listen $PORT/g" /etc/nginx/http.d/default.conf
 
-echo "=== Starting on port $PORT ==="
+echo "=== Starting Services on Port $PORT ==="
 exec /usr/bin/supervisord -c /etc/supervisord.conf

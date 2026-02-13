@@ -1,58 +1,48 @@
 #!/bin/sh
 # ============================================
-# Monolith Startup Script
+# ROBUST Monolith Startup Script
 # Runs both Next.js + Laravel in one container
 # ============================================
 
-# set -e (Disabled to prevent crash loop)
+echo "=== QuickConn Monolith Starting (Railway Mode) ==="
 
-echo "=== QuickConn Monolith Starting ==="
-echo "=== Next.js Frontend + Laravel API ==="
-
-# ==========================================
-# LARAVEL SETUP
-# ==========================================
+# 1. LARAVEL SETUP
 cd /var/www/api
 
-# Generate APP_KEY if not set
-if [ -z "$APP_KEY" ]; then
-    echo "Generating APP_KEY..."
-    php artisan key:generate --force
+# 2. FIX APP_KEY
+if [ -z "$APP_KEY" ] || [[ ! "$APP_KEY" =~ ^base64: ]]; then
+    echo "Detected invalid/missing APP_KEY. Regenerating..."
+    NEW_KEY="base64:$(php -r 'echo base64_encode(random_bytes(32));')"
+    export APP_KEY="$NEW_KEY"
+    echo "APP_KEY set to: $APP_KEY"
 fi
 
-# Create storage link
-php artisan storage:link 2>/dev/null || true
+# 3. FORCE DEBUG (Temporarily)
+export APP_DEBUG=true
 
-# Optimize for production
-echo "Optimizing Laravel..."
-php artisan config:clear
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-
-# Run migrations
+# 4. RUN MIGRATIONS
 echo "Running database migrations..."
-php artisan migrate --force || echo "❌ Migration failed! Check DB credentials."
+php artisan migrate --force --no-interaction || echo "⚠️ Migration failed - check DB credentials in Railway Dashboard"
 
-# Seed settings and ensure admin user exists
-php artisan db:seed --class=SettingsSeeder --force 2>/dev/null || echo "❌ Settings seeding failed!"
-php artisan db:seed --class=EnsureAdminUserSeeder --force 2>/dev/null || echo "⚠️ Admin seeder skipped (may already exist)"
+# 5. OPTIMIZE
+echo "Optimizing framework..."
+php artisan config:cache --no-interaction
+php artisan route:cache --no-interaction
+php artisan view:cache --no-interaction
 
-# Fix permissions
-chown -R www-data:www-data /var/www/api/storage
-chown -R www-data:www-data /var/www/api/bootstrap/cache
+# 6. PERMISSIONS
+echo "Setting permissions..."
+chown -R www-data:www-data /var/www/api/storage /var/www/api/bootstrap/cache /run/php
+chmod -R 775 /var/www/api/storage /var/www/api/bootstrap/cache /run/php
 
-# ==========================================
-# CONFIGURE PORTS
-# ==========================================
-# Use Railway's/Render's PORT environment variable (default 8080)
+# Ensure symlink works
+rm -rf public/storage
+php artisan storage:link --no-interaction || true
+
+# 7. CONFIGURE PORTS
 export PORT=${PORT:-8080}
-sed -i "s/listen 8080/listen $PORT/" /etc/nginx/http.d/default.conf
+sed -i "s/listen 8080/listen $PORT/g" /etc/nginx/http.d/default.conf
+sed -i "s/listen \[::\]:8080/listen $PORT/g" /etc/nginx/http.d/default.conf
 
 echo "=== Starting Services on Port $PORT ==="
-echo "  - Nginx (reverse proxy)"
-echo "  - PHP-FPM (Laravel API)"
-echo "  - Next.js (React Frontend)"
-
-# Start supervisor (manages all services)
 exec /usr/bin/supervisord -c /etc/supervisord.conf
