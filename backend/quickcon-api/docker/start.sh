@@ -31,7 +31,7 @@ fi
 echo "Preparing storage directories..."
 mkdir -p storage/logs storage/framework/{cache,sessions,views} bootstrap/cache
 mkdir -p storage/app/public/avatars
-mkdir -p /run/php
+# mkdir -p /run/php (No longer needed for TCP)
 
 # Ensure symlink works
 rm -rf public/storage
@@ -50,8 +50,8 @@ php artisan view:cache --no-interaction
 
 # 7. PERMISSIONS
 echo "Setting permissions..."
-chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /run/php
-chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /run/php
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # 8. CONFIGURE NGINX PORT
 export PORT=${PORT:-8080}

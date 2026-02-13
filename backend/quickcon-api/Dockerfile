@@ -25,20 +25,16 @@ RUN composer install --no-dev --optimize-autoloader --no-scripts --no-interactio
     && rm -rf ~/.composer/cache
 
 # Setup PHP-FPM for performance
-RUN mkdir -p /run/php && chown www-data:www-data /run/php
 RUN rm -f /usr/local/etc/php-fpm.d/*.conf
 RUN echo "[www]" > /usr/local/etc/php-fpm.d/www.conf \
     && echo "user = www-data" >> /usr/local/etc/php-fpm.d/www.conf \
     && echo "group = www-data" >> /usr/local/etc/php-fpm.d/www.conf \
-    && echo "listen = /run/php/php-fpm.sock" >> /usr/local/etc/php-fpm.d/www.conf \
-    && echo "listen.owner = www-data" >> /usr/local/etc/php-fpm.d/www.conf \
-    && echo "listen.group = www-data" >> /usr/local/etc/php-fpm.d/www.conf \
-    && echo "listen.mode = 0660" >> /usr/local/etc/php-fpm.d/www.conf \
+    && echo "listen = 127.0.0.1:9000" >> /usr/local/etc/php-fpm.d/www.conf \
     && echo "pm = dynamic" >> /usr/local/etc/php-fpm.d/www.conf \
-    && echo "pm.max_children = 10" >> /usr/local/etc/php-fpm.d/www.conf \
-    && echo "pm.start_servers = 3" >> /usr/local/etc/php-fpm.d/www.conf \
-    && echo "pm.min_spare_servers = 2" >> /usr/local/etc/php-fpm.d/www.conf \
-    && echo "pm.max_spare_servers = 5" >> /usr/local/etc/php-fpm.d/www.conf \
+    && echo "pm.max_children = 20" >> /usr/local/etc/php-fpm.d/www.conf \
+    && echo "pm.start_servers = 5" >> /usr/local/etc/php-fpm.d/www.conf \
+    && echo "pm.min_spare_servers = 3" >> /usr/local/etc/php-fpm.d/www.conf \
+    && echo "pm.max_spare_servers = 10" >> /usr/local/etc/php-fpm.d/www.conf \
     && echo "catch_workers_output = yes" >> /usr/local/etc/php-fpm.d/www.conf
 
 # Copy config and app
