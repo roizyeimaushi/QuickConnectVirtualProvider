@@ -18,13 +18,12 @@ return new class extends Migration
             $table->index('attendance_date');
         });
 
-        // Backfill existing records with the session date (PostgreSQL syntax)
+        // Backfill existing records with the session date (MySQL/TiDB syntax)
         DB::statement("
             UPDATE attendance_records
-            SET attendance_date = s.date
-            FROM attendance_sessions s
-            WHERE attendance_records.session_id = s.id
-            AND attendance_records.attendance_date IS NULL
+            JOIN attendance_sessions s ON attendance_records.session_id = s.id
+            SET attendance_records.attendance_date = s.date
+            WHERE attendance_records.attendance_date IS NULL
         ");
 
         // Now make it not nullable and add unique constraint
