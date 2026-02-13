@@ -154,6 +154,9 @@ class AuditLog extends Model
         
         // Get the last log's hash for chain integrity - CACHE this for 10 seconds to avoid DB hit every call
         $previousHash = \Illuminate\Support\Facades\Cache::remember('last_audit_log_hash', 10, function() {
+            if (!\Illuminate\Support\Facades\Schema::hasColumn('audit_logs', 'hash')) {
+                return null;
+            }
             return self::orderBy('id', 'desc')->value('hash');
         });
         
@@ -181,8 +184,10 @@ class AuditLog extends Model
             'created_at' => now(),
         ];
         
-        // Generate tamper-proof hash
-        $logData['hash'] = self::generateHash($logData);
+        // Generate tamper-proof hash if column exists
+        if (\Illuminate\Support\Facades\Schema::hasColumn('audit_logs', 'hash')) {
+            $logData['hash'] = self::generateHash($logData);
+        }
         
         $log = self::create($logData);
         
