@@ -61,7 +61,7 @@ class AttendanceSessionController extends Controller
         }
 
         // Rule 3: Only the current day should be Active by default
-        $boundary = (int) (\App\Models\Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
+        $boundary = (int) \App\Models\Setting::getCached('shift_boundary_hour', 14);
         $sessionDate = Carbon::parse($validated['date'])->startOfDay();
         $targetToday = (Carbon::now()->hour < $boundary ? Carbon::yesterday() : Carbon::today())->startOfDay();
         
@@ -423,7 +423,7 @@ class AttendanceSessionController extends Controller
         $this->syncSessionStatuses();
 
         // Customizable Shift Boundary (Default 14:00)
-        $boundary = (int) (\App\Models\Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
+        $boundary = (int) \App\Models\Setting::getCached('shift_boundary_hour', 14);
         
         $now = Carbon::now();
         $today = $now->hour < $boundary 

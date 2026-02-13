@@ -39,9 +39,13 @@ export const API_BASE_URL = (() => {
     // If set to a full URL or hostname = separate services mode
     let resolvedUrl = envUrl;
 
-    // Fix Render internal hostname issue
+    // Fix Platform specific internal hostname issues
     if (!resolvedUrl.includes('.') && !resolvedUrl.includes('localhost') && !resolvedUrl.startsWith('http')) {
-        resolvedUrl = `${resolvedUrl}.onrender.com`;
+        if (resolvedUrl.includes('railway')) {
+            resolvedUrl = `${resolvedUrl}.up.railway.app`;
+        } else {
+            resolvedUrl = `${resolvedUrl}.onrender.com`;
+        }
     }
 
     // Ensure protocol

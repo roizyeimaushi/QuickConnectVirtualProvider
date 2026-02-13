@@ -434,7 +434,7 @@ class AttendanceRecordController extends Controller
             // LATE ARRIVAL NOTIFICATION: Alert admins when employee is late
             // ============================================================
             if ($status === 'late') {
-                $lateAlerts = filter_var(Setting::where('key', 'late_alerts')->value('value'), FILTER_VALIDATE_BOOLEAN);
+                $lateAlerts = filter_var(Setting::getCached('late_alerts', 'false'), FILTER_VALIDATE_BOOLEAN);
                 if ($lateAlerts) {
                     try {
                         $record->load('user');
@@ -520,7 +520,7 @@ class AttendanceRecordController extends Controller
         $today = $this->getToday();
 
         // Check settings
-        $allowMultiCheckin = filter_var(Setting::where('key', 'allow_multi_checkin')->value('value'), FILTER_VALIDATE_BOOLEAN);
+        $allowMultiCheckin = filter_var(Setting::getCached('allow_multi_checkin', 'false'), FILTER_VALIDATE_BOOLEAN);
 
         // Check if already has attendance for TODAY
         $latestRecord = AttendanceRecord::where('user_id', $user->id)
@@ -579,7 +579,7 @@ class AttendanceRecordController extends Controller
         
         // Weekend Check
         $dayOfWeek = $baseDate->dayOfWeek;
-        $weekendAllowed = filter_var(Setting::where('key', 'weekend_checkin')->value('value'), FILTER_VALIDATE_BOOLEAN);
+        $weekendAllowed = filter_var(Setting::getCached('weekend_checkin', 'true'), FILTER_VALIDATE_BOOLEAN);
         
         if (!$weekendAllowed && ($dayOfWeek === Carbon::SATURDAY || $dayOfWeek === Carbon::SUNDAY)) {
             return response()->json([
@@ -841,8 +841,8 @@ class AttendanceRecordController extends Controller
         $sessionDate = $session->date->format('Y-m-d');
         
         // Fetch Break Window Settings
-        $breakStartStr = Setting::where('key', 'break_start_window')->value('value') ?: '00:00';
-        $breakEndStr = Setting::where('key', 'break_end_window')->value('value') ?: '01:00';
+        $breakStartStr = Setting::getCached('break_start_window', '00:00');
+        $breakEndStr = Setting::getCached('break_end_window', '01:00');
         
         // Parse Window Times relative to Session Date
         $breakStartDt = Carbon::parse($sessionDate . ' ' . $breakStartStr);
@@ -885,7 +885,7 @@ class AttendanceRecordController extends Controller
         }
 
         // Check if break limit reached
-        $maxBreaks = (int) (Setting::where('key', 'max_breaks')->value('value') ?: 1);
+        $maxBreaks = (int) Setting::getCached('max_breaks', 1);
         $shiftDate = $attendanceRecord->attendance_date->toDateString();
         $todaysBreaksCount = \App\Models\EmployeeBreak::where('user_id', $user->id)
             ->where('break_date', $shiftDate)
@@ -986,10 +986,10 @@ class AttendanceRecordController extends Controller
             // ============================================================
             // NOTIFICATIONS: Break Overtime
             // ============================================================
-            $breakLimit = (int) (Setting::where('key', 'break_duration')->value('value') ?: 60);
+            $breakLimit = (int) Setting::getCached('break_duration', 60);
 
             if ($duration > $breakLimit) {
-                $breakAlerts = filter_var(Setting::where('key', 'break_alerts')->value('value'), FILTER_VALIDATE_BOOLEAN);
+                $breakAlerts = filter_var(Setting::getCached('break_alerts', 'false'), FILTER_VALIDATE_BOOLEAN);
                 if ($breakAlerts) {
                     $excess = $duration - $breakLimit;
                     $admins = \App\Models\User::where('role', 'admin')->get();
@@ -999,7 +999,7 @@ class AttendanceRecordController extends Controller
                 // ============================================================
                 // BREAK OVERTIME PENALTY
                 // ============================================================
-                $breakPenalty = filter_var(Setting::where('key', 'break_penalty')->value('value'), FILTER_VALIDATE_BOOLEAN);
+                $breakPenalty = filter_var(Setting::getCached('break_penalty', 'false'), FILTER_VALIDATE_BOOLEAN);
                 if ($breakPenalty) {
                     $excess = $duration - $breakLimit;
                     // Store penalty minutes on the break record
@@ -1030,8 +1030,8 @@ class AttendanceRecordController extends Controller
     {
         if ($attendanceRecord->break_start && !$attendanceRecord->break_end) {
             $start = Carbon::parse($attendanceRecord->break_start);
-            $autoResume = filter_var(Setting::where('key', 'auto_resume')->value('value'), FILTER_VALIDATE_BOOLEAN);
-            $breakDuration = (int) (Setting::where('key', 'break_duration')->value('value') ?: 60);
+            $autoResume = filter_var(Setting::getCached('auto_resume', 'false'), FILTER_VALIDATE_BOOLEAN);
+            $breakDuration = (int) Setting::getCached('break_duration', 60);
 
             if ($autoResume && Carbon::now()->diffInMinutes($start) > $breakDuration) {
                 // Auto-end
@@ -1286,8 +1286,8 @@ class AttendanceRecordController extends Controller
     {
         $user = $request->user();
         
-        // 1. Sync statuses for today's sessions to ensure they reflect current time
-        $this->syncAllSessionStatuses();
+        // 1. Sync statuses for today's sessions but ONLY via the throttled global method
+        AttendanceSession::syncStatuses();
 
         $today = $this->getToday();
         $realToday = Carbon::today()->toDateString();
@@ -1430,7 +1430,7 @@ class AttendanceRecordController extends Controller
             $breakDurationSeconds = Carbon::now()->diffInSeconds($breakStart);
             
             // Get break duration from settings (default 90 mins = 5400 seconds)
-            $breakLimitMinutes = (int) (Setting::where('key', 'break_duration')->value('value') ?: 90);
+            $breakLimitMinutes = (int) Setting::getCached('break_duration', 90);
             $maxBreakSeconds = $breakLimitMinutes * 60;
             
             if ($breakDurationSeconds > $maxBreakSeconds) {
@@ -1484,48 +1484,6 @@ class AttendanceRecordController extends Controller
      */
     private function syncAllSessionStatuses()
     {
-        $now = Carbon::now();
-        $boundary = (int) (Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
-        $today = ($now->hour < $boundary ? Carbon::yesterday() : Carbon::today())->startOfDay();
-
-        // Sync non-locked sessions for today or earlier
-        $sessions = AttendanceSession::whereIn('status', ['pending', 'active'])
-            ->where('date', '<=', $today)
-            ->with('schedule')
-            ->get();
-
-        foreach ($sessions as $session) {
-            if (!$session->schedule) {
-                if ($session->status === 'active' && $session->date->addDay()->isPast()) {
-                    $session->update(['status' => 'completed']);
-                }
-                continue;
-            }
-
-            $schedule = $session->schedule;
-            $sessionDate = $session->date->format('Y-m-d');
-            
-            $shiftStart = Carbon::parse("$sessionDate {$schedule->time_in}");
-            $shiftEnd = Carbon::parse("$sessionDate {$schedule->time_out}");
-            
-            if ($shiftEnd->lt($shiftStart)) {
-                $shiftEnd->addDay();
-            }
-
-            $oldStatus = $session->status;
-            $newStatus = $oldStatus;
-
-            if ($now->lt($shiftStart)) {
-                $newStatus = 'pending';
-            } elseif ($now->gte($shiftStart) && $now->lte($shiftEnd)) {
-                $newStatus = 'active';
-            } else {
-                $newStatus = 'completed';
-            }
-
-            if ($newStatus !== $oldStatus) {
-                $session->update(['status' => $newStatus]);
-            }
-        }
+        AttendanceSession::syncStatuses();
     }
 }

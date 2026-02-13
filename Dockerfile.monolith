@@ -96,10 +96,10 @@ COPY docker/monolith/supervisord.conf /etc/supervisord.conf
 COPY docker/monolith/start.sh /start.sh
 RUN chmod +x /start.sh
 
-EXPOSE 10000
+EXPOSE 8080
 
 # Healthcheck
 HEALTHCHECK --interval=30s --timeout=5s \
-    CMD curl -f http://localhost:10000/api/health || exit 1
+    CMD curl -f http://localhost:8080/api/health || exit 1
 
 CMD ["/start.sh"]

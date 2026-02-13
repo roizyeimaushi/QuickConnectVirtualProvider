@@ -70,7 +70,7 @@ class AttendanceRecord extends Model
      */
     public function scopeToday($query)
     {
-        $boundary = (int) (\App\Models\Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
+        $boundary = (int) Setting::getCached('shift_boundary_hour', 14);
         $now = now();
         $today = ($now->hour < $boundary ? \Carbon\Carbon::yesterday() : \Carbon\Carbon::today())->toDateString();
         

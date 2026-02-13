@@ -49,11 +49,17 @@ class EmployeeController extends Controller
         $perPage = $request->get('per_page', 20);
         $paginated = $query->orderBy('employee_id', 'asc')->paginate($perPage);
 
-        // Add summary counts to the response
+        // Add summary counts to the response in a single optimized query
+        $counts = User::where('role', 'employee')
+            ->selectRaw('count(*) as total')
+            ->selectRaw("count(case when status = 'active' then 1 end) as active")
+            ->selectRaw("count(case when status = 'inactive' then 1 end) as inactive")
+            ->first();
+
         $summary = [
-            'total' => User::where('role', 'employee')->count(),
-            'active' => User::where('role', 'employee')->where('status', 'active')->count(),
-            'inactive' => User::where('role', 'employee')->where('status', 'inactive')->count(),
+            'total' => $counts->total,
+            'active' => $counts->active,
+            'inactive' => $counts->inactive,
         ];
 
         return response()->json(array_merge($paginated->toArray(), ['summary' => $summary]));
@@ -61,9 +67,9 @@ class EmployeeController extends Controller
 
     public function store(Request $request)
     {
-        // Get password policy settings
-        $minLength = (int) (\App\Models\Setting::where('key', 'pass_min_length')->value('value') ?: 8);
-        $requireSpecialChar = filter_var(\App\Models\Setting::where('key', 'pass_special_chars')->value('value'), FILTER_VALIDATE_BOOLEAN);
+        // Get password policy settings with caching
+        $minLength = (int) (\App\Models\Setting::getCached('pass_min_length', 8));
+        $requireSpecialChar = filter_var(\App\Models\Setting::getCached('pass_special_chars', false), FILTER_VALIDATE_BOOLEAN);
 
         // Build password validation rules dynamically
         $passwordRules = ['required', 'string', 'min:' . $minLength, 'confirmed'];

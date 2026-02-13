@@ -27,7 +27,7 @@ class AuthController extends Controller
         // Security: Rate Limiting
         // Use IP and Email as key to prevent lockouts from shared IPs unless same email
         $throttleKey = 'login.' . $request->ip() . '.' . $request->email;
-        $maxAttempts = (int) (Setting::where('key', 'max_login_attempts')->value('value') ?: 5);
+        $maxAttempts = (int) Setting::getCached('max_login_attempts', 5);
         $decaySeconds = 60; // Lockout for 1 minute
 
         if (RateLimiter::tooManyAttempts($throttleKey, $maxAttempts)) {
@@ -207,7 +207,7 @@ class AuthController extends Controller
 
         if ($session) {
             // Security: Session Timeout Check
-            $timeoutMinutes = (int) (Setting::where('key', 'session_timeout')->value('value') ?: 30);
+            $timeoutMinutes = (int) Setting::getCached('session_timeout', 30);
             $lastActivity = \Carbon\Carbon::parse($session->last_activity);
             
             if ($lastActivity->diffInMinutes(now()) > $timeoutMinutes) {
@@ -350,8 +350,8 @@ class AuthController extends Controller
         $user = $request->user();
 
         // Get password policy settings
-        $minLength = (int) (Setting::where('key', 'pass_min_length')->value('value') ?: 8);
-        $requireSpecialChar = filter_var(Setting::where('key', 'pass_special_chars')->value('value'), FILTER_VALIDATE_BOOLEAN);
+        $minLength = (int) Setting::getCached('pass_min_length', 8);
+        $requireSpecialChar = filter_var(Setting::getCached('pass_special_chars', 'false'), FILTER_VALIDATE_BOOLEAN);
 
         // Build validation rules dynamically
         $passwordRules = ['required', 'string', 'min:' . $minLength, 'confirmed'];
@@ -401,8 +401,8 @@ class AuthController extends Controller
     public function getPasswordPolicy()
     {
         return response()->json([
-            'min_length' => (int) (Setting::where('key', 'pass_min_length')->value('value') ?: 8),
-            'require_special_char' => filter_var(Setting::where('key', 'pass_special_chars')->value('value'), FILTER_VALIDATE_BOOLEAN),
+            'min_length' => (int) Setting::getCached('pass_min_length', 8),
+            'require_special_char' => filter_var(Setting::getCached('pass_special_chars', 'false'), FILTER_VALIDATE_BOOLEAN),
         ]);
     }
 }

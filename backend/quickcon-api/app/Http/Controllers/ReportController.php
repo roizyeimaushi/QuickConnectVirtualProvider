@@ -20,7 +20,7 @@ class ReportController extends Controller
     public function dashboard()
     {
         $now = Carbon::now();
-        $boundary = (int) (Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
+        $boundary = (int) Setting::getCached('shift_boundary_hour', 14);
         $today = $now->hour < $boundary ? Carbon::yesterday()->toDateString() : Carbon::today()->toDateString();
         $realToday = Carbon::today()->toDateString();
         
@@ -28,9 +28,6 @@ class ReportController extends Controller
         $cacheKey = 'admin_dashboard_' . $today . '_' . floor(time() / 30);
         
         return Cache::remember($cacheKey, 30, function() use ($today, $realToday, $now) {
-            // 1. Sync statuses for today's sessions to ensure they reflect current time
-            AttendanceSession::syncStatuses();
-
             $totalEmployees = User::where('role', 'employee')
                                   ->where('status', 'active')
                                   ->count();
@@ -109,17 +106,17 @@ class ReportController extends Controller
                              ?? $allTodaySessions->where('status', 'pending')->where('total_count', '>', 0)->first();
             }
 
-            $presentToday = AttendanceRecord::where('attendance_date', $today)
-                ->whereIn('status', ['present', 'left_early'])
-                ->count();
-            
-            $lateToday = AttendanceRecord::where('attendance_date', $today)
-                ->where('status', 'late')
-                ->count();
-            
-            $manualAbsentToday = AttendanceRecord::where('attendance_date', $today)
-                ->whereIn('status', ['absent', 'excused'])
-                ->count();
+            $counts = AttendanceRecord::where('attendance_date', $today)
+                ->selectRaw("count(case when status in ('present', 'left_early') then 1 end) as present")
+                ->selectRaw("count(case when status = 'late' then 1 end) as late")
+                ->selectRaw("count(case when status in ('absent', 'excused') then 1 end) as absent")
+                ->selectRaw("count(case when status not in ('pending', 'optional') then 1 end) as processed")
+                ->first();
+
+            $presentToday = $counts->present;
+            $lateToday = $counts->late;
+            $manualAbsentToday = $counts->absent;
+            $totalProcessed = $counts->processed;
                                          
             // 4. RESET STATS ON WEEKENDS
             // If it's a weekend and there's no active session, stats should be zero
@@ -131,10 +128,6 @@ class ReportController extends Controller
                 $totalProcessed = 0;
             } else {
                 $absentToday = $manualAbsentToday;
-                // Processed = anyone who has a record with a definitive status
-                $totalProcessed = AttendanceRecord::where('attendance_date', $today)
-                    ->whereNotIn('status', ['pending', 'optional'])
-                    ->count();
                 $pendingToday = max(0, $totalEmployees - $totalProcessed);
             }
 
@@ -196,113 +189,157 @@ class ReportController extends Controller
     {
         $user = $request->user();
         $now = Carbon::now();
-
-        // 1. Sync statuses for all current sessions to ensure availability
-        AttendanceSession::syncStatuses();
-
-        // 2. Boundary & Logic Today
-        static $boundary = null;
-        if ($boundary === null) {
-            $boundary = (int) (Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
-        }
+        $boundary = (int) Setting::getCached('shift_boundary_hour', 14);
+        
         $today = $now->hour < $boundary ? Carbon::yesterday()->toDateString() : Carbon::today()->toDateString();
         $realToday = Carbon::today()->toDateString();
+        
+        // Performance: Cache employee dashboard data for 30 seconds per user
+        $cacheKey = 'employee_dashboard_' . $user->id . '_' . $today . '_' . floor(time() / 30);
+        
+        return Cache::remember($cacheKey, 30, function() use ($user, $today, $realToday, $now) {
+            $todaySession = null;
 
-        // 3. DETECT SESSION (Prioritizing Individual Assignment)
-        $todaySession = null;
-
-        // A. If an active record exists, that's the absolute truth
-        $activeRecord = AttendanceRecord::with(['session.schedule'])
-            ->where('user_id', $user->id)
-            ->whereNull('time_out')
-            ->whereNotIn('status', ['pending', 'absent', 'excused'])
-            ->where('attendance_date', '<=', Carbon::today()) 
-            ->latest('time_in')
-            ->first();
-
-        if ($activeRecord) {
-            $today = $activeRecord->attendance_date->toDateString();
-            $todaySession = $activeRecord->session;
-        } else {
-            // B. Try to find a session (Active, Locked, OR Pending if it belongs to today)
-            $todaySession = AttendanceSession::whereDate('date', $today)
-                ->whereIn('status', ['active', 'locked', 'pending'])
-                ->whereHas('records', function($q) use ($user) {
-                    $q->where('user_id', $user->id);
-                })
-                ->with('schedule')
+            // A. If an active record exists, that's the absolute truth
+            $activeRecord = AttendanceRecord::with(['session.schedule'])
+                ->where('user_id', $user->id)
+                ->whereNull('time_out')
+                ->whereNotIn('status', ['pending', 'absent', 'excused'])
+                ->where('attendance_date', '<=', Carbon::today()) 
+                ->latest('time_in')
                 ->first();
 
-            // C. Fallback to any active/pending session for the date (Global/Dynamic)
-            if (!$todaySession) {
-                $fallbackSession = AttendanceSession::with('schedule')
-                    ->whereDate('date', $today)
-                    ->whereIn('status', ['active', 'locked', 'pending'])
-                    ->first();
-                
-                if ($fallbackSession) {
-                    // If it's a required session, we show it (Normal shift)
-                    if ($fallbackSession->attendance_required) {
-                        $todaySession = $fallbackSession;
-                    } else {
-                        // If it's OPTIONAL (weekend), only show it to people assigned to it
-                        $isUserInSession = \App\Models\AttendanceRecord::where('session_id', $fallbackSession->id)
-                            ->where('user_id', $user->id)
-                            ->exists();
-                        
-                        if ($isUserInSession) {
-                            $todaySession = $fallbackSession;
-                        }
-                        // Otherwise, return null so they see "Enjoy your Weekend"
-                    }
-                }
-            }
-
-            // D. Handle Overnight Roll-over / Early Access Fallback
-            // If logically today is yesterday (overnight gap), but no session exists for it,
-            // check if there's a session for "real today".
-            if (!$todaySession && $today !== $realToday) {
-                 $todaySession = AttendanceSession::whereDate('date', $realToday)
+            if ($activeRecord) {
+                $todayString = $activeRecord->attendance_date->toDateString();
+                $todaySession = $activeRecord->session;
+            } else {
+                $todayString = $today;
+                // B. Try to find a session (Active, Locked, OR Pending if it belongs to today)
+                $todaySession = AttendanceSession::whereDate('date', $todayString)
                     ->whereIn('status', ['active', 'locked', 'pending'])
                     ->whereHas('records', function($q) use ($user) {
                         $q->where('user_id', $user->id);
                     })
-                    ->first() ?: AttendanceSession::whereDate('date', $realToday)
+                    ->with('schedule')
+                    ->first();
+
+                if (!$todaySession) {
+                    $fallbackSession = AttendanceSession::with('schedule')
+                        ->whereDate('date', $todayString)
                         ->whereIn('status', ['active', 'locked', 'pending'])
                         ->first();
-                
-                if ($todaySession) {
-                    $today = $realToday;
+                    
+                    if ($fallbackSession) {
+                        if ($fallbackSession->attendance_required) {
+                            $todaySession = $fallbackSession;
+                        } else {
+                            $isUserInSession = \App\Models\AttendanceRecord::where('session_id', $fallbackSession->id)
+                                ->where('user_id', $user->id)
+                                ->exists();
+                            
+                            if ($isUserInSession) {
+                                $todaySession = $fallbackSession;
+                            }
+                        }
+                    }
+                }
+
+                if (!$todaySession && $todayString !== $realToday) {
+                     $todaySession = AttendanceSession::whereDate('date', $realToday)
+                        ->whereIn('status', ['active', 'locked', 'pending'])
+                        ->whereHas('records', function($q) use ($user) {
+                            $q->where('user_id', $user->id);
+                        })
+                        ->first() ?: AttendanceSession::whereDate('date', $realToday)
+                            ->whereIn('status', ['active', 'locked', 'pending'])
+                            ->first();
+                    
+                    if ($todaySession) {
+                        $todayString = $realToday;
+                    }
                 }
             }
-        }
 
-        // 3. WEEKEND CHECK (Crucial for UI)
-        $logicalDate = Carbon::parse($today);
-        $physicalDate = Carbon::now();
-        
-        // It's a weekend if:
-        // 1. Logically it's a weekend (e.g. Saturday afternoon counts as Saturday)
-        // 2. Physically it's a weekend AND user is NOT currently at work (no activeRecord)
-        $isWeekend = $logicalDate->isWeekend();
-        
-        // Special case: Saturday/Sunday morning. 
-        // If physically weekend, and NOT currently at work, show weekend.
-        if (!$isWeekend && $physicalDate->isWeekend() && !$activeRecord) {
-            $isWeekend = true;
-            $today = $physicalDate->toDateString(); // Switch to physical date for message
-        }
+            // WEEKEND CHECK
+            $logicalDate = Carbon::parse($todayString);
+            $isWeekend = $logicalDate->isWeekend();
+            if (!$isWeekend && Carbon::now()->isWeekend() && !$activeRecord) {
+                $isWeekend = true;
+                $todayString = Carbon::now()->toDateString();
+            }
 
-        // NEW LOGIC: Only show weekend message if NO session exists and NO active record is found.
-        // This allows Admin-created weekend shifts to work correctly.
-        if ($isWeekend && !$todaySession && !$activeRecord) {
-            $dayName = Carbon::parse($today)->format('l'); // 'l' gives full day name
+            if ($isWeekend && (!$todaySession || !$todaySession->attendance_required) && !$activeRecord) {
+                $dayName = Carbon::parse($todayString)->format('l');
+                $thisMonth = Carbon::now()->startOfMonth();
+                $monthlyStats = AttendanceRecord::where('user_id', $user->id)
+                    ->where('attendance_date', '>=', $thisMonth)
+                    ->selectRaw('status, COUNT(*) as count')
+                    ->groupBy('status')
+                    ->get()
+                    ->pluck('count', 'status');
+
+                $recentRecords = AttendanceRecord::with(['session.schedule'])
+                    ->where('user_id', $user->id)
+                    ->orderBy('attendance_date', 'desc')
+                    ->limit(5)
+                    ->get();
+
+                return response()->json([
+                    'active_session' => null,
+                    'today_record' => null,
+                    'is_weekend' => true,
+                    'no_work_today' => true,
+                    'day_name' => $dayName,
+                    'monthly_stats' => [
+                        'present' => $monthlyStats['present'] ?? 0, 'late' => $monthlyStats['late'] ?? 0, 'absent' => $monthlyStats['absent'] ?? 0,
+                    ],
+                    'recent_records' => $recentRecords,
+                    'can_confirm' => false,
+                    'check_in_message' => "No work scheduled for {$dayName}. Enjoy your day off!",
+                    'attendance_date' => $todayString,
+                    'break_status' => ['is_on_break' => false, 'can_start_break' => false, 'break_message' => 'No work today.'],
+                ]);
+            }
+
+            // AUTO-CREATE / DETECT LOGIC FALLBACK
+            if (!$todaySession) {
+                $allSchedules = \App\Models\Schedule::where('status', 'active')->get();
+                $adminId = User::where('role', 'admin')->value('id') ?: $user->id;
+                
+                foreach ($allSchedules as $schedule) {
+                    $shiftStart = Carbon::parse($todayString . ' ' . $schedule->time_in);
+                    $shiftEnd = Carbon::parse($todayString . ' ' . $schedule->time_out);
+                    if ($schedule->is_overnight || $shiftEnd->lt($shiftStart)) $shiftEnd->addDay();
+
+                    $windowStart = $shiftStart->copy()->subHours(3);
+                    if ($now->between($windowStart, $shiftEnd)) {
+                        $todaySession = AttendanceSession::firstOrCreate(
+                            ['schedule_id' => $schedule->id, 'date' => $todayString],
+                            ['status' => 'active', 'opened_at' => $now, 'created_by' => $adminId]
+                        );
+                        $todaySession->load('schedule');
+                        break;
+                    }
+                }
+            }
+
+            $todayRecordSummary = null;
+            if ($todaySession) {
+                $todayRecordSummary = AttendanceRecord::with(['session.schedule'])
+                    ->where('user_id', $user->id)
+                    ->where('session_id', $todaySession->id)
+                    ->first();
+            }
+            
+            if (!$todayRecordSummary && $activeRecord) {
+                 $todayRecordSummary = $activeRecord;
+            }
+
             $thisMonth = Carbon::now()->startOfMonth();
             $monthlyStats = AttendanceRecord::where('user_id', $user->id)
                 ->where('attendance_date', '>=', $thisMonth)
-                ->selectRaw('status, COUNT(*) as count')
+                ->selectRaw('status, count(*) as count')
                 ->groupBy('status')
-                ->get()
                 ->pluck('count', 'status');
 
             $recentRecords = AttendanceRecord::with(['session.schedule'])
@@ -311,153 +348,72 @@ class ReportController extends Controller
                 ->limit(5)
                 ->get();
 
+            // Check-in constraints logic
+            $checkInMessage = null;
+            $checkInReason = null;
+            $canConfirm = false;
+            
+            if ($todayRecordSummary && $todayRecordSummary->time_out) {
+                $canConfirm = false;
+                $checkInMessage = "You have already completed your shift.";
+                $checkInReason = "already_checked_out";
+            } elseif ($todayRecordSummary && $todayRecordSummary->time_in) {
+                $canConfirm = false;
+                $checkInMessage = "You are already checked in.";
+                $checkInReason = "already_checked_in";
+            } elseif ($todaySession) {
+                $schedule = $todaySession->schedule;
+                $sessionDate = Carbon::parse($todaySession->date->format('Y-m-d'));
+                $windowOpen = $sessionDate->copy()->setTime(18, 0, 0); 
+                $shiftEnd = Carbon::parse($sessionDate->format('Y-m-d') . ' ' . $schedule->time_out);
+                if ($schedule->is_overnight) $shiftEnd->addDay();
+                $checkInClose = $shiftEnd;
+
+                if ($now->lt($windowOpen)) {
+                    $checkInMessage = "Check-in opens at " . $windowOpen->format('H:i'); $checkInReason = "too_early";
+                } elseif ($now->gt($checkInClose)) {
+                    $checkInMessage = "Check-in closed at " . $checkInClose->format('H:i'); $checkInReason = "too_late";
+                } elseif ($todaySession->status === 'locked') {
+                    $checkInMessage = "Session is locked."; $checkInReason = "session_locked";
+                } else {
+                    $canConfirm = true;
+                }
+            } else {
+                $checkInMessage = "No active session available."; $checkInReason = "no_session";
+            }
+
+            $activeBreak = EmployeeBreak::where('attendance_id', $todayRecordSummary?->id)->whereNull('break_end')->first();
+            $breakStatus = [
+                'is_on_break' => !!$activeBreak,
+                'can_start_break' => $todayRecordSummary && !$todayRecordSummary->time_out && !$activeBreak,
+                'can_end_break' => !!$activeBreak,
+                'break_message' => $activeBreak ? "You are on break." : "Break available.",
+                'break_remaining_seconds' => $activeBreak ? $activeBreak->getRemainingSeconds() : 5400,
+            ];
+
+            if ($todayRecordSummary) {
+                $todayRecordSummary->hours_worked = $todayRecordSummary->calculateHoursWorked();
+            }
+
+            $recentRecords->transform(function ($record) {
+                $record->hours_worked = $record->calculateHoursWorked();
+                return $record;
+            });
+
             return response()->json([
-                'active_session' => null,
-                'today_record' => null,
-                'is_weekend' => true,
-                'no_work_today' => true,
-                'day_name' => $dayName,
+                'active_session' => $todaySession,
+                'today_record' => $todayRecordSummary,
                 'monthly_stats' => [
-                    'present' => $monthlyStats['present'] ?? 0,
-                    'late' => $monthlyStats['late'] ?? 0,
-                    'absent' => $monthlyStats['absent'] ?? 0,
+                    'present' => $monthlyStats['present'] ?? 0, 'late' => $monthlyStats['late'] ?? 0, 'absent' => $monthlyStats['absent'] ?? 0,
                 ],
                 'recent_records' => $recentRecords,
-                'can_confirm' => false,
-                'check_in_message' => "No work scheduled for {$dayName}. Enjoy your day off!",
-                'check_in_reason' => 'weekend',
-                'attendance_date' => $today,
-                'break_status' => ['is_on_break' => false, 'can_start_break' => false, 'break_message' => 'No work today.'],
+                'can_confirm' => $canConfirm,
+                'check_in_message' => $checkInMessage,
+                'check_in_reason' => $checkInReason,
+                'attendance_date' => $todayString,
+                'break_status' => $breakStatus,
             ]);
-        }
-
-        // 4. AUTO-CREATE / DETECT LOGIC FALLBACK
-        if (!$todaySession) {
-            $allSchedules = \App\Models\Schedule::where('status', 'active')->get();
-            $adminUser = User::where('role', 'admin')->first();
-            $adminId = $adminUser ? $adminUser->id : $user->id;
-            
-            foreach ($allSchedules as $schedule) {
-                $shiftStart = Carbon::parse($today . ' ' . $schedule->time_in);
-                $shiftEnd = Carbon::parse($today . ' ' . $schedule->time_out);
-                if ($schedule->is_overnight || $shiftEnd->lt($shiftStart)) $shiftEnd->addDay();
-
-                $windowStart = $shiftStart->copy()->subHours(3);
-                if ($now->between($windowStart, $shiftEnd)) {
-                    $todaySession = AttendanceSession::firstOrCreate(
-                        ['schedule_id' => $schedule->id, 'date' => $today],
-                        ['status' => 'active', 'opened_at' => $now, 'created_by' => $adminId]
-                    );
-                    $todaySession->load('schedule');
-                    break;
-                }
-            }
-        }
-
-        // 5. FINAL DATA GATHERING
-        $todayRecord = null;
-        if ($todaySession) {
-            $todayRecord = AttendanceRecord::with(['session.schedule'])
-                ->where('user_id', $user->id)
-                ->where('session_id', $todaySession->id)
-                ->first();
-        }
-        
-        if (!$todayRecord) {
-             $todayRecord = AttendanceRecord::with(['session.schedule'])
-                ->where('user_id', $user->id)
-                ->whereNull('time_out')
-                ->whereNotIn('status', ['pending', 'absent', 'excused'])
-                ->whereNotNull('time_in')
-                ->latest('time_in')
-                ->first();
-        }
-
-        $thisMonth = Carbon::now()->startOfMonth();
-        $monthlyStats = AttendanceRecord::where('user_id', $user->id)
-            ->where('attendance_date', '>=', $thisMonth)
-            ->selectRaw('status, COUNT(*) as count')
-            ->groupBy('status')
-            ->get()
-            ->pluck('count', 'status');
-
-        $recentRecords = AttendanceRecord::with(['session.schedule'])
-            ->where('user_id', $user->id)
-            ->orderBy('attendance_date', 'desc')
-            ->limit(5)
-            ->get();
-
-        // Check-in constraints logic
-        $checkInMessage = null;
-        $checkInReason = null;
-        $canConfirm = false;
-        
-        if ($todayRecord && $todayRecord->time_out) {
-            $canConfirm = false;
-            $checkInMessage = "You have already completed your shift.";
-            $checkInReason = "already_checked_out";
-        } elseif ($todayRecord && $todayRecord->time_in) {
-            $canConfirm = false;
-            $checkInMessage = "You are already checked in.";
-            $checkInReason = "already_checked_in";
-        } elseif ($todaySession) {
-            $schedule = $todaySession->schedule;
-            $sessionDate = Carbon::parse($todaySession->date->format('Y-m-d'));
-            $windowOpen = $sessionDate->copy()->setTime(18, 0, 0); // Open at 6 PM
-            
-            $shiftEnd = Carbon::parse($sessionDate->format('Y-m-d') . ' ' . $schedule->time_out);
-            if ($schedule->is_overnight) $shiftEnd->addDay();
-            $checkInClose = $shiftEnd;
-
-            if ($now->lt($windowOpen)) {
-                $checkInMessage = "Check-in opens at " . $windowOpen->format('H:i');
-                $checkInReason = "too_early";
-            } elseif ($now->gt($checkInClose)) {
-                $checkInMessage = "Check-in closed at " . $checkInClose->format('H:i');
-                $checkInReason = "too_late";
-            } elseif ($todaySession->status === 'locked') {
-                $checkInMessage = "Session is locked.";
-                $checkInReason = "session_locked";
-            } else {
-                $canConfirm = true;
-            }
-        } else {
-            $checkInMessage = "No active session available.";
-            $checkInReason = "no_session";
-        }
-
-        // Break Status Logic (Simplified for brevity but functional)
-        $activeBreak = EmployeeBreak::where('attendance_id', $todayRecord?->id)->whereNull('break_end')->first();
-        $breakStatus = [
-            'is_on_break' => !!$activeBreak,
-            'can_start_break' => $todayRecord && !$todayRecord->time_out && !$activeBreak,
-            'can_end_break' => !!$activeBreak,
-            'break_message' => $activeBreak ? "You are on break." : "Break available.",
-            'break_remaining_seconds' => $activeBreak ? $activeBreak->getRemainingSeconds() : 5400,
-        ];
-
-        if ($todayRecord) {
-            $todayRecord->hours_worked = $todayRecord->calculateHoursWorked();
-        }
-
-        $recentRecords->transform(function ($record) {
-            $record->hours_worked = $record->calculateHoursWorked();
-            return $record;
         });
-
-        return response()->json([
-            'active_session' => $todaySession,
-            'today_record' => $todayRecord,
-            'monthly_stats' => [
-                'present' => $monthlyStats['present'] ?? 0, 'late' => $monthlyStats['late'] ?? 0, 'absent' => $monthlyStats['absent'] ?? 0,
-            ],
-            'recent_records' => $recentRecords,
-            'can_confirm' => $canConfirm,
-            'check_in_message' => $checkInMessage,
-            'check_in_reason' => $checkInReason,
-            'attendance_date' => $today,
-            'break_status' => $breakStatus,
-        ]);
     }
 
     public function dailyReport($date)

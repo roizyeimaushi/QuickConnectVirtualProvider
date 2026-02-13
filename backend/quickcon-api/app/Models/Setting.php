@@ -15,4 +15,15 @@ class Setting extends Model
         'group',
         'type', // 'string', 'boolean', 'json', 'integer'
     ];
+
+    /**
+     * Get a setting value with caching for performance.
+     */
+    public static function getCached($key, $default = null)
+    {
+        return \Illuminate\Support\Facades\Cache::remember("setting_{$key}", 3600, function () use ($key, $default) {
+            $setting = static::where('key', $key)->first();
+            return $setting ? $setting->value : $default;
+        });
+    }
 }

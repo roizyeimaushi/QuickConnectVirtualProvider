@@ -65,8 +65,8 @@ rm -rf public/storage
 php artisan storage:link
 
 # Set port
-export PORT=${PORT:-10000}
-sed -i "s/listen 10000/listen $PORT/g" /etc/nginx/http.d/default.conf
+export PORT=${PORT:-8080}
+sed -i "s/listen 8080/listen $PORT/g" /etc/nginx/http.d/default.conf
 
 echo "=== Starting on port $PORT ==="
 exec /usr/bin/supervisord -c /etc/supervisord.conf

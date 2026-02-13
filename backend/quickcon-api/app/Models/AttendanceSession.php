@@ -75,8 +75,15 @@ class AttendanceSession extends Model
      */
     public static function syncStatuses()
     {
+        // THROTTLE: Only run this heavy sync once every 5 minutes globally
+        $syncKey = 'global_session_sync_lock';
+        if (\Illuminate\Support\Facades\Cache::has($syncKey)) {
+            return;
+        }
+        \Illuminate\Support\Facades\Cache::put($syncKey, true, 300); // 5 minutes
+
         $now = \Carbon\Carbon::now();
-        $boundary = (int) (\App\Models\Setting::where('key', 'shift_boundary_hour')->value('value') ?: 14);
+        $boundary = (int) Setting::getCached('shift_boundary_hour', 14);
         $today = ($now->hour < $boundary ? \Carbon\Carbon::yesterday() : \Carbon\Carbon::today())->startOfDay();
 
         // Sync non-locked sessions for today or earlier

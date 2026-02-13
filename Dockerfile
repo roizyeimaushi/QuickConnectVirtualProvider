@@ -34,4 +34,5 @@ RUN npm ci --omit=dev
 
 EXPOSE 3000
 
-CMD ["npm", "start"]
+# Start Next.js on the port provided by Railway
+CMD npm start -- -p ${PORT:-3000}

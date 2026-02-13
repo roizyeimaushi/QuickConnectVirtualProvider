@@ -1,38 +1,65 @@
-FROM php:8.2-cli-alpine
+# ============================================
+# Laravel PHP API - PRO optimized for Railway
+# ============================================
 
-# Install system dependencies
+FROM php:8.2-fpm-alpine
+
+# Install ALL system dependencies
 RUN apk add --no-cache \
-    bash \
-    git \
-    unzip \
-    curl \
-    freetype-dev \
-    libjpeg-turbo-dev \
-    libpng-dev \
-    oniguruma-dev \
-    icu-dev \
-    zlib-dev \
-    libxml2-dev \
-    libzip-dev \
-    postgresql-dev \
-    npm \
-    nodejs \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd pdo pdo_mysql pdo_pgsql mbstring bcmath intl opcache zip exif pcntl
+    git curl bash zip unzip \
+    libpng-dev libzip-dev oniguruma-dev postgresql-dev icu-dev mysql-client \
+    nginx supervisor \
+    && docker-php-ext-install -j$(nproc) pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd zip intl \
+    && rm -rf /var/cache/apk/* /tmp/*
 
-# Install Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+# Get Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-WORKDIR /app
+WORKDIR /var/www/html
 
-# Copy Laravel files
+# Copy ONLY dependency files first
+COPY composer.json composer.lock ./
+
+# Install PHP deps
+RUN composer install --no-dev --optimize-autoloader --no-scripts --no-interaction --prefer-dist \
+    && rm -rf ~/.composer/cache
+
+# Setup PHP-FPM for performance
+RUN mkdir -p /run/php && chown www-data:www-data /run/php
+RUN rm -f /usr/local/etc/php-fpm.d/*.conf
+RUN echo "[www]" > /usr/local/etc/php-fpm.d/www.conf \
+    && echo "user = www-data" >> /usr/local/etc/php-fpm.d/www.conf \
+    && echo "group = www-data" >> /usr/local/etc/php-fpm.d/www.conf \
+    && echo "listen = /run/php/php-fpm.sock" >> /usr/local/etc/php-fpm.d/www.conf \
+    && echo "listen.owner = www-data" >> /usr/local/etc/php-fpm.d/www.conf \
+    && echo "listen.group = www-data" >> /usr/local/etc/php-fpm.d/www.conf \
+    && echo "listen.mode = 0660" >> /usr/local/etc/php-fpm.d/www.conf \
+    && echo "pm = dynamic" >> /usr/local/etc/php-fpm.d/www.conf \
+    && echo "pm.max_children = 10" >> /usr/local/etc/php-fpm.d/www.conf \
+    && echo "pm.start_servers = 3" >> /usr/local/etc/php-fpm.d/www.conf \
+    && echo "pm.min_spare_servers = 2" >> /usr/local/etc/php-fpm.d/www.conf \
+    && echo "pm.max_spare_servers = 5" >> /usr/local/etc/php-fpm.d/www.conf \
+    && echo "catch_workers_output = yes" >> /usr/local/etc/php-fpm.d/www.conf
+
+# Copy config and app
+COPY docker/nginx.render.conf /etc/nginx/http.d/default.conf
+COPY docker/supervisord.render.conf /etc/supervisord.conf
+COPY docker/start.sh /start.sh
+RUN chmod +x /start.sh
+
+# Copy application code
 COPY . .
 
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
+# Final setup
+RUN composer dump-autoload --optimize --no-dev \
+    && mkdir -p storage/logs storage/framework/{cache,sessions,views} bootstrap/cache \
+    && chown -R www-data:www-data /var/www/html \
+    && chmod -R 775 storage bootstrap/cache
 
-# Expose Railway port (default 8080 if not set, but Railway sets it)
 EXPOSE 8080
 
-# Start Laravel server on Railway port
-CMD php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
+# Railway uses $PORT
+HEALTHCHECK --interval=30s --timeout=5s \
+    CMD curl -f http://localhost:${PORT:-8080}/api/health || exit 1
+
+CMD ["/start.sh"]

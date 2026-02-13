@@ -45,9 +45,9 @@ chown -R www-data:www-data /var/www/api/bootstrap/cache
 # ==========================================
 # CONFIGURE PORTS
 # ==========================================
-# Use Render's PORT environment variable (default 10000)
-export PORT=${PORT:-10000}
-sed -i "s/listen 10000/listen $PORT/" /etc/nginx/http.d/default.conf
+# Use Railway's/Render's PORT environment variable (default 8080)
+export PORT=${PORT:-8080}
+sed -i "s/listen 8080/listen $PORT/" /etc/nginx/http.d/default.conf
 
 echo "=== Starting Services on Port $PORT ==="
 echo "  - Nginx (reverse proxy)"

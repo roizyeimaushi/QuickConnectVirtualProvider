@@ -152,9 +152,10 @@ class AuditLog extends Model
             $severity = self::SEVERITY_LOW;
         }
         
-        // Get the last log's hash for chain integrity
-        $lastLog = self::orderBy('id', 'desc')->first();
-        $previousHash = $lastLog?->hash;
+        // Get the last log's hash for chain integrity - CACHE this for 10 seconds to avoid DB hit every call
+        $previousHash = \Illuminate\Support\Facades\Cache::remember('last_audit_log_hash', 10, function() {
+            return self::orderBy('id', 'desc')->value('hash');
+        });
         
         // Build log data
         $logData = [
@@ -183,7 +184,12 @@ class AuditLog extends Model
         // Generate tamper-proof hash
         $logData['hash'] = self::generateHash($logData);
         
-        return self::create($logData);
+        $log = self::create($logData);
+        
+        // Update cache with the new hash for the next call
+        \Illuminate\Support\Facades\Cache::put('last_audit_log_hash', $log->hash, 60);
+
+        return $log;
     }
 
     /**
