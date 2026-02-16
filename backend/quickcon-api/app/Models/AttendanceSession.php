@@ -137,4 +137,19 @@ class AttendanceSession extends Model
             }
         }
     }
+
+    /**
+     * Get the sequential number for display (e.g. Session #23).
+     */
+    public function getSequenceNumberAttribute()
+    {
+        return self::where('date', '<', $this->date)
+            ->orWhere(function ($query) {
+                $query->where('date', $this->date)
+                      ->where('created_at', '<', $this->created_at);
+            })
+            ->count() + 1;
+    }
+    
+    protected $appends = ['sequence_number'];
 }

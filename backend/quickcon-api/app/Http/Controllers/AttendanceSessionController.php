@@ -130,8 +130,26 @@ class AttendanceSessionController extends Controller
         return response()->json($session, 201);
     }
 
-    public function show(AttendanceSession $attendanceSession)
+    public function show($id)
     {
+        // Custom resolution to support "Sequence IDs" (e.g. "23" maps to 145558)
+        $attendanceSession = AttendanceSession::find($id);
+
+        if (!$attendanceSession) {
+            // If not found by ID, check if it's a small number (sequence index)
+            if (is_numeric($id) && $id < 100000 && $id > 0) {
+                // Try to find the N-th session
+                $attendanceSession = AttendanceSession::orderBy('date')
+                    ->orderBy('created_at')
+                    ->skip($id - 1)
+                    ->first();
+            }
+        }
+
+        if (!$attendanceSession) {
+            return response()->json(['message' => 'Session not found'], 404);
+        }
+
         $attendanceSession->load(['schedule', 'creator', 'lockedByUser', 'records.user' => function ($query) {
             $query->withTrashed();
         }, 'records.breaks']);
