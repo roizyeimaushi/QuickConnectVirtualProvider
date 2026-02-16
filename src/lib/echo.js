@@ -39,9 +39,16 @@ export function initializeEcho(token, forceNew = false) {
         defaultHost = apiUrl.replace('https://', '').replace('http://', '').split('/')[0];
     }
 
-    const reverbHost = process.env.NEXT_PUBLIC_REVERB_HOST || defaultHost;
-    const reverbPort = process.env.NEXT_PUBLIC_REVERB_PORT || (reverbHost === 'localhost' ? '8080' : '443');
-    const reverbScheme = process.env.NEXT_PUBLIC_REVERB_SCHEME || (reverbHost === 'localhost' ? 'http' : 'https');
+    let reverbHost = process.env.NEXT_PUBLIC_REVERB_HOST || defaultHost;
+    
+    // Sanitize host: remove protocols and trailing slashes
+    reverbHost = reverbHost.replace(/^https?:\/\//, '').replace(/^wss?:\/\//, '').replace(/\/$/, '');
+
+    // Auto-configure for Production (Railway/Render)
+    const isProduction = reverbHost.includes('railway.app') || reverbHost.includes('onrender.com');
+    
+    const reverbPort = process.env.NEXT_PUBLIC_REVERB_PORT || (isProduction ? '443' : '8080');
+    const reverbScheme = process.env.NEXT_PUBLIC_REVERB_SCHEME || (isProduction ? 'https' : 'http');
     const reverbKey = process.env.NEXT_PUBLIC_REVERB_KEY || 'y8f9rilu0kvciolzehfx';
 
     try {
