@@ -35,7 +35,7 @@ export function initializeEcho(token, forceNew = false) {
     
     // Automatically derive reverb host from API URL if not provided
     let defaultHost = 'localhost';
-    if (apiUrl && apiUrl.includes('onrender.com')) {
+    if (apiUrl && (apiUrl.includes('onrender.com') || apiUrl.includes('railway.app'))) {
         defaultHost = apiUrl.replace('https://', '').replace('http://', '').split('/')[0];
     }
 
