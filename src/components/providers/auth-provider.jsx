@@ -211,7 +211,24 @@ export function AuthProvider({ children }) {
 
     const logout = async () => {
         // Capture role before clearing state to determine redirect
-        const wasAdmin = user?.role === USER_ROLES.ADMIN;
+        let wasAdmin = user?.role === USER_ROLES.ADMIN;
+
+        // Fallback: If user state is lost/null (e.g. reload or timeout), check storage
+        if (!user) {
+            const roleCookie = Cookies.get("quickcon_role");
+            const storedUser = localStorage.getItem("quickcon_user");
+            
+            if (roleCookie === USER_ROLES.ADMIN) {
+                wasAdmin = true;
+            } else if (storedUser) {
+                try {
+                    const parsed = JSON.parse(storedUser);
+                    if (parsed.role === USER_ROLES.ADMIN) wasAdmin = true;
+                } catch (e) {
+                    // Ignore parse error
+                }
+            }
+        }
 
         try {
             if (!DEMO_MODE) {

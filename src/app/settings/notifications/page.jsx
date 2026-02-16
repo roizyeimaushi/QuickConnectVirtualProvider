@@ -102,7 +102,7 @@ export default function NotificationsSettingsPage() {
 
                     <div className="space-y-4 pt-4 border-t">
                         <Label className="text-base font-semibold">Notification Delivery</Label>
-                        <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="grid gap-4 sm:grid-cols-1">
                             <div className="flex items-center justify-between p-4 border rounded-xl bg-card shadow-sm hover:shadow-md transition-shadow">
                                 <div className="flex items-center space-x-3">
                                     <Checkbox
@@ -112,41 +112,10 @@ export default function NotificationsSettingsPage() {
                                     />
                                     <Label htmlFor="inapp" className="flex flex-col space-y-0.5 cursor-pointer">
                                         <span className="font-medium text-sm">In-app Alerts</span>
-                                        <span className="text-[10px] text-muted-foreground">Instant alerts in-app.</span>
+                                        <span className="text-[10px] text-muted-foreground">Instant alerts in-app. Real-time updates via socket connection.</span>
                                     </Label>
                                 </div>
                                 <span className="text-[9px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase tracking-tighter">Real-time</span>
-                            </div>
-
-                            <div className="flex items-center justify-between p-4 border rounded-xl bg-card shadow-sm hover:shadow-md transition-shadow">
-                                <div className="flex items-center space-x-3">
-                                    <Checkbox
-                                        id="email"
-                                        checked={formData.notify_email || false}
-                                        onCheckedChange={(val) => handleChange("notify_email", val)}
-                                    />
-                                    <Label htmlFor="email" className="flex flex-col space-y-0.5 cursor-pointer">
-                                        <span className="font-medium text-sm">Email Alerts</span>
-                                        <span className="text-[10px] text-muted-foreground">Send reports via email.</span>
-                                    </Label>
-                                </div>
-                                <span className="text-[9px] font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full uppercase tracking-tighter">Reliable</span>
-                            </div>
-
-                            <div className="flex items-center justify-between p-4 border rounded-xl bg-card shadow-sm opacity-60">
-                                <div className="flex items-center space-x-3">
-                                    <Checkbox
-                                        id="sms"
-                                        disabled
-                                        checked={formData.notify_sms || false}
-                                        onCheckedChange={(val) => handleChange("notify_sms", val)}
-                                    />
-                                    <Label htmlFor="sms" className="flex flex-col space-y-0.5">
-                                        <span className="font-medium text-sm">SMS Alerts</span>
-                                        <span className="text-[10px] text-muted-foreground text-orange-600 font-medium italic">Premium Feature</span>
-                                    </Label>
-                                </div>
-                                <span className="text-[9px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full uppercase tracking-tighter">Locked</span>
                             </div>
                         </div>
                     </div>

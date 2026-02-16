@@ -145,10 +145,10 @@ export default function AdminLoginPage() {
                 </div>
 
                 {/* Login Card */}
-                <div className="relative z-10 w-full max-w-[400px] px-4">
-                    <Card className="border border-white/20 shadow-2xl bg-white/90 backdrop-blur-xl shadow-emerald-500/10 overflow-hidden rounded-xl">
-                        <CardHeader className="pt-8 pb-4 text-center">
-                            <div className="flex justify-center mb-6">
+                <div className="relative z-10 w-full max-w-[480px] px-4">
+                    <Card className="border border-white/20 shadow-2xl bg-white/90 backdrop-blur-xl shadow-emerald-500/10 overflow-hidden rounded-[2rem]">
+                        <CardHeader className="pt-12 pb-6 text-center">
+                            <div className="flex justify-center mb-8">
                                 <Image
                                     src={getLogoUrl(settings?.system_logo)}
                                     alt="QuickConn Logo"
@@ -159,22 +159,22 @@ export default function AdminLoginPage() {
                                     onError={(e) => { e.currentTarget.src = "/quickconnect-logo.png"; }}
                                 />
                             </div>
-                            <CardTitle className="text-xl sm:text-2xl font-black tracking-tight font-inter whitespace-nowrap">
+                            <CardTitle className="text-2xl sm:text-4xl font-black tracking-tight font-inter whitespace-nowrap">
                                 <span className="text-emerald-600">QuickConn</span> <span className="text-slate-900">Admin</span>
                             </CardTitle>
-                            <CardDescription className="text-slate-500 mt-1 text-sm">
+                            <CardDescription className="text-slate-500 mt-2 text-base">
                                 Unauthorized access is strictly prohibited
                             </CardDescription>
                         </CardHeader>
 
-                        <CardContent className="px-8 pb-8">
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                <div className="space-y-3">
-                                    <div className="space-y-1.5">
-                                        <Label htmlFor="email" className="text-[10px] font-bold text-slate-700 uppercase ml-1 tracking-widest">Email</Label>
+                        <CardContent className="px-10 pb-12">
+                            <form onSubmit={handleSubmit} className="space-y-6">
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="email" className="text-xs font-bold text-slate-700 uppercase ml-1 tracking-widest">Email</Label>
                                         <div className="relative group">
-                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-600 transition-colors">
-                                                <Mail className="h-4 w-4" />
+                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-600 transition-colors">
+                                                <Mail className="h-5 w-5" />
                                             </div>
                                             <input
                                                 id="email"
@@ -184,16 +184,16 @@ export default function AdminLoginPage() {
                                                 onChange={(e) => setEmail(e.target.value)}
                                                 required
                                                 autoComplete="username"
-                                                className="w-full h-10 pl-9 pr-3 bg-white/50 border border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 transition-all text-slate-900 font-inter placeholder:text-slate-300 text-sm"
+                                                className="w-full h-14 pl-12 pr-4 bg-white/50 border border-slate-200 rounded-2xl focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all text-slate-900 font-inter placeholder:text-slate-300"
                                             />
                                         </div>
                                     </div>
 
-                                    <div className="space-y-1.5">
-                                        <Label htmlFor="password" className="text-[10px] font-bold text-slate-700 uppercase ml-1 tracking-widest">Password</Label>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="password" className="text-xs font-bold text-slate-700 uppercase ml-1 tracking-widest">Password</Label>
                                         <div className="relative group">
-                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-600 transition-colors">
-                                                <Lock className="h-4 w-4" />
+                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-600 transition-colors">
+                                                <Lock className="h-5 w-5" />
                                             </div>
                                             <input
                                                 id="password"
@@ -202,14 +202,14 @@ export default function AdminLoginPage() {
                                                 value={password}
                                                 onChange={(e) => setPassword(e.target.value)}
                                                 required
-                                                className="w-full h-10 pl-9 pr-10 bg-slate-50/50 border border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 transition-all text-slate-900 font-inter text-sm"
+                                                className="w-full h-14 pl-12 pr-14 bg-slate-50/50 border border-slate-200 rounded-2xl focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all text-slate-900 font-inter"
                                             />
                                             <button
                                                 type="button"
                                                 onClick={() => setShowPassword(!showPassword)}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600 transition-colors"
+                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600 transition-colors"
                                             >
-                                                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                                             </button>
                                         </div>
                                     </div>
@@ -221,9 +221,9 @@ export default function AdminLoginPage() {
                                             id="remember"
                                             checked={remember}
                                             onCheckedChange={setRemember}
-                                            className="h-4 w-4 border-slate-300 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                                            className="border-slate-300 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
                                         />
-                                        <Label htmlFor="remember" className="text-xs font-medium text-slate-600 cursor-pointer">
+                                        <Label htmlFor="remember" className="text-sm font-medium text-slate-600 cursor-pointer">
                                             Keep me signed in
                                         </Label>
                                     </div>
@@ -231,7 +231,7 @@ export default function AdminLoginPage() {
 
                                 <Button
                                     type="submit"
-                                    className="w-full h-10 text-sm font-bold rounded-lg shadow-lg shadow-emerald-600/20 hover:shadow-emerald-600/30 transition-all active:scale-[0.98] border-none"
+                                    className="w-full h-14 text-lg font-bold rounded-2xl shadow-xl shadow-emerald-600/20 hover:shadow-emerald-600/30 transition-all active:scale-[0.98] border-none"
                                     loading={loading}
                                     style={{
                                         background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
