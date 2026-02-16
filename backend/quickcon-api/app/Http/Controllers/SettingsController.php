@@ -151,25 +151,39 @@ class SettingsController extends Controller
         ]);
 
         if ($request->file('logo')) {
-            try {
-                // Support Cloudinary for persistent storage on Railway/Render
-                if (config('cloudinary.cloud_url') || env('CLOUDINARY_URL')) {
+            $uploaded = false;
+            $url = null;
+
+            // Try Cloudinary if configured
+            if (config('cloudinary.cloud_url') || env('CLOUDINARY_URL')) {
+                try {
                     $result = $request->file('logo')->storeOnCloudinary('logos');
                     $url = $result->getSecurePath();
-                } else {
-                    $path = $request->file('logo')->store('logos', 'public');
-                    $url = $path;
+                    $uploaded = true;
+                } catch (\Exception $e) {
+                    Log::warning("Cloudinary logo upload failed, falling back to local: " . $e->getMessage());
+                    // Fallback will happen below
                 }
+            }
 
+            // If not uploaded yet (either not configured or failed), use local storage
+            if (!$uploaded) {
+                try {
+                    $path = $request->file('logo')->store('logos', 'public');
+                    // Generate full URL for local file
+                    $url = asset('storage/' . $path);
+                } catch (\Exception $e) {
+                    Log::error("Logo upload failed (local): " . $e->getMessage());
+                    return response()->json(['message' => 'Logo upload failed: ' . $e->getMessage()], 500);
+                }
+            }
+
+            if ($url) {
                 Setting::updateOrCreate(
                     ['key' => 'system_logo'],
                     ['value' => $url, 'group' => 'general']
                 );
-
                 return response()->json(['url' => $url, 'message' => 'Logo uploaded successfully']);
-            } catch (\Exception $e) {
-                Log::error("Logo upload failed: " . $e->getMessage());
-                return response()->json(['message' => 'Logo upload failed: ' . $e->getMessage()], 500);
             }
         }
 
