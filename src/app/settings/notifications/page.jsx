@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -11,36 +11,9 @@ import { useSettings } from "@/hooks/use-settings";
 
 export default function NotificationsSettingsPage() {
     const { settings, loading, saving, updateSettings } = useSettings();
-    const [formData, setFormData] = useState({});
-    const [isReady, setIsReady] = useState(false);
-    const isInitialized = useRef(false);
 
-    // Initialize formData ONLY once when settings first load
-    // This prevents the 5-second polling from overwriting user's in-progress changes
-    useEffect(() => {
-        if (settings && Object.keys(settings).length > 0 && !isInitialized.current) {
-            isInitialized.current = true;
-            setFormData({
-                late_alerts: settings.late_alerts === "1" || settings.late_alerts === true,
-                absent_alerts: settings.absent_alerts === "1" || settings.absent_alerts === true,
-                break_alerts: settings.break_alerts === "1" || settings.break_alerts === true,
-                notify_email: settings.notify_email === "1" || settings.notify_email === true,
-                notify_sms: settings.notify_sms === "1" || settings.notify_sms === true,
-                notify_inapp: settings.notify_inapp === "1" || settings.notify_inapp === true,
-            });
-            setIsReady(true);
-        }
-    }, [settings]);
-
-    const handleChange = (key, value) => {
-        setFormData(prev => ({ ...prev, [key]: value }));
-    };
-
-    const handleSave = () => {
-        updateSettings(formData);
-    };
-
-    if (loading || !isReady) {
+    // Show loader until settings are fetched
+    if (loading || !settings || Object.keys(settings).length === 0) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -48,6 +21,33 @@ export default function NotificationsSettingsPage() {
             </div>
         );
     }
+
+    return (
+        <NotificationsSettingsForm 
+            initialSettings={settings} 
+            saving={saving} 
+            onSave={updateSettings} 
+        />
+    );
+}
+
+function NotificationsSettingsForm({ initialSettings, saving, onSave }) {
+    // Initialize state directly from props - no useEffect needed
+    const [formData, setFormData] = useState({
+        late_alerts: initialSettings.late_alerts === "1" || initialSettings.late_alerts === true,
+        absent_alerts: initialSettings.absent_alerts === "1" || initialSettings.absent_alerts === true,
+        break_alerts: initialSettings.break_alerts === "1" || initialSettings.break_alerts === true,
+        notify_inapp: initialSettings.notify_inapp === "1" || initialSettings.notify_inapp === true,
+        // Removed email/sms as requested previously, but keeping data structure clean if keys exist
+    });
+
+    const handleChange = (key, value) => {
+        setFormData(prev => ({ ...prev, [key]: value }));
+    };
+
+    const handleSave = () => {
+        onSave(formData);
+    };
 
     return (
         <div className="space-y-6 animate-fade-in">
