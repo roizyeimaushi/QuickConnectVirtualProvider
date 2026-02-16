@@ -112,10 +112,9 @@ function NotificationsSettingsForm({ initialSettings, saving, onSave }) {
                                     />
                                     <Label htmlFor="inapp" className="flex flex-col space-y-0.5 cursor-pointer">
                                         <span className="font-medium text-sm">In-app Alerts</span>
-                                        <span className="text-[10px] text-muted-foreground">Instant alerts in-app. Real-time updates via socket connection.</span>
+                                        <span className="text-[10px] text-muted-foreground">Receive immediate notifications directly within the application dashboard.</span>
                                     </Label>
                                 </div>
-                                <span className="text-[9px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase tracking-tighter">Real-time</span>
                             </div>
                         </div>
                     </div>
