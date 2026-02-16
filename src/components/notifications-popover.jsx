@@ -369,12 +369,6 @@ export function NotificationsPopover() {
                 <div className="flex items-center justify-between p-4 bg-muted/30">
                     <div className="flex items-center gap-2">
                         <h4 className="font-semibold text-sm">Notifications</h4>
-                        {isConnected && (
-                            <span className="flex items-center gap-1">
-                                <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-                                <span className="text-[10px] text-green-600 font-medium">LIVE</span>
-                            </span>
-                        )}
                     </div>
                     {unreadCount > 0 && (
                         <Button variant="ghost" size="sm" onClick={handleMarkAllRead} className="h-auto p-0 text-xs text-primary hover:text-primary/80">
