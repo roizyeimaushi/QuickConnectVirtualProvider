@@ -316,19 +316,29 @@ class AuthController extends Controller
 
             $uploadWarning = null;
             if ($request->hasFile('avatar')) {
-                try {
-                    // Use Cloudinary if configured
-                    if (config('cloudinary.cloud_url') || env('CLOUDINARY_URL')) {
+                $uploaded = false;
+                
+                // Try Cloudinary if configured
+                if (config('cloudinary.cloud_url') || env('CLOUDINARY_URL')) {
+                    try {
                         $result = $request->file('avatar')->storeOnCloudinary('avatars');
                         $user->avatar = $result->getSecurePath();
-                    } else {
+                        $uploaded = true;
+                    } catch (\Exception $e) {
+                        Log::warning("Cloudinary upload failed, falling back to local: " . $e->getMessage());
                         // Fallback to local storage
+                    }
+                }
+
+                // If not uploaded (either not configured or failed), use local storage
+                if (!$uploaded) {
+                    try {
                         $path = $request->file('avatar')->store('avatars', 'public');
                         $user->avatar = $path;
+                    } catch (\Exception $e) {
+                        $uploadWarning = "Avatar upload failed: " . $e->getMessage();
+                        Log::warning($uploadWarning);
                     }
-                } catch (\Exception $e) {
-                    $uploadWarning = "Avatar upload failed: " . $e->getMessage();
-                    Log::warning($uploadWarning);
                 }
             }
 
