@@ -5,6 +5,7 @@ import { AuthProvider } from "@/components/providers/auth-provider";
 import { SettingsProvider } from "@/components/providers/settings-provider";
 import { SWRProvider } from "@/components/providers/swr-provider";
 import { RealTimeProvider } from "@/components/providers/realtime-provider";
+import { GlobalLoadingScreen } from "@/components/providers/global-loading";
 import { UrlHider } from "@/components/system/url-hider";
 import "./globals.css";
 
@@ -61,13 +62,15 @@ export default function RootLayout({ children }) {
                 <SWRProvider>
                     <SettingsProvider>
                         <AuthProvider>
-                            <RealTimeProvider>
-                                <Suspense fallback={null}>
-                                    <UrlHider />
-                                </Suspense>
-                                {children}
-                                <Toaster />
-                            </RealTimeProvider>
+                            <GlobalLoadingScreen>
+                                <RealTimeProvider>
+                                    <Suspense fallback={null}>
+                                        <UrlHider />
+                                    </Suspense>
+                                    {children}
+                                    <Toaster />
+                                </RealTimeProvider>
+                            </GlobalLoadingScreen>
                         </AuthProvider>
                     </SettingsProvider>
                 </SWRProvider>
