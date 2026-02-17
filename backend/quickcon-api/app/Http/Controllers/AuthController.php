@@ -337,8 +337,9 @@ class AuthController extends Controller
                         $imageData = file_get_contents($file->getRealPath());
                         $mime = $file->getMimeType();
                         
-                        // Try to resize with GD if available (keeps DB size small)
-                        if (function_exists('imagecreatefromstring')) {
+                        // Try to resize with GD if available AND has JPEG support
+                        // Railway has partial GD (imagecreatefromstring exists) but no imagejpeg
+                        if (function_exists('imagecreatefromstring') && function_exists('imagejpeg')) {
                             $image = @imagecreatefromstring($imageData);
                             
                             if ($image) {
