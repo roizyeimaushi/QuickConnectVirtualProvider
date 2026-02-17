@@ -12,8 +12,14 @@ Artisan::command('inspire', function () {
 // Scheduled Tasks
 // ==========================================
 
-// Reset daily session - runs at 5:30 PM (before 6PM check-in window opens)
-// This creates a new session and locks old ones from the previous day
+// ── PRIMARY: Auto-finalize at 7:05 AM ──
+// Locks the active session (shift ends at 7:00 AM), marks absent employees,
+// then auto-creates the next day's session — fully automated daily cycle
+Schedule::command('attendance:auto-finalize-and-create')->dailyAt('07:05');
+
+// ── FALLBACK: Reset daily session at 5:30 PM ──
+// Safety net in case the 7:05 AM run missed (e.g., server downtime).
+// The create logic is idempotent — won't duplicate if the session already exists.
 Schedule::command('attendance:reset-daily-session')->dailyAt('17:30');
 
 // Auto checkout - runs every hour to check for employees who forgot to check out

@@ -33,6 +33,7 @@ class SettingsSeeder extends Seeder
             ['key' => 'prevent_duplicate_checkin', 'value' => '1', 'group' => 'attendance', 'type' => 'boolean'],
             ['key' => 'auto_checkout', 'value' => '1', 'group' => 'attendance', 'type' => 'boolean'],
             ['key' => 'auto_checkout_grace_hours', 'value' => '1', 'group' => 'attendance', 'type' => 'integer'],
+            ['key' => 'auto_lock_minutes_after_shift', 'value' => '5', 'group' => 'attendance', 'type' => 'integer'],
 
             // ==========================================
             // Attendance Rules - Check-in Window (Night Shift: 23:00 - 07:00)
