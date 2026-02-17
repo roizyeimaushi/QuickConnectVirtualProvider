@@ -104,6 +104,18 @@ class AutoFinalizeAndCreateSession extends Command
                 $oldStatus = $session->status;
                 $isAttendanceRequired = $session->attendance_required;
 
+                // ── Handle employees with MISSING TIMEOUT (Time In but No Time Out) ──
+                // Status becomes 'incomplete' (requires admin review) instead of auto-checkout
+                AttendanceRecord::where('session_id', $session->id)
+                    ->whereNotNull('time_in')
+                    ->whereNull('time_out')
+                    ->update([
+                        'status' => 'incomplete', 
+                        'notes' => DB::raw("CONCAT(COALESCE(notes, ''), ' | Missing Timeout - Requires Admin Review')")
+                    ]);
+
+                $this->info("  -> Marked lingering employees as 'incomplete'.");
+
                 // ── Mark pending employees as absent (for required sessions) ──
                 $finalStatus = $isAttendanceRequired ? 'absent' : 'excused';
                 $reason = ($session->session_type ?: 'Session') . ' Auto-Finalization';

@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { EditRecordDialog } from "@/components/attendance/edit-record-dialog";
 import { LockSessionDialog } from "@/components/attendance/lock-session-dialog";
 import { attendanceApi, sessionsApi } from "@/lib/api";
 import { formatTime24, formatDate } from "@/lib/utils";
+import { getAvatarUrl } from "@/lib/constants";
 import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -40,7 +42,6 @@ import {
     Lock,
     CheckCircle2,
     AlertCircle,
-    AlertTriangle,
     ShieldCheck,
     Timer,
     MapPin,
@@ -91,7 +92,7 @@ export default function SessionDetailsPage() {
     const [isDeleting, setIsDeleting] = useState(false);
     const [lockDialogOpen, setLockDialogOpen] = useState(false);
 
-    const fetchSession = async (isPolling = false) => {
+    const fetchSession = useCallback(async (isPolling = false) => {
         if (!id) return;
 
         try {
@@ -123,13 +124,12 @@ export default function SessionDetailsPage() {
         } finally {
             if (!isPolling) setLoading(false);
         }
-    };
+    }, [id, router, toast]);
 
     // Initial fetch
     useEffect(() => {
         fetchSession();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [id]);
+    }, [fetchSession]);
 
     // Polling logic (fallback - WebSocket handles real-time updates)
     useEffect(() => {
@@ -138,7 +138,7 @@ export default function SessionDetailsPage() {
             const interval = setInterval(() => fetchSession(true), 60000); // Fallback poll every 60s
             return () => clearInterval(interval);
         }
-    }, [editDialogOpen]);
+    }, [editDialogOpen, fetchSession]);
 
     const handleDeleteRecord = (record) => {
         setRecordToDelete(record);
@@ -247,6 +247,11 @@ export default function SessionDetailsPage() {
             label: "Day Off",
             color: "bg-sky-50 text-sky-700 dark:bg-sky-900/40 dark:text-sky-400 border-sky-100",
             icon: Coffee,
+        },
+        incomplete: {
+            label: "Missing Timeout",
+            color: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 border-orange-200",
+            icon: AlertCircle,
         }
     };
 
@@ -336,7 +341,7 @@ export default function SessionDetailsPage() {
                     <AlertCircle className="h-12 w-12 text-destructive" />
                     <h3 className="text-lg font-semibold">Session not found</h3>
                     <p className="text-muted-foreground text-sm max-w-xs">
-                        This session record might have been removed or you don't have permission to view it.
+                        This session record might have been removed or you don&apos;t have permission to view it.
                     </p>
                     <Button asChild variant="outline">
                         <Link href="/attendance/sessions">
@@ -495,7 +500,13 @@ export default function SessionDetailsPage() {
                                         <div className="flex items-center gap-2 text-sm">
                                             <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border border-primary/20">
                                                 {session.locked_by_user?.avatar ? (
-                                                    <img src={session.locked_by_user.avatar} className="object-cover h-full w-full" />
+                                            <Image
+                                                src={session.locked_by_user.avatar}
+                                                alt={session.locked_by_user.name || "User Avatar"}
+                                                width={24}
+                                                height={24}
+                                                className="object-cover h-full w-full"
+                                            />
                                                 ) : (
                                                     <User className="h-3 w-3 text-primary" />
                                                 )}
@@ -530,7 +541,7 @@ export default function SessionDetailsPage() {
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="flex items-center gap-3 flex-1 min-w-0">
                                                     <Avatar className="h-11 w-11 border border-primary/10 shadow-sm">
-                                                        <AvatarImage src={record.user?.avatar} />
+                                                        <AvatarImage src={getAvatarUrl(record.user?.avatar)} />
                                                         <AvatarFallback className="bg-primary/5 text-primary text-xs font-bold">
                                                             {record.user?.first_name ? record.user.first_name.charAt(0) : (record.user?.name?.charAt(0) || "U")}
                                                             {record.user?.last_name ? record.user.last_name.charAt(0) : ""}
@@ -644,7 +655,7 @@ export default function SessionDetailsPage() {
                                                     <TableCell>
                                                         <div className="flex items-center gap-3">
                                                             <Avatar className="h-9 w-9 border border-primary/10">
-                                                                <AvatarImage src={record.user?.avatar} />
+                                                                <AvatarImage src={getAvatarUrl(record.user?.avatar)} />
                                                                 <AvatarFallback className="bg-primary/5 text-primary text-xs font-bold">
                                                                     {record.user?.first_name ? record.user.first_name.charAt(0) : (record.user?.name?.charAt(0) || "U")}
                                                                     {record.user?.last_name ? record.user.last_name.charAt(0) : ""}
@@ -859,9 +870,9 @@ export default function SessionDetailsPage() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Cannot Delete Pending Record</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This is a placeholder for an active employee who hasn't checked in yet.
+                            This is a placeholder for an active employee who hasn&apos;t checked in yet.
                             <br /><br />
-                            This employee (<strong>{recordToDelete?.user?.first_name} {recordToDelete?.user?.last_name}</strong>) is currently listed as "Active" in the system.
+                            This employee (<strong>{recordToDelete?.user?.first_name} {recordToDelete?.user?.last_name}</strong>) is currently listed as &quot;Active&quot; in the system.
                             To remove them from this list, you must <strong>deactivate</strong> or <strong>delete</strong> their account in the Employees section.
                         </AlertDialogDescription>
                     </AlertDialogHeader>

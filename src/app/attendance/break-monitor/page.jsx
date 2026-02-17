@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { attendanceApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { formatTime24, getInitials, formatDate } from "@/lib/utils";
+import { getAvatarUrl } from "@/lib/constants";
 import {
     Timer,
     Clock,
@@ -213,7 +214,7 @@ export default function BreakMonitorPage() {
                                                     <TableCell>
                                                         <div className="flex items-center justify-center gap-3">
                                                             <Avatar className="h-9 w-9">
-                                                                <AvatarImage src={breakRecord.employee.avatar} />
+                                                                <AvatarImage src={getAvatarUrl(breakRecord.employee.avatar)} />
                                                                 <AvatarFallback>{getInitials(breakRecord.employee.name)}</AvatarFallback>
                                                             </Avatar>
                                                             <div className="text-left">

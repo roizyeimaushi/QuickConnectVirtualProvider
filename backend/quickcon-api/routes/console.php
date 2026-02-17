@@ -12,10 +12,10 @@ Artisan::command('inspire', function () {
 // Scheduled Tasks
 // ==========================================
 
-// ── PRIMARY: Auto-finalize at 7:05 AM ──
+// ── PRIMARY: Auto-finalize at 08:00 AM (Shift end + 1hr grace) ──
 // Locks the active session (shift ends at 7:00 AM), marks absent employees,
 // then auto-creates the next day's session — fully automated daily cycle
-Schedule::command('attendance:auto-finalize-and-create')->dailyAt('07:05');
+Schedule::command('attendance:auto-finalize-and-create')->dailyAt('08:00');
 
 // ── FALLBACK: Reset daily session at 5:30 PM ──
 // Safety net in case the 7:05 AM run missed (e.g., server downtime).

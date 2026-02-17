@@ -27,8 +27,9 @@ export const API_BASE_URL = (() => {
                 hostname.startsWith('172.31.');
 
             if (isLocalDev) {
-                // Use same hostname but Laravel's port (8000) for development
-                return `${window.location.protocol}//${hostname}:8000/api`;
+                // Use relative path to leverage Next.js rewrites (proxies to port 8000)
+                // This avoids CORS issues and ensures proper image loading via /storage/
+                return '/api';
             }
         }
         // Production monolith: same-origin API
@@ -135,7 +136,9 @@ export const getAvatarUrl = (avatarPath, options = {}) => {
 
     // Ensure it starts with /storage/ or backend domain/storage/
     const cleanPath = avatarPath.replace(/^\/?storage\//, "");
-    return `${backendRoot}/storage/${cleanPath}`;
+    const finalPath = `${backendRoot}/storage/${cleanPath}`;
+
+    return options.cacheBust ? `${finalPath}?t=${Date.now()}` : finalPath;
 };
 
 export const USER_ROLES = {
@@ -147,6 +150,7 @@ export const ATTENDANCE_STATUS = {
     PRESENT: 'present',
     LATE: 'late',
     ABSENT: 'absent',
+    INCOMPLETE: 'incomplete',
 };
 
 export const SESSION_STATUS = {
@@ -199,6 +203,11 @@ export const STATUS_COLORS = {
         bg: 'bg-red-100 dark:bg-red-900/30',
         text: 'text-red-800 dark:text-red-400',
         border: 'border-red-200 dark:border-red-800',
+    },
+    incomplete: {
+        bg: 'bg-orange-100 dark:bg-orange-900/30',
+        text: 'text-orange-800 dark:text-orange-400',
+        border: 'border-orange-200 dark:border-orange-800',
     },
     pending: {
         bg: 'bg-slate-100 dark:bg-slate-900/30',

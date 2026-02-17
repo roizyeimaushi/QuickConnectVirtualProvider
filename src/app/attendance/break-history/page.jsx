@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { breakApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { formatTime24, getInitials, formatDate } from "@/lib/utils";
+import { getAvatarUrl } from "@/lib/constants";
 import {
     History,
     Calendar,
@@ -286,7 +287,7 @@ export default function BreakHistoryPage() {
                                                 <div className="flex items-start justify-between">
                                                     <div className="flex items-center gap-3">
                                                         <Avatar className="h-10 w-10">
-                                                            <AvatarImage src={record.employee.avatar} />
+                                                            <AvatarImage src={getAvatarUrl(record.employee.avatar)} />
                                                             <AvatarFallback>{getInitials(record.employee.name)}</AvatarFallback>
                                                         </Avatar>
                                                         <div>
@@ -397,7 +398,7 @@ export default function BreakHistoryPage() {
                                                         <TableCell>
                                                             <div className="flex items-center gap-3">
                                                                 <Avatar className="h-9 w-9">
-                                                                    <AvatarImage src={record.employee.avatar} />
+                                                                    <AvatarImage src={getAvatarUrl(record.employee.avatar)} />
                                                                     <AvatarFallback>{getInitials(record.employee.name)}</AvatarFallback>
                                                                 </Avatar>
                                                                 <div className="text-left">

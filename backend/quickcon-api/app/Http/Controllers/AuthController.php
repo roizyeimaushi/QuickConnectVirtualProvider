@@ -329,7 +329,35 @@ class AuthController extends Controller
                     }
                 }
 
-                // Fallback: Convert to base64 data URI and store in database
+                // Fallback 1: Store on local filesystem (path fits in VARCHAR(255))
+                if (!$uploaded) {
+                    try {
+                        $file = $request->file('avatar');
+                        $extension = $file->getClientOriginalExtension() ?: 'jpg';
+                        $fileName = 'user_' . $user->id . '_' . time() . '.' . $extension;
+                        
+                        // Store in public disk under avatars/
+                        $path = $file->storeAs('avatars', $fileName, 'public');
+                        
+                        if ($path) {
+                            // Delete old avatar file if it was a local file
+                            $oldAvatar = $user->getOriginal('avatar');
+                            if ($oldAvatar && !str_starts_with($oldAvatar, 'data:') && !str_starts_with($oldAvatar, 'http')) {
+                                $oldPath = str_replace('/storage/', '', $oldAvatar);
+                                Storage::disk('public')->delete($oldPath);
+                            }
+                            
+                            $user->avatar = '/storage/' . $path;
+                            $uploaded = true;
+                            Log::info("Avatar saved to local filesystem: /storage/{$path}");
+                        }
+                    } catch (\Exception $e) {
+                        Log::warning("Local filesystem avatar save failed: " . $e->getMessage());
+                    }
+                }
+
+                // Fallback 2: Convert to base64 data URI and store in database
+                // Only works if avatar column is LONGTEXT (base64 is ~30KB+)
                 // This survives Railway/Render redeployments (ephemeral filesystem wipes local files)
                 if (!$uploaded) {
                     try {
@@ -338,14 +366,13 @@ class AuthController extends Controller
                         $mime = $file->getMimeType();
                         
                         // Try to resize with GD if available AND has JPEG support
-                        // Railway has partial GD (imagecreatefromstring exists) but no imagejpeg
                         if (function_exists('imagecreatefromstring') && function_exists('imagejpeg')) {
                             $image = @imagecreatefromstring($imageData);
                             
                             if ($image) {
                                 $origWidth = imagesx($image);
                                 $origHeight = imagesy($image);
-                                $maxDim = 200;
+                                $maxDim = 150; // Smaller to reduce base64 size
                                 
                                 if ($origWidth > $maxDim || $origHeight > $maxDim) {
                                     $ratio = min($maxDim / $origWidth, $maxDim / $origHeight);
@@ -358,14 +385,14 @@ class AuthController extends Controller
                                     imagecopyresampled($resized, $image, 0, 0, 0, 0, $newWidth, $newHeight, $origWidth, $origHeight);
                                     
                                     ob_start();
-                                    imagejpeg($resized, null, 80);
+                                    imagejpeg($resized, null, 60); // Lower quality for smaller base64
                                     $compressedData = ob_get_clean();
                                     
                                     imagedestroy($image);
                                     imagedestroy($resized);
                                 } else {
                                     ob_start();
-                                    imagejpeg($image, null, 85);
+                                    imagejpeg($image, null, 65);
                                     $compressedData = ob_get_clean();
                                     imagedestroy($image);
                                 }
