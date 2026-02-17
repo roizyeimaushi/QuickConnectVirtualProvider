@@ -11,22 +11,32 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('user_sessions', function (Blueprint $table) {
-            // Speed up "is_online" lookup in EmployeeController
-            $table->index(['user_id', 'last_activity'], 'idx_user_last_activity');
-        });
+        // Use try-catch for each index to make migration idempotent
+        // (indexes may already exist from a previous partial run)
+        try {
+            Schema::table('user_sessions', function (Blueprint $table) {
+                $table->index(['user_id', 'last_activity'], 'idx_user_last_activity');
+            });
+        } catch (\Exception $e) {
+            // Index already exists, skip
+        }
 
-        Schema::table('attendance_records', function (Blueprint $table) {
-            // Speed up "last_attendance" subqueries in EmployeeController
-            // Note: idx_user_attendance_date already exists, but adding status covers more ground
-            $table->index(['user_id', 'status', 'attendance_date'], 'idx_user_status_date');
-        });
+        try {
+            Schema::table('attendance_records', function (Blueprint $table) {
+                $table->index(['user_id', 'status', 'attendance_date'], 'idx_user_status_date');
+            });
+        } catch (\Exception $e) {
+            // Index already exists, skip
+        }
         
-        Schema::table('audit_logs', function (Blueprint $table) {
-            // Audit logs can grow huge, indexes on common filter columns are vital
-            $table->index('action');
-            $table->index(['auditable_type', 'auditable_id']);
-        });
+        try {
+            Schema::table('audit_logs', function (Blueprint $table) {
+                $table->index('action');
+                $table->index(['auditable_type', 'auditable_id']);
+            });
+        } catch (\Exception $e) {
+            // Index already exists, skip
+        }
     }
 
     /**
