@@ -13,8 +13,13 @@ export default function LoginRedirect() {
     }, [router]);
 
     return (
-        <div className="min-h-screen flex items-center justify-center">
-            <div className="w-8 h-8 border-4 border-gray-200 border-t-[#2e8b57] rounded-full animate-spin"></div>
+        <div className="min-h-screen flex items-center justify-center bg-white">
+            <img
+                src="/quickconnect-logo.png"
+                alt="QuickConnect"
+                className="h-16 w-auto object-contain"
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+            />
         </div>
     );
 }

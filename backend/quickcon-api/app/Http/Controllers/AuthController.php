@@ -334,48 +334,49 @@ class AuthController extends Controller
                 if (!$uploaded) {
                     try {
                         $file = $request->file('avatar');
-                        
-                        // Resize image to max 200x200 to keep database size reasonable
                         $imageData = file_get_contents($file->getRealPath());
-                        $image = @imagecreatefromstring($imageData);
+                        $mime = $file->getMimeType();
                         
-                        if ($image) {
-                            $origWidth = imagesx($image);
-                            $origHeight = imagesy($image);
-                            $maxDim = 200;
+                        // Try to resize with GD if available (keeps DB size small)
+                        if (function_exists('imagecreatefromstring')) {
+                            $image = @imagecreatefromstring($imageData);
                             
-                            // Only resize if larger than max dimension
-                            if ($origWidth > $maxDim || $origHeight > $maxDim) {
-                                $ratio = min($maxDim / $origWidth, $maxDim / $origHeight);
-                                $newWidth = (int) round($origWidth * $ratio);
-                                $newHeight = (int) round($origHeight * $ratio);
+                            if ($image) {
+                                $origWidth = imagesx($image);
+                                $origHeight = imagesy($image);
+                                $maxDim = 200;
                                 
-                                $resized = imagecreatetruecolor($newWidth, $newHeight);
-                                // Preserve transparency for PNG
-                                imagealphablending($resized, false);
-                                imagesavealpha($resized, true);
-                                imagecopyresampled($resized, $image, 0, 0, 0, 0, $newWidth, $newHeight, $origWidth, $origHeight);
+                                if ($origWidth > $maxDim || $origHeight > $maxDim) {
+                                    $ratio = min($maxDim / $origWidth, $maxDim / $origHeight);
+                                    $newWidth = (int) round($origWidth * $ratio);
+                                    $newHeight = (int) round($origHeight * $ratio);
+                                    
+                                    $resized = imagecreatetruecolor($newWidth, $newHeight);
+                                    imagealphablending($resized, false);
+                                    imagesavealpha($resized, true);
+                                    imagecopyresampled($resized, $image, 0, 0, 0, 0, $newWidth, $newHeight, $origWidth, $origHeight);
+                                    
+                                    ob_start();
+                                    imagejpeg($resized, null, 80);
+                                    $compressedData = ob_get_clean();
+                                    
+                                    imagedestroy($image);
+                                    imagedestroy($resized);
+                                } else {
+                                    ob_start();
+                                    imagejpeg($image, null, 85);
+                                    $compressedData = ob_get_clean();
+                                    imagedestroy($image);
+                                }
                                 
-                                ob_start();
-                                imagejpeg($resized, null, 80); // Compress to JPEG at 80% quality
-                                $compressedData = ob_get_clean();
-                                
-                                imagedestroy($image);
-                                imagedestroy($resized);
-                            } else {
-                                // Small enough, just re-encode as JPEG
-                                ob_start();
-                                imagejpeg($image, null, 85);
-                                $compressedData = ob_get_clean();
-                                imagedestroy($image);
+                                $base64 = base64_encode($compressedData);
+                                $user->avatar = "data:image/jpeg;base64,{$base64}";
+                                $uploaded = true;
                             }
-                            
-                            $base64 = base64_encode($compressedData);
-                            $user->avatar = "data:image/jpeg;base64,{$base64}";
-                            $uploaded = true;
-                        } else {
-                            // GD couldn't process it, store raw base64
-                            $mime = $file->getMimeType();
+                        }
+                        
+                        // If GD not available or failed, store raw base64
+                        if (!$uploaded) {
                             $base64 = base64_encode($imageData);
                             $user->avatar = "data:{$mime};base64,{$base64}";
                             $uploaded = true;
