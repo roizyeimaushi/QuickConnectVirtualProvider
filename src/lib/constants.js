@@ -100,17 +100,24 @@ export const getLogoUrl = (settingsLogo) => {
 /**
  * Helper to resolve the correct avatar URL
  * @param {string} avatarPath - Avatar path from user data
+ * @param {object} [options] - Options
+ * @param {boolean} [options.cacheBust] - If true, append cache-busting query param (skipped for data/blob URIs)
  * @returns {string} Resolved avatar URL or fallback
  */
-export const getAvatarUrl = (avatarPath) => {
+export const getAvatarUrl = (avatarPath, options = {}) => {
     if (!avatarPath) return "https://github.com/shadcn.png";
 
-    if (avatarPath.startsWith("http") || avatarPath.startsWith("data:") || avatarPath.startsWith("blob:")) {
+    // Data URIs and blob URLs should be returned as-is (never append ?t= to these)
+    if (avatarPath.startsWith("data:") || avatarPath.startsWith("blob:")) {
+        return avatarPath;
+    }
+
+    if (avatarPath.startsWith("http")) {
         // Security check: If page is HTTPS, upgrade HTTP avatar URLs to avoid mixed content block on mobile
         if (typeof window !== 'undefined' && window.location.protocol === 'https:' && avatarPath.startsWith('http://')) {
-            return avatarPath.replace('http://', 'https://');
+            avatarPath = avatarPath.replace('http://', 'https://');
         }
-        return avatarPath;
+        return options.cacheBust ? `${avatarPath}?t=${Date.now()}` : avatarPath;
     }
 
     // Handle Laravel storage paths
