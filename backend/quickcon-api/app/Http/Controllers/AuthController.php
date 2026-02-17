@@ -325,16 +325,61 @@ class AuthController extends Controller
                         $user->avatar = $result->getSecurePath();
                         $uploaded = true;
                     } catch (\Exception $e) {
-                        Log::warning("Cloudinary upload failed, falling back to local: " . $e->getMessage());
-                        // Fallback to local storage
+                        Log::warning("Cloudinary upload failed, falling back to base64: " . $e->getMessage());
                     }
                 }
 
-                // If not uploaded (either not configured or failed), use local storage
+                // Fallback: Convert to base64 data URI and store in database
+                // This survives Railway/Render redeployments (ephemeral filesystem wipes local files)
                 if (!$uploaded) {
                     try {
-                        $path = $request->file('avatar')->store('avatars', 'public');
-                        $user->avatar = $path;
+                        $file = $request->file('avatar');
+                        
+                        // Resize image to max 200x200 to keep database size reasonable
+                        $imageData = file_get_contents($file->getRealPath());
+                        $image = @imagecreatefromstring($imageData);
+                        
+                        if ($image) {
+                            $origWidth = imagesx($image);
+                            $origHeight = imagesy($image);
+                            $maxDim = 200;
+                            
+                            // Only resize if larger than max dimension
+                            if ($origWidth > $maxDim || $origHeight > $maxDim) {
+                                $ratio = min($maxDim / $origWidth, $maxDim / $origHeight);
+                                $newWidth = (int) round($origWidth * $ratio);
+                                $newHeight = (int) round($origHeight * $ratio);
+                                
+                                $resized = imagecreatetruecolor($newWidth, $newHeight);
+                                // Preserve transparency for PNG
+                                imagealphablending($resized, false);
+                                imagesavealpha($resized, true);
+                                imagecopyresampled($resized, $image, 0, 0, 0, 0, $newWidth, $newHeight, $origWidth, $origHeight);
+                                
+                                ob_start();
+                                imagejpeg($resized, null, 80); // Compress to JPEG at 80% quality
+                                $compressedData = ob_get_clean();
+                                
+                                imagedestroy($image);
+                                imagedestroy($resized);
+                            } else {
+                                // Small enough, just re-encode as JPEG
+                                ob_start();
+                                imagejpeg($image, null, 85);
+                                $compressedData = ob_get_clean();
+                                imagedestroy($image);
+                            }
+                            
+                            $base64 = base64_encode($compressedData);
+                            $user->avatar = "data:image/jpeg;base64,{$base64}";
+                            $uploaded = true;
+                        } else {
+                            // GD couldn't process it, store raw base64
+                            $mime = $file->getMimeType();
+                            $base64 = base64_encode($imageData);
+                            $user->avatar = "data:{$mime};base64,{$base64}";
+                            $uploaded = true;
+                        }
                     } catch (\Exception $e) {
                         $uploadWarning = "Avatar upload failed: " . $e->getMessage();
                         Log::warning($uploadWarning);
