@@ -387,7 +387,22 @@ class AuthController extends Controller
                 }
             }
 
-            $user->save();
+            // Try to save - if avatar column is still VARCHAR and base64 is too large,
+            // fall back to saving without avatar
+            try {
+                $user->save();
+            } catch (\Exception $saveErr) {
+                // If save failed and we were trying to save base64 avatar,
+                // the column might still be VARCHAR(255) - try without avatar
+                if ($request->hasFile('avatar') && str_starts_with($user->avatar ?? '', 'data:')) {
+                    Log::warning("Avatar save failed (column may need LONGTEXT migration): " . $saveErr->getMessage());
+                    $user->avatar = $user->getOriginal('avatar'); // Restore original
+                    $uploadWarning = "Avatar upload failed: database column needs migration. Please contact admin.";
+                    $user->save(); // Save other fields
+                } else {
+                    throw $saveErr; // Re-throw if not avatar-related
+                }
+            }
             
             // Log the action
             AuditLog::log(
@@ -399,13 +414,16 @@ class AuthController extends Controller
                 $user->id
             );
 
+            // Re-fetch to get clean data
+            $user->refresh();
+
             return response()->json([
                 'message' => $uploadWarning ? "Profile updated but avatar upload failed" : 'Profile updated successfully',
-                'user' => $user,
+                'user' => new UserResource($user),
                 'warning' => $uploadWarning
             ]);
         } catch (\Exception $e) {
-            Log::error("Profile update failed: " . $e->getMessage());
+            Log::error("Profile update failed: " . $e->getMessage() . " | Trace: " . $e->getTraceAsString());
             return response()->json([
                 'message' => 'Failed to update profile: ' . $e->getMessage()
             ], 500);
